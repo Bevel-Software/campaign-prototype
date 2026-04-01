@@ -1,0 +1,123 @@
+claude-code.txt
+@claude-code.txt  
+
+implement feedback from my meeting:
+Date: Mar 31
+
+Transcript:
+ 
+Me: Hello. Sorry. I'm trying to share my  
+Them: Yeah. Hallo. Ja.  
+Me: Yep.  
+Them: Mhmm.  
+Me: Does it work now? Okay. So this is the campaign agent. Let's see what you think. So this is, the same status before. Can make it shorter, but, look, we wanna expand. Well, to Japan. So, you know, what what messaging do you recommend? Like, what ad sets? Would work? It's like, okay. But fitness and young professionals, we're messaging each one for the B2C. Fitness Freedom for the B2B employee retention, It's like, okay. Create the campaign, whatever.  
+Them: Hold on. This is wait. I don't understand anything.  
+Me: Let's do it. Apply the Yeah. Yeah.  
+Them: Sorry. I like, it just went by so fast. I don't understand anything.  
+Me: Yeah. I I think I'm gonna delete most of this. This is the previous campaign, which basically sets all of these things up What's your budget? What's your time line? What's your channels? And I'm thinking, like, I'm just gonna present this campaign settings. And then make this more like, hey. Apply, like, and then here I'm just gonna ask it. Like like, for the said campaign, like, create creatives. Generate creatives. Right?  
+Them: Would it make sense to for me to send you the conversation I had with Claude and you just do that? Because I felt like that was pretty clear. Right? Like, even just the way it's formatted stuff, it was very easy to follow along with  
+Me: Mhmm.  
+Them: step one, step two, step three, step four. Done. Okay. Now we're here. You know? Whereas this one, like, I got lost so fast. It's crazy. Like, all of those messages look the same. I don't have a feeling of where I am at in the planning step. Or what is happening.  
+Me: I think it makes sense. I think it  
+Them: And all the questions  
+Me: I think you must probably base it. But before  
+Them: Jessica, Uh-huh.  
+Me: that, I think that's already great feedback. So let let's put us to do, but maybe I can quickly show you this as well. Or do you wanna So here,  
+Them: So this is basically, step one is done, and now  
+Me: No. No. Step one and two are done. Theoretically, you already got the image brief.  
+Them: it created this. No?  
+Me: Actually, there is no image brief in this demo, but step two. So you generated the assets. Actually, this is all after image asset three, actually. Essentially. Like, after you generate the images, how do you edit them? How do you, like, create variation? And so forth?  
+Them: But I wouldn't I would make the whole thing in the Canvas. Like, because if not, I mean, it's just an edit screen. Fuck it. You know? Just make an edit screen like this. You know? They don't need to if you wanna really make this whole canvas forward, then make the entire workflow in the Canvas. Like, literally, the brief appears as an as an text box in this canvas. And you can change the brief here in the the canvas. Right? Every single part appears as a  
+Me: Okay. Okay.  
+Them: flow in this canvas, and this flow just gets extended, basically. At some point, it, like, for example, it splits, right, when it's like the table with different segments. Right? Like, it literally is like a flow which gets written in the canons. I think that would be really  
+Me: Yeah. Yeah. Yeah. So, like like,  
+Them: fucking sick.  
+Me: let's say, the the first panel will be, like, the campaign summary. With all these things.  
+Them: Sure. Sure. Yeah.  
+Me: The second one will be what you just  
+Them: That's gets filled out maybe or something like that. Or  
+Me: Yeah. Yeah. Okay. Yeah. Yeah. Yeah. Exactly. The second one will be, like, the image  
+Them: yeah. Well, no. The second one  
+Me: brief that you can, like, chat like, the plan.  
+Them: No. The second one would probably be the segments. Right? The segments.  
+Me: Oh, sure. For sure.  
+Them: Like, this would split into multiple. Like, branches, basically. Right? And each of them is, one of these segments. Then you click on one of them and say continue here. And say, it generates the bridge here, but then you click on that one and digitalize this. You know?  
+Me: Mhmm.  
+Them: Like, it should really, like, feel like you're you are  
+Me: Yay, ya,  
+Them: literally doing a different one.  
+Me: Yeah. Yeah. Yeah. Then the third one is  
+Them: Breeze.  
+Me: like, image brief, like, the plan mode, essentially, in a sense?  
+Them: Yeah. And there, I would also add on top of what we already did is the learning we had while we're doing it. Right? That it also says, oh, add x, y, and z are are relevant, and I would reuse the assets from those. And maybe there, you would also show the assets from the previous campaign.  
+Me: Okay.  
+Them: Previous things. Right? And therefore, each of those are generous  
+Me: Ja.  
+Them: You know? Yeah. Fourth or fifth depending on yeah. Exactly. Mhmm.  
+Me: Then this is the fourth attempt, essentially. Okay. And then this is basically yeah. I mean, okay. Then I'll have to to still work on this a lot. But, yeah, you select the creative you select the creative and, like, generate three variations. It gives you three variations. You can see them. You can edit them as well. Like, you select them. You can also, like, I want to work out your company pays, or you can be like, ah, want a healthier lifestyle. Variations, want up 9,000 gyms. You can save the changes And, if you want to, like, let's say, make a variation for this, like, make this with a higher Like, then it keeps kind of giving you this flow. So you can also, like, have some sort of, like, version history of what we have been created  
+Them: There's another thing here. There is a bit of inconsistency. Between left flow on the right and the flow on the left. And if you also build the first flow to be kind of similar ish to to to be much more in the graph in the left, then I would honestly even not have the chat as an always on thing on the right. But rather as, like, thing which pops up, when you click on a specific thing, and it's the chat for that specific step, for example. You know? Because here, it makes no sense that I you would  
+Me: I understand.  
+Them: the chat to do that. You know? Like, there's a difference there. Like, uh-huh.  
+Me: My head, there is no dissonance, to be honest, but  
+Them: Yeah, maybe that's a little bit better at  
+Me: so, like, here, you were, like, click, it would be a pop up.  
+Them: Yeah. Maybe the chart will be there as a pop up or something. Know? You have the right click and you give me a new variation. You would think you have the other screen for the variation. You could just right click there and see, give me a variation like this or change the text like this or, you know, maybe So  
+Me: Would it be the same with the other, like, kind of flows?  
+Them: Like, for example, for the first one, you will write you have nothing. You have just a canvas and you right click and you say, create new campaign, this creates that box with the settings. Opens the chat. Right? And this you chat with it until it fills out the settings, then it's done. It closes the chat. You now have the filled out settings for the campaign. Right? And now you right click on it, and you say, now join me in segments. And this in the in the Canvas, the thing. Like, that will be such a sick flow, such a sick workflow. You know?  
+Me: Yeah. I mean, I see it like I see it a little bit like like an ID, like a cloud code that when you select this, right, now you know it's in the context and you can chat with it, kinda like in the same way that when you select align and click command l, it  
+Them: Oh, but that's not intuitive for nondeveloped  
+Me: like, it push  
+Them: I mean, for me, it wasn't intuitive, and I'm a developer in Avios Cloud Code. Like, there's no way they're gonna figure this out. I I figure the commentary told me this is how you what you thought how you thought about it.  
+Me: I mean, because this is the line. You know? Like, maybe, like, it could be added here as well, like, the chat. Like, oh, image selected. Variations get moving, and then you you know that  
+Them: Yeah.  
+Me: like, that's in the context in itself.  
+Them: Yeah. I mean, yeah, interesting. Yeah? Yeah. Yeah. Maybe that's yeah.  
+Me: Because because yeah. Because that way you can always use it for any like, throughout the steps  
+Them: But then  
+Me: I don't know if I would do it, like, one  
+Them: Then but then, like, I wouldn't make the extra I think the extra screen on top of all this when you wanna edit something makes no sense.  
+Me: Like this one, mean?  
+Them: Yeah. Yeah. Yeah. Yes. For sure not.  
+Me: Yeah.  
+Them: Like, you have to be able to double click on the thing directly to change the text. On that thing there. Double click on the text, and then you change the text there.  
+Me: Like,  
+Them: Yeah. Yeah. Right? And then if you wanna make a variation, just right click on it and click variation or something like that. You know? Like, no extra screen with all of this stuff. Моё opinion.  
+Me: Why, if I could ask?  
+Them: I mean, there is no point in having the whole Canvas if have an extra screen for the variations anyway. You know? Then might as well just make it a unique screen. You know? Like,  
+Me: Я Because at least for me, I guess, I would be like not the image, but, like, whatever I wanna change from gym to gyms. You know?  
+Them: Yeah. But that's what I'm saying. You you can double click on any of the text here to to directly here. It's like Figma. It's like Figma. Right? It's much more intuitive like that. Like, Figma doesn't open a whole new view. It could have a sidebar with something maybe. But open a whole new view for it. Right? Like, this is Like, this is it's too immersion breaking. You know?  
+Me: Okay. Yeah. That makes sense. But then this would now be like, cut here.  
+Them: Yeah.  
+Me: It would all to be, like, large enough for it to  
+Them: Well, I mean, you can also do it when you click. I mean, yeah, but obviously, you know, like, you put a text, you should probably not cut it in the ad. You know? Because then my message is not bullish. Well, you can do it when you click on it to edit it, then it shows it all. If it's a thing which has a show more thing, you know, or whatever.  
+Me: Ja, oké, ja dat maakt sense. That makes sense.  
+Them: Now problem of doing it like this is that it's, we would have to have need to know every single very way that Facebook does their ads and then show it to you in that specific way in our platform. And whenever they change, we're something to change. You know? Because sometimes the image is like this. Sometimes the text is above the image, and it's like, you know,  
+Me: I mean, please, I mean, a lot of different versions to be fair.  
+Them: it's a lands landscape Exactly. Yeah. Yeah. Yeah. So that would be very painful for us to implement. Whatever that's implementation design.  
+Me: Yeah. But, also, I don't know if we have to per se because it's maybe sometimes it's just the tagline and there's not a promise it's gonna look like this per se.  
+Them: Mhmm.  
+Me: It's just more like this is the tagline, and Facebook is gonna, you know, generate variations as  
+Them: Yeah. That's true. That's true, actually. Yeah. Alright.  
+Me: Facebook needs to generate variations. Ok.  
+Them: Yep. But that will be my feedback on it. But, other than that, I I think it's it's cool with the Canvas.  
+Me: Ja, jetzt kann das sie, jetzt kann das sie. Okay. Let me let let me think about how to design that then. Sounds good. Cool. Thank you.  
+Them: K. I'm gonna send you the chat, I guess. Right? How how do I send you the chat?  
+Me: А,  
+Them: The question?  
+Me: Ah, ja, true.  
+Them: Copy, paste just? Or  
+Me: Yeah. I think you should copy paste. You should  
+Them: you might need to copy  
+Me: be able to. Maybe  
+Them: you might need to copy it into, like, a MD file or something plus it is  
+Me: yeah. If you can pop me into a TXT file, maybe it would be helpful.  
+Them: large. I sent it to you already.  
+Me: Okay.  
+Them: I can try and  
+Me: No. That's fine.  
+Them: Is it fine or should I do it?  
+Me: No. It's okay. Just the takes two seconds.  
+Them: Ok.  
+Me: Okay. Cool. Thank you.  
+Them: Alright. Bye bye.  
+Me: Bye.

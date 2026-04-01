@@ -1,0 +1,2597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Campaign Generator — EGYM Wellpass Japan</title>
+<style>
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #fbfbfd;
+    color: #1d1d1f;
+    min-height: 100vh;
+    line-height: 1.47059;
+  }
+
+  /* ===== DESIGN TOKENS ===== */
+  :root {
+    --teal: #135E69;
+    --teal-light: #1a7a87;
+    --teal-dark: #0e4a53;
+    --teal-10: rgba(19, 94, 105, 0.08);
+    --teal-15: rgba(19, 94, 105, 0.12);
+    --orange: #FF8F3D;
+    --orange-hover: #f0832f;
+    --white: #ffffff;
+    --bg: #fbfbfd;
+    --gray-50: #fafafa;
+    --gray-100: #f5f5f7;
+    --gray-200: #e8e8ed;
+    --gray-300: #d2d2d7;
+    --gray-400: #aeaeb2;
+    --gray-500: #86868b;
+    --gray-600: #6e6e73;
+    --gray-700: #48484a;
+    --gray-900: #1d1d1f;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+    --shadow-md: 0 2px 8px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.1);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.08), 0 16px 48px rgba(0,0,0,0.12);
+    --radius: 20px;
+    --radius-md: 16px;
+    --radius-sm: 12px;
+    --spring: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* ===== NAVBAR — Frosted Glass ===== */
+  .navbar {
+    background: rgba(251, 251, 253, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    padding: 0 32px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 0.5px solid rgba(0,0,0,0.09);
+  }
+  .navbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .navbar-logo-text {
+    color: var(--gray-900);
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .navbar-logo-text span {
+    font-weight: 400;
+    color: var(--gray-600);
+  }
+  .navbar-badge {
+    color: var(--gray-500);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  /* ===== PROGRESS BAR — Minimal Dots ===== */
+  .progress-bar {
+    background: rgba(251, 251, 253, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    padding: 0 32px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    position: sticky;
+    top: 52px;
+    z-index: 99;
+    border-bottom: 0.5px solid rgba(0,0,0,0.06);
+  }
+  .progress-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--gray-400);
+    cursor: default;
+    transition: color 0.3s var(--spring);
+    letter-spacing: -0.01em;
+  }
+  .progress-step .step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gray-300);
+    flex-shrink: 0;
+    transition: all 0.4s var(--spring);
+  }
+  .progress-step.active .step-dot {
+    background: var(--teal);
+    width: 10px;
+    height: 10px;
+    box-shadow: 0 0 0 3px rgba(19, 94, 105, 0.15);
+  }
+  .progress-step.active {
+    color: var(--gray-900);
+    font-weight: 600;
+  }
+  .progress-step.completed .step-dot {
+    background: var(--teal);
+  }
+  .progress-step.completed { color: var(--gray-600); font-weight: 500; }
+  .progress-connector {
+    width: 32px;
+    height: 1px;
+    background: var(--gray-300);
+    flex-shrink: 0;
+    transition: background 0.3s var(--spring);
+  }
+  .progress-connector.completed { background: var(--teal); }
+
+  /* ===== MAIN CONTAINER ===== */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* ===== SCREEN TRANSITIONS ===== */
+  .screen {
+    display: none;
+    animation: screenEnter 0.6s var(--spring) both;
+  }
+  .screen.active { display: block; }
+  @keyframes screenEnter {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== SLIDE NAVIGATION ARROWS ===== */
+  .slide-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--gray-500);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s var(--spring);
+    z-index: 50;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .slide-arrow:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--gray-900);
+    transform: translateY(-50%) scale(1.08);
+  }
+  .slide-arrow.hidden { opacity: 0; pointer-events: none; }
+  .slide-arrow-left { left: 24px; }
+  .slide-arrow-right { right: 24px; }
+  @media (max-width: 1300px) {
+    .slide-arrow { width: 36px; height: 36px; font-size: 1rem; }
+    .slide-arrow-left { left: 12px; }
+    .slide-arrow-right { right: 12px; }
+  }
+
+  /* ===== CHAT SUB-SLIDE VISIBILITY ===== */
+  [data-subslide]:not(.visible) {
+    display: none !important;
+  }
+  [data-subslide].visible {
+    animation: screenEnter 0.4s var(--spring) both;
+  }
+
+  /* ===== BUTTONS — Apple Pill Style ===== */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 980px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s var(--spring);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+    min-height: 44px;
+  }
+  .btn-primary {
+    background: var(--teal);
+    color: var(--white);
+  }
+  .btn-primary:hover {
+    background: var(--teal-light);
+    transform: scale(1.02);
+  }
+  .btn-teal {
+    background: var(--teal);
+    color: var(--white);
+  }
+  .btn-teal:hover {
+    background: var(--teal-light);
+    transform: scale(1.02);
+  }
+  .btn-outline {
+    background: transparent;
+    color: var(--teal);
+    border: 1.5px solid var(--teal);
+  }
+  .btn-outline:hover {
+    background: var(--teal-10);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--gray-600);
+    border: none;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s var(--spring);
+  }
+  .btn-ghost:hover {
+    background: rgba(0,0,0,0.04);
+    color: var(--gray-900);
+  }
+
+  /* ===== CARD ===== */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 32px;
+  }
+
+  /* ============================================
+     SCREEN 1: CAMPAIGN PLANNING CHAT
+     ============================================ */
+  .chat-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 32px;
+    min-height: calc(100vh - 220px);
+  }
+
+  .chat-card {
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-header {
+    margin-bottom: 28px;
+  }
+  .chat-header h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.02em;
+  }
+  .chat-header h2 .icon {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  .chat-messages {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    padding-bottom: 16px;
+  }
+  .msg {
+    display: flex;
+    gap: 10px;
+    max-width: 88%;
+  }
+  .msg.agent { align-self: flex-start; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .msg-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .msg.agent .msg-avatar {
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    color: var(--white);
+  }
+  .msg.user .msg-avatar {
+    background: var(--gray-200);
+    color: var(--gray-600);
+  }
+  .msg-bubble {
+    padding: 14px 18px;
+    border-radius: 18px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+  }
+  .msg.agent .msg-bubble {
+    background: var(--gray-100);
+    color: var(--gray-700);
+  }
+  .msg.user .msg-bubble {
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    color: var(--white);
+  }
+  .msg-bubble ul {
+    margin: 8px 0 4px 16px;
+    list-style: disc;
+  }
+  .msg-bubble li { margin-bottom: 4px; }
+
+  /* Tool calls */
+  .tool-calls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: 40px;
+  }
+  .tool-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--teal-10);
+    border: none;
+    border-radius: 980px;
+    font-size: 0.78rem;
+    color: var(--teal);
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .tool-pill.loading {
+    opacity: 1;
+    transform: translateY(0);
+    color: var(--gray-500);
+  }
+  .tool-pill.loading::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--teal);
+    border-top-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+    animation: toolSpin 0.8s linear infinite;
+  }
+  @keyframes toolSpin {
+    to { transform: rotate(360deg); }
+  }
+  .tool-pill.done {
+    opacity: 1;
+    transform: translateY(0);
+    background: var(--teal-10);
+    color: var(--teal);
+  }
+  .tool-pill.done::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    background: var(--teal);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 8px;
+  }
+  .tool-pill .spinner { display: none; }
+  .tool-pill .shimmer { display: none; }
+
+  /* Tool call messages — each tool call as independent message with data */
+  .tool-call-msg {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 0 0 44px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .tool-call-msg.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .tool-call-result {
+    background: var(--gray-50);
+    border-left: 3px solid var(--teal);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    color: var(--gray-700);
+    line-height: 1.5;
+  }
+  .tool-call-result strong {
+    color: var(--gray-900);
+  }
+
+  /* Chat input */
+  .chat-input {
+    padding-top: 20px;
+    margin-top: auto;
+  }
+  .chat-input-field {
+    width: 100%;
+    padding: 14px 18px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    color: var(--gray-400);
+    background: var(--gray-100);
+    outline: none;
+    transition: all 0.2s var(--spring);
+    font-family: inherit;
+  }
+
+  /* Context panel */
+  .context-panel h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 24px;
+    letter-spacing: -0.02em;
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .summary-item {
+    font-size: 0.85rem;
+  }
+  .summary-item .label {
+    font-weight: 500;
+    color: var(--gray-500);
+    font-size: 0.75rem;
+    margin-bottom: 3px;
+    letter-spacing: 0.01em;
+  }
+  .summary-item .value {
+    color: var(--gray-900);
+    font-weight: 500;
+  }
+  .summary-item.full-width {
+    grid-column: 1 / -1;
+  }
+  .summary-insight {
+    background: var(--teal-10);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    font-size: 0.82rem;
+    color: var(--teal-dark);
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+  .summary-insight strong { color: var(--teal); }
+  .data-sources h4 {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    font-weight: 500;
+    margin-bottom: 12px;
+    letter-spacing: 0.01em;
+  }
+  .data-source-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: var(--gray-700);
+    padding: 8px 0;
+  }
+  .data-source-item .check {
+    color: var(--teal);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+
+  /* ============================================
+     SCREEN 2: AUDIENCE SEGMENTS TABLE
+     ============================================ */
+  .segments-header {
+    margin-bottom: 32px;
+  }
+  .segments-header h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 8px;
+    letter-spacing: -0.03em;
+  }
+  .segments-header p {
+    font-size: 0.95rem;
+    color: var(--gray-500);
+    margin-bottom: 16px;
+    line-height: 1.5;
+    max-width: 640px;
+  }
+  .segments-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--teal-10);
+    color: var(--teal);
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 980px;
+  }
+
+  .segments-table {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .segment-row {
+    display: grid;
+    grid-template-columns: 48px 1fr 1fr 1fr 1.3fr;
+    gap: 16px;
+    align-items: center;
+    padding: 24px;
+    background: var(--white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s var(--spring);
+    border: none;
+    opacity: 1;
+  }
+  .segment-row:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+  .segment-row.unselected {
+    opacity: 0.45;
+  }
+  .segment-row.unselected:hover {
+    opacity: 0.65;
+    transform: translateY(-1px);
+  }
+
+  /* Staggered entrance */
+  .screen.active .segment-row { animation: rowEnter 0.5s var(--spring) both; }
+  .screen.active .segment-row:nth-child(1) { animation-delay: 0s; }
+  .screen.active .segment-row:nth-child(2) { animation-delay: 0.06s; }
+  .screen.active .segment-row:nth-child(3) { animation-delay: 0.12s; }
+  .screen.active .segment-row:nth-child(4) { animation-delay: 0.18s; }
+  .screen.active .segment-row:nth-child(5) { animation-delay: 0.24s; }
+  .screen.active .segment-row:nth-child(6) { animation-delay: 0.30s; }
+  .screen.active .segment-row:nth-child(7) { animation-delay: 0.36s; }
+  .screen.active .segment-row:nth-child(8) { animation-delay: 0.42s; }
+  @keyframes rowEnter {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .segment-row.unselected { animation: rowEnterFaded 0.5s var(--spring) both !important; }
+  @keyframes rowEnterFaded {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 0.45; transform: translateY(0); }
+  }
+
+  /* Custom checkbox */
+  .seg-checkbox {
+    width: 22px; height: 22px;
+    border: 2px solid var(--gray-300);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s var(--spring-bounce);
+  }
+  .seg-checkbox.checked {
+    background: var(--teal);
+    border-color: var(--teal);
+    transform: scale(1);
+  }
+  .seg-checkbox.checked::after {
+    content: "✓";
+    color: var(--white);
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  .seg-checkbox:active { transform: scale(0.9); }
+
+  .seg-persona .name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--gray-900);
+    letter-spacing: -0.01em;
+  }
+  .seg-persona .sub {
+    font-size: 0.78rem;
+    color: var(--gray-500);
+    margin-top: 3px;
+  }
+  .seg-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .seg-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--gray-100);
+    border-radius: 4px;
+    font-size: 0.68rem;
+    color: var(--gray-600);
+    font-weight: 500;
+  }
+  .seg-tag.highlight {
+    background: var(--teal-10);
+    color: var(--teal);
+  }
+  .seg-channel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .seg-channel .ch-icon {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--white);
+    flex-shrink: 0;
+  }
+  .ch-linkedin { background: #0077b5; }
+  .ch-meta { background: #1877f2; }
+  .ch-douyin { background: #fe2c55; }
+  .ch-xiaohongshu { background: #ff2442; }
+  .ch-wechat { background: #07c160; }
+  .seg-channel .ch-name {
+    font-size: 0.85rem;
+    color: var(--gray-700);
+  }
+  .seg-vp .vp-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--gray-900);
+    letter-spacing: -0.01em;
+  }
+  .seg-vp .vp-desc {
+    font-size: 0.78rem;
+    color: var(--gray-500);
+    margin-top: 3px;
+  }
+  .seg-instructions {
+    font-size: 0.8rem;
+    color: var(--gray-700);
+    line-height: 1.45;
+    width: 100%;
+    min-height: 60px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    background: var(--gray-50);
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s var(--spring);
+  }
+  .seg-instructions:focus {
+    border-color: var(--teal);
+    background: var(--white);
+  }
+  .seg-instructions::placeholder {
+    color: var(--gray-400);
+  }
+
+  .segments-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .segments-footer .count {
+    font-size: 0.88rem;
+    color: var(--gray-500);
+  }
+
+  /* Column headers */
+  .segments-col-headers {
+    display: grid;
+    grid-template-columns: 48px 1fr 1fr 1fr 1.3fr;
+    gap: 16px;
+    padding: 0 24px 10px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--gray-500);
+    letter-spacing: 0.01em;
+  }
+
+  /* ============================================
+     SCREEN 3: LOADING STATE
+     ============================================ */
+  .loading-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 220px);
+  }
+  .loading-card {
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+  }
+  .loading-card .agent-icon {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 1.5rem;
+    color: var(--white);
+    font-weight: 500;
+    box-shadow: 0 0 0 8px rgba(19, 94, 105, 0.08), 0 0 0 16px rgba(19, 94, 105, 0.04);
+  }
+  .loading-card h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 6px;
+    letter-spacing: -0.03em;
+  }
+  .loading-card .subtitle {
+    font-size: 0.9rem;
+    color: var(--gray-500);
+    margin-bottom: 32px;
+  }
+  .loading-checklist {
+    text-align: left;
+    margin-bottom: 32px;
+  }
+  .loading-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    font-size: 0.88rem;
+  }
+  .loading-item .li-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+  .loading-item .li-icon.done {
+    background: var(--teal);
+    color: var(--white);
+    font-weight: 700;
+  }
+  .loading-item .li-icon.spinning {
+    background: var(--teal-10);
+    color: var(--teal);
+  }
+  .loading-item .li-icon.waiting {
+    background: var(--gray-100);
+    color: var(--gray-400);
+  }
+  .loading-item .li-text { color: var(--gray-700); letter-spacing: -0.01em; }
+  .loading-item .li-detail {
+    color: var(--gray-400);
+    font-size: 0.78rem;
+    margin-left: auto;
+  }
+  .loading-item-expanded {
+    padding: 12px 0;
+    font-size: 0.88rem;
+  }
+  .loading-item-expanded .li-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .loading-item-expanded .li-preview {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    margin-left: 36px;
+  }
+  .loading-item-expanded .li-preview img {
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Progress bar */
+  .progress-track {
+    width: 100%;
+    height: 4px;
+    background: var(--gray-200);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--teal-light));
+    border-radius: 2px;
+    width: 100%;
+    position: relative;
+  }
+  .progress-fill::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: -2px;
+    width: 12px;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--teal-light);
+    box-shadow: 0 0 8px rgba(19, 94, 105, 0.4);
+  }
+  .skip-link {
+    color: var(--gray-500);
+    font-size: 0.82rem;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .skip-link:hover { color: var(--teal); }
+
+  /* ============================================
+     SCREEN 4: GENERATED CREATIVES
+     ============================================ */
+  .creatives-section {
+    margin-bottom: 48px;
+  }
+  .creatives-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .creatives-section-header h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    letter-spacing: -0.02em;
+  }
+  .ch-badge-pill {
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 980px;
+    color: var(--white);
+  }
+  .creatives-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .creative-card {
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    background: var(--white);
+    overflow: hidden;
+    transition: all 0.3s var(--spring);
+    position: relative;
+  }
+  .creative-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+  }
+  .creative-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 0.5px solid var(--gray-200);
+  }
+  .creative-top-bar .label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    letter-spacing: -0.01em;
+  }
+  .creative-top-bar .actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  /* LinkedIn mock ad */
+  .linkedin-ad {
+    padding: 18px;
+  }
+  .linkedin-ad-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .linkedin-ad-header .company-logo {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 0.55rem;
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: center;
+  }
+  .linkedin-ad-header .company-info .name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--gray-900);
+  }
+  .linkedin-ad-header .company-info .meta {
+    font-size: 0.72rem;
+    color: var(--gray-500);
+  }
+  .linkedin-ad-body {
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--gray-700);
+    margin-bottom: 14px;
+  }
+  .linkedin-ad-image {
+    width: 100%;
+    height: 150px;
+    background: linear-gradient(135deg, var(--teal), #1a8a97, var(--teal-light));
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.78rem;
+    margin-bottom: 14px;
+    letter-spacing: -0.01em;
+  }
+  .linkedin-ad-headline {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .linkedin-ad-cta {
+    display: inline-block;
+    padding: 6px 16px;
+    border: 1.5px solid #0077b5;
+    border-radius: 980px;
+    color: #0077b5;
+    font-size: 0.78rem;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+
+  /* Meta mock ad */
+  .meta-ad { padding: 0; }
+  .meta-ad-image {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(135deg, #1877f2, #42a5f5, #1565c0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.78rem;
+    letter-spacing: -0.01em;
+  }
+  .meta-ad-content {
+    padding: 16px 18px;
+  }
+  .meta-ad-brand {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .meta-ad-text {
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--gray-700);
+    margin-bottom: 10px;
+  }
+  .meta-ad-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    background: var(--gray-50);
+    border-top: 0.5px solid var(--gray-200);
+  }
+  .meta-ad-bottom .headline {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    letter-spacing: -0.01em;
+  }
+  .meta-ad-cta {
+    padding: 7px 18px;
+    background: #1877f2;
+    color: var(--white);
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+
+  /* Creative footer tags */
+  .creative-footer {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 12px 18px;
+    border-top: 0.5px solid var(--gray-200);
+  }
+  .creative-tag {
+    font-size: 0.7rem;
+    color: var(--gray-600);
+    background: var(--gray-100);
+    padding: 4px 10px;
+    border-radius: 980px;
+    font-weight: 500;
+  }
+
+  .creatives-bottom-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 40px;
+    padding-top: 24px;
+  }
+  .creatives-bottom-bar .count {
+    font-size: 0.88rem;
+    color: var(--gray-500);
+  }
+
+  /* ============================================
+     EDIT OVERLAY
+     ============================================ */
+  .edit-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(24px);
+    transition: opacity 0.35s var(--spring), transform 0.35s var(--spring);
+  }
+  .edit-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  .edit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    border-bottom: 0.5px solid rgba(0,0,0,0.09);
+    background: rgba(251, 251, 253, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    flex-shrink: 0;
+  }
+  .edit-header .btn-ghost {
+    font-size: 0.85rem;
+    padding: 8px 14px;
+  }
+  .edit-creative-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    letter-spacing: -0.02em;
+  }
+  .edit-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    flex: 1;
+    overflow: hidden;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 32px;
+  }
+  .edit-form {
+    overflow-y: auto;
+    padding-right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .edit-form::-webkit-scrollbar { width: 4px; }
+  .edit-form::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
+  .edit-preview {
+    position: sticky;
+    top: 0;
+    align-self: start;
+  }
+  .edit-preview-card {
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    background: var(--white);
+    overflow: hidden;
+  }
+  .edit-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .edit-field label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .edit-field input,
+  .edit-field textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    background: var(--gray-50);
+    font-family: inherit;
+    font-size: 0.88rem;
+    color: var(--gray-900);
+    outline: none;
+    transition: border-color 0.2s var(--spring), background 0.2s var(--spring);
+    line-height: 1.5;
+  }
+  .edit-field input:focus,
+  .edit-field textarea:focus {
+    border-color: var(--teal);
+    background: var(--white);
+  }
+  .edit-field textarea {
+    min-height: 80px;
+    resize: vertical;
+  }
+  .edit-field-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .variation-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    background: var(--teal-10);
+    border: none;
+    border-radius: 980px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--teal);
+    cursor: pointer;
+    transition: all 0.2s var(--spring);
+  }
+  .variation-btn:hover {
+    background: var(--teal-15);
+  }
+  .variation-btn .spinner {
+    display: none;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--teal);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: toolSpin 0.8s linear infinite;
+  }
+  .variation-btn.loading .spinner { display: inline-block; }
+  .variation-btn.loading { pointer-events: none; opacity: 0.7; }
+  .variations-list {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    animation: screenEnter 0.3s var(--spring) both;
+  }
+  .variations-list.visible {
+    display: flex;
+  }
+  .variation-option {
+    padding: 10px 14px;
+    background: var(--gray-50);
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    font-size: 0.82rem;
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: all 0.2s var(--spring);
+    line-height: 1.5;
+  }
+  .variation-option:hover {
+    border-color: var(--teal);
+    background: var(--teal-10);
+    color: var(--teal-dark);
+  }
+  .edit-section-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gray-400);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding-top: 8px;
+    border-top: 1px solid var(--gray-200);
+  }
+  .image-regen-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .image-regen-row {
+    display: flex;
+    gap: 8px;
+  }
+  .image-regen-row input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    background: var(--gray-50);
+    font-family: inherit;
+    font-size: 0.82rem;
+    color: var(--gray-900);
+    outline: none;
+    transition: border-color 0.2s var(--spring);
+  }
+  .image-regen-row input:focus {
+    border-color: var(--teal);
+    background: var(--white);
+  }
+  .image-regen-row input::placeholder { color: var(--gray-400); }
+  .image-regen-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: transparent;
+    border: 1.5px solid var(--teal);
+    border-radius: 980px;
+    color: var(--teal);
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s var(--spring);
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  .image-regen-btn:hover { background: var(--teal-10); }
+  .image-regen-btn.loading { opacity: 0.6; pointer-events: none; }
+  .image-regen-btn .spinner {
+    display: none;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--teal);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: toolSpin 0.8s linear infinite;
+  }
+  .image-regen-btn.loading .spinner { display: inline-block; }
+  .edit-tags-row {
+    display: flex;
+    gap: 12px;
+  }
+  .edit-tags-row .edit-field { flex: 1; }
+  .edit-field select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    background: var(--gray-50);
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: var(--gray-900);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s var(--spring);
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+  .edit-field select:focus { border-color: var(--teal); }
+  .edit-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 16px;
+    border-top: 1px solid var(--gray-200);
+    margin-top: auto;
+  }
+  .edit-preview-loading {
+    position: relative;
+  }
+  .edit-preview-loading::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    backdrop-filter: blur(4px);
+  }
+
+  /* LinkedIn Ads mock */
+  .inmail-ad {
+    padding: 18px;
+  }
+  .inmail-subject {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 0.5px solid var(--gray-200);
+    letter-spacing: -0.01em;
+  }
+  .inmail-body {
+    font-size: 0.85rem;
+    line-height: 1.65;
+    color: var(--gray-700);
+  }
+  .inmail-body p { margin-bottom: 10px; }
+  .inmail-cta {
+    display: inline-block;
+    padding: 8px 20px;
+    background: #0077b5;
+    color: var(--white);
+    border-radius: 980px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+
+  /* ============================================
+     SCREEN 5: EXPORT CONFIRMATION
+     ============================================ */
+  .export-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 220px);
+  }
+  .export-card {
+    max-width: 620px;
+    width: 100%;
+    text-align: center;
+  }
+  .export-check {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 2rem;
+    color: var(--white);
+    animation: popIn 0.6s var(--spring-bounce);
+    box-shadow: 0 0 0 12px rgba(19, 94, 105, 0.08), 0 0 0 24px rgba(19, 94, 105, 0.04);
+  }
+  @keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .export-card h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 8px;
+    letter-spacing: -0.03em;
+  }
+  .export-card .subtitle {
+    font-size: 0.95rem;
+    color: var(--gray-500);
+    margin-bottom: 32px;
+  }
+
+  /* Mock spreadsheet */
+  .mock-sheet {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 32px;
+    text-align: left;
+    box-shadow: var(--shadow-sm);
+  }
+  .mock-sheet-toolbar {
+    background: #34a853;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+  .mock-sheet-toolbar .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+  }
+  .mock-sheet-toolbar .title {
+    color: var(--white);
+    font-size: 0.78rem;
+    font-weight: 500;
+    margin-left: 4px;
+  }
+  .mock-sheet table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+  }
+  .mock-sheet th {
+    background: var(--gray-50);
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--gray-700);
+    border-bottom: 0.5px solid var(--gray-200);
+    letter-spacing: -0.01em;
+  }
+  .mock-sheet td {
+    padding: 9px 12px;
+    border-bottom: 0.5px solid var(--gray-100);
+    color: var(--gray-700);
+  }
+  .mock-sheet tr:last-child td { border-bottom: none; }
+
+  .export-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar">
+  <div class="navbar-logo">
+    <div class="navbar-logo-text">EGYM <span>Wellpass</span></div>
+  </div>
+  <div class="navbar-badge">Powered by Bevel</div>
+</nav>
+
+<!-- ===== PROGRESS BAR ===== -->
+<div class="progress-bar" id="progressBar">
+  <div class="progress-step active" data-step="1">
+    <div class="step-dot"></div>
+    Campaign Goal
+  </div>
+  <div class="progress-connector"></div>
+  <div class="progress-step" data-step="2">
+    <div class="step-dot"></div>
+    Audience Segments
+  </div>
+  <div class="progress-connector"></div>
+  <div class="progress-step" data-step="3">
+    <div class="step-dot"></div>
+    Creatives
+  </div>
+  <div class="progress-connector"></div>
+  <div class="progress-step" data-step="4">
+    <div class="step-dot"></div>
+    Export
+  </div>
+</div>
+
+<!-- ===== SLIDE NAVIGATION ARROWS ===== -->
+<button class="slide-arrow slide-arrow-left hidden" id="arrowLeft" onclick="prevSlide()">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+</button>
+<button class="slide-arrow slide-arrow-right" id="arrowRight" onclick="nextSlide()">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+</button>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="main">
+
+  <!-- ==========================================
+       SCREEN 1: CAMPAIGN PLANNING CHAT
+       ========================================== -->
+  <div class="screen active" id="screen1">
+    <div class="chat-layout">
+
+      <!-- Chat Area -->
+      <div class="card chat-card">
+        <div class="chat-header">
+          <h2>
+            <span class="icon">&#10022;</span>
+            Campaign Planning Agent
+          </h2>
+        </div>
+
+        <div class="chat-messages">
+          <!-- Subslide 1: User brief → Agent + Tool 1 -->
+          <div class="msg user" data-subslide="1">
+            <div class="msg-avatar">JV</div>
+            <div class="msg-bubble">
+              We want to expand Wellpass to Japan &mdash; targeting 10K B2C app installs and 50 B2B demo requests over 8 weeks. We had strong results in Germany, let's build on that.
+            </div>
+          </div>
+          <div class="msg agent" data-subslide="1">
+            <div class="msg-avatar">&#10022;</div>
+            <div class="msg-bubble">
+              Great brief. Because you have two distinct conversion goals (App Installs vs. Lead Gen), we'll need to build <strong>two separate campaigns</strong>. Let me pull your DACH data to establish a baseline.
+            </div>
+          </div>
+          <div class="tool-call-msg" data-subslide="1">
+            <div class="tool-pill done">Load past campaign data</div>
+            <div class="tool-call-result">
+              B2C Meta ads reached <strong>63,000+</strong> users, strongest in <strong>25-34 age group</strong>. B2B Meta/LinkedIn targeting enterprises hit <strong>28,400+</strong> reach with strong 35-44 engagement.
+            </div>
+          </div>
+
+          <!-- Subslide 2: User → Agent + Tool 2 -->
+          <div class="msg user" data-subslide="2">
+            <div class="msg-avatar">JV</div>
+            <div class="msg-bubble">
+              Solid baseline. What messaging actually drove those conversions?
+            </div>
+          </div>
+          <div class="msg agent" data-subslide="2">
+            <div class="msg-avatar">&#10022;</div>
+            <div class="msg-bubble">
+              Checking your strategy to see what creative themes we should adapt for the Japanese market.
+            </div>
+          </div>
+          <div class="tool-call-msg" data-subslide="2">
+            <div class="tool-pill done">Load Egym marketing strategy</div>
+            <div class="tool-call-result">
+              Brand positioning: <strong>&ldquo;Freedom to move&rdquo;</strong> &mdash; emphasize choice, flexibility, and employer-paid access. Tone: energetic, aspirational, never preachy. Key pillars: <strong>variety of sports</strong>, <strong>employer-paid benefit</strong>, <strong>zero hassle</strong>.
+            </div>
+          </div>
+
+          <!-- Subslide 3: User → Agent + Tool 3 -->
+          <div class="msg user" data-subslide="3">
+            <div class="msg-avatar">JV</div>
+            <div class="msg-bubble">
+              The lifestyle angle clearly resonated. How should we structure our Ad Sets in Japan?
+            </div>
+          </div>
+          <div class="msg agent" data-subslide="3">
+            <div class="msg-avatar">&#10022;</div>
+            <div class="msg-bubble">
+              Based on your DACH data and the Japan market, I recommend <strong>3 B2C Ad Sets</strong> and <strong>2 B2B Ad Sets</strong>.
+            </div>
+          </div>
+          <div class="tool-call-msg" data-subslide="3">
+            <div class="tool-pill done">Load personas</div>
+            <div class="tool-call-result">
+              <strong>B2C Ad Sets:</strong> Broad Fitness Interests, Young Professionals (25-34), and DACH Lookalike 1-3%.<br>
+              <strong>B2B Ad Sets:</strong> HR Directors (Enterprise) and C-Suite (SME).
+            </div>
+          </div>
+
+          <!-- Subslide 4: User → Agent + Tool 4 -->
+          <div class="msg user" data-subslide="4">
+            <div class="msg-avatar">JV</div>
+            <div class="msg-bubble">
+              Good breakdown. What messaging goes inside each Ad Set?
+            </div>
+          </div>
+          <div class="msg agent" data-subslide="4">
+            <div class="msg-avatar">&#10022;</div>
+            <div class="msg-bubble">
+              I'm adapting your top DACH value propositions to align with Japanese work culture (e.g., post-work refresh, corporate wellness).
+            </div>
+          </div>
+          <div class="tool-call-msg" data-subslide="4">
+            <div class="tool-pill done">Load value propositions for each persona</div>
+            <div class="tool-call-result">
+              B2C Creatives: <strong>Fitness Freedom</strong>, <strong>Refresh After Work</strong>, <strong>Your Wellness Your Way</strong>. <br>B2B Creatives: <strong>Employee Retention ROI</strong>, <strong>Corporate Wellness Platform</strong>.
+            </div>
+          </div>
+
+          <!-- Subslide 5: User → Agent + Tool 5 -->
+          <div class="msg user" data-subslide="5">
+            <div class="msg-avatar">JV</div>
+            <div class="msg-bubble">
+              Perfect. Let's go with a &yen;2,000,000 budget over 8 weeks starting May 1. How do we route the channels?
+            </div>
+          </div>
+          <div class="msg agent" data-subslide="5">
+            <div class="msg-avatar">&#10022;</div>
+            <div class="msg-bubble">
+              I will map the channels to your two campaigns. I highly recommend turning on <strong>Advantage Campaign Budget (CBO)</strong> so Meta automatically shifts your budget to the cheapest app installs.
+            </div>
+          </div>
+          <div class="tool-call-msg" data-subslide="5">
+            <div class="tool-pill done">Load channels</div>
+            <div class="tool-call-result">
+              <strong>Campaign 1 (App Installs):</strong> Meta (Instagram/Facebook)<br>
+              <strong>Campaign 2 (Lead Gen):</strong> LinkedIn + Meta B2B.
+            </div>
+          </div>
+
+          <!-- Subslide 6: User confirmation (No tool call) -->
+          <div class="msg user" data-subslide="6">
+            <div class="msg-avatar">JV</div>
+            <div class="msg-bubble">
+              Let's do it. Apply the budget split and generate the plan.
+            </div>
+          </div>
+          <div class="msg agent" data-subslide="6">
+            <div class="msg-avatar">&#10022;</div>
+            <div class="msg-bubble">
+              Done. I've allocated <strong>&yen;1,300,000</strong> to the B2C App Campaign (lower CPA) and <strong>&yen;700,000</strong> to the B2B Lead Gen Campaign. Generating your audience and creative dashboard now...
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-input">
+          <input class="chat-input-field" type="text" placeholder="Type a message..." disabled>
+        </div>
+
+      </div>
+
+      <!-- Context Panel -->
+      <div class="card context-panel">
+        <h3>Campaign Architecture</h3>
+        <div class="summary-grid">
+          <div class="summary-item" data-subslide="1">
+            <div class="label">Objectives</div>
+            <div class="value">App Promotion (B2C) &amp; Lead Gen (B2B)</div>
+          </div>
+          <div class="summary-item" data-subslide="1">
+            <div class="label">Target Market</div>
+            <div class="value">Tokyo, Osaka, Yokohama, Nagoya</div>
+          </div>
+          <div class="summary-item" data-subslide="3">
+            <div class="label">Ad Sets (B2C)</div>
+            <div class="value">Broad Fitness, Young Pros, 1-3% LAL</div>
+          </div>
+          <div class="summary-item" data-subslide="3">
+            <div class="label">Ad Sets (B2B)</div>
+            <div class="value">HR Directors, SME C-Suite</div>
+          </div>
+          <div class="summary-item" data-subslide="5">
+            <div class="label">Placements</div>
+            <div class="value">Instagram, FB, LinkedIn</div>
+          </div>
+          <div class="summary-item" data-subslide="6">
+            <div class="label">Total Budget</div>
+            <div class="value">&yen;2,000,000 (Advantage CBO ON)</div>
+          </div>
+          <div class="summary-item full-width" data-subslide="6">
+            <div class="label">Timeline</div>
+            <div class="value">May 1 – Jun 26, 2026 (8 weeks)</div>
+          </div>
+        </div>
+
+
+        <div class="data-sources" data-subslide="2">
+          <h4>Connected Data Sources</h4>
+          <div class="data-source-item"><span class="check">&#10003;</span> DACH campaign data (Q1 2026)</div>
+          <div class="data-source-item"><span class="check">&#10003;</span> EGYM marketing strategy</div>
+          <div class="data-source-item"><span class="check">&#10003;</span> Brand guidelines</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==========================================
+       SCREEN 2: AUDIENCE SEGMENTS
+       ========================================== -->
+  <div class="screen" id="screen2">
+    <div class="segments-header">
+      <h2>Ad Sets</h2>
+      <p>Select the Ad Sets you want to generate creatives for. Each maps to an audience, channel placement, and tailored value proposition.</p>
+      <div class="segments-badge">&#10022; Generated from your DACH campaign data</div>
+    </div>
+
+    <div class="segments-col-headers">
+      <div></div>
+      <div>Ad Set / Audience</div>
+      <div>Channel</div>
+      <div>Value Proposition</div>
+      <div>Instructions</div>
+    </div>
+
+    <div class="segments-table">
+      <!-- Campaign 1: App Installs (B2C) — Meta -->
+      <div class="segment-row" id="seg1">
+        <div class="seg-checkbox checked" onclick="toggleSeg(this)"></div>
+        <div class="seg-persona">
+          <div class="name">Broad Fitness Interests</div>
+          <div class="sub">18-44 / All / Tokyo, Osaka, Yokohama, Nagoya</div>
+          <div class="seg-tags">
+            <span class="seg-tag">Interest: Gym</span>
+            <span class="seg-tag">Interest: Fitness</span>
+            <span class="seg-tag">Interest: Yoga</span>
+            <span class="seg-tag">Interest: Wellness</span>
+          </div>
+        </div>
+        <div class="seg-channel">
+          <div class="ch-icon ch-meta">f</div>
+          <div class="ch-name">Meta (IG + FB)</div>
+        </div>
+        <div class="seg-vp">
+          <div class="vp-title">Fitness Freedom</div>
+          <div class="vp-desc">Your employer pays &mdash; you choose where to work out</div>
+        </div>
+        <textarea class="seg-instructions" placeholder="Add instructions..."></textarea>
+      </div>
+
+      <div class="segment-row" id="seg2">
+        <div class="seg-checkbox checked" onclick="toggleSeg(this)"></div>
+        <div class="seg-persona">
+          <div class="name">Young Professionals (25-34)</div>
+          <div class="sub">25-34 / All / Tokyo, Osaka, Yokohama</div>
+          <div class="seg-tags">
+            <span class="seg-tag">Interest: Work-Life Balance</span>
+            <span class="seg-tag">Interest: Career</span>
+            <span class="seg-tag">Interest: Self-improvement</span>
+          </div>
+        </div>
+        <div class="seg-channel">
+          <div class="ch-icon ch-meta">f</div>
+          <div class="ch-name">Meta (IG + FB)</div>
+        </div>
+        <div class="seg-vp">
+          <div class="vp-title">Refresh After Work</div>
+          <div class="vp-desc">Turn your company benefit into daily energy &mdash; gym, yoga, swimming</div>
+        </div>
+        <textarea class="seg-instructions" placeholder="Add instructions..."></textarea>
+      </div>
+
+      <div class="segment-row" id="seg3">
+        <div class="seg-checkbox checked" onclick="toggleSeg(this)"></div>
+        <div class="seg-persona">
+          <div class="name">DACH Lookalike 1-3%</div>
+          <div class="sub">18-44 / All / Tokyo, Osaka, Yokohama, Nagoya</div>
+          <div class="seg-tags">
+            <span class="seg-tag highlight">Lookalike 1-3%</span>
+            <span class="seg-tag">Seed: 8,400 DACH converters</span>
+          </div>
+        </div>
+        <div class="seg-channel">
+          <div class="ch-icon ch-meta">f</div>
+          <div class="ch-name">Meta (IG + FB)</div>
+        </div>
+        <div class="seg-vp">
+          <div class="vp-title">Your Wellness, Your Way</div>
+          <div class="vp-desc">One app, thousands of gyms &amp; studios &mdash; zero hassle</div>
+        </div>
+        <textarea class="seg-instructions" placeholder="Add instructions..."></textarea>
+      </div>
+
+      <!-- Campaign 2: Lead Gen (B2B) — LinkedIn + Meta B2B -->
+      <div class="segment-row" id="seg4">
+        <div class="seg-checkbox checked" onclick="toggleSeg(this)"></div>
+        <div class="seg-persona">
+          <div class="name">HR Directors, Enterprise</div>
+          <div class="sub">35-50 / All / Tokyo, Osaka, Yokohama</div>
+          <div class="seg-tags">
+            <span class="seg-tag">Title: HR Director</span>
+            <span class="seg-tag">Title: VP People</span>
+            <span class="seg-tag">Industry: Tech, Finance, Manufacturing</span>
+          </div>
+        </div>
+        <div class="seg-channel">
+          <div class="ch-icon ch-linkedin">in</div>
+          <div class="ch-name">LinkedIn Ads</div>
+        </div>
+        <div class="seg-vp">
+          <div class="vp-title">Employee Retention ROI</div>
+          <div class="vp-desc">Reduce turnover 23%, boost retention across Japan offices</div>
+        </div>
+        <textarea class="seg-instructions" placeholder="Add instructions..."></textarea>
+      </div>
+
+      <div class="segment-row unselected" id="seg5">
+        <div class="seg-checkbox" onclick="toggleSeg(this)"></div>
+        <div class="seg-persona">
+          <div class="name">C-Suite, SME</div>
+          <div class="sub">35-55 / All / Tokyo, Osaka, Yokohama, Nagoya</div>
+          <div class="seg-tags">
+            <span class="seg-tag">Title: CEO</span>
+            <span class="seg-tag">Title: COO</span>
+            <span class="seg-tag">Title: GM</span>
+          </div>
+        </div>
+        <div class="seg-channel">
+          <div class="ch-icon ch-linkedin">in</div>
+          <div class="ch-name">LinkedIn Ads</div>
+        </div>
+        <div class="seg-vp">
+          <div class="vp-title">Corporate Wellness Platform</div>
+          <div class="vp-desc">Simplify employee wellness for growing teams in Japan</div>
+        </div>
+        <textarea class="seg-instructions" placeholder="Add instructions..."></textarea>
+      </div>
+    </div>
+
+    <div class="segments-footer">
+      <div class="count" id="segCount">4 of 5 ad sets selected</div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       SCREEN 3: LOADING STATE
+       ========================================== -->
+  <div class="screen" id="screen3">
+    <div class="loading-screen">
+      <div class="card loading-card">
+        <div class="agent-icon">&#10022;</div>
+        <h2>Content Creation Agent</h2>
+        <p class="subtitle">Preparing to generate creatives for 4 ad sets across 2 campaigns...</p>
+
+        <div class="loading-checklist">
+          <div class="loading-item">
+            <span class="li-icon done">&#10003;</span>
+            <span class="li-text">DACH creative library loaded</span>
+            <span class="li-detail">47 assets</span>
+          </div>
+          <div class="loading-item-expanded">
+            <div class="li-row">
+              <span class="li-icon done">&#10003;</span>
+              <span class="li-text">Fetched brand assets</span>
+              <span class="li-detail">DACH creatives</span>
+            </div>
+            <div class="li-preview">
+              <img src="germany-creative.jpg" alt="DACH creative — landscape fitness ad">
+              <img src="germany-creative-2.jpg" alt="DACH creative — story format ad">
+            </div>
+          </div>
+          <div class="loading-item">
+            <span class="li-icon spinning">&#9679;</span>
+            <span class="li-text">Loading brand guidelines...</span>
+            <span class="li-detail"></span>
+          </div>
+          <div class="loading-item">
+            <span class="li-icon waiting">&#9675;</span>
+            <span class="li-text">Channel format specs</span>
+            <span class="li-detail">Meta, LinkedIn</span>
+          </div>
+        </div>
+
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       SCREEN 4: GENERATED CREATIVES
+       ========================================== -->
+  <div class="screen" id="screen4">
+
+    <!-- Campaign 1: App Installs — Meta (IG + FB) -->
+    <div class="creatives-section">
+      <div class="creatives-section-header">
+        <h3>Broad Fitness Interests (18-44)</h3>
+        <span class="ch-badge-pill" style="background:#1877f2;">Meta (IG + FB)</span>
+      </div>
+      <div class="creatives-grid">
+        <div class="creative-card">
+          <div class="creative-top-bar">
+            <span class="label">Creative 1.1 &mdash; Fitness Freedom</span>
+            <div class="actions">
+              <button class="btn-ghost" onclick="openEditPage(this)">Edit</button>
+              <div class="seg-checkbox checked" onclick="this.classList.toggle('checked')" style="width:18px;height:18px;border-radius:5px;"></div>
+            </div>
+          </div>
+          <div class="meta-ad">
+            <img src="japan-creative.png" alt="Wellpass Japan creative — fitness lifestyle" style="width:100%; display:block;">
+            <div class="meta-ad-content">
+              <div class="meta-ad-brand">EGYM WELLPASS</div>
+              <div class="meta-ad-text">
+                運動したい？会社が払ってくれる！9,000以上のジム＆スタジオが使い放題。ヨガ、筋トレ、水泳、ボルダリング——好きな時に、好きな場所で。
+              </div>
+            </div>
+            <div class="meta-ad-bottom">
+              <span class="headline">運動したい？会社が払ってくれる！</span>
+              <span class="meta-ad-cta" style="background:#1877f2;">詳しくはこちら</span>
+            </div>
+          </div>
+          <div class="creative-footer">
+            <span class="creative-tag">Tone: Casual</span>
+            <span class="creative-tag">Format: Image ad</span>
+            <span class="creative-tag">Angle: Lifestyle</span>
+            <span class="creative-tag">Objective: App Install</span>
+          </div>
+        </div>
+
+        <div class="creative-card">
+          <div class="creative-top-bar">
+            <span class="label">Creative 1.2 &mdash; Refresh After Work</span>
+            <div class="actions">
+              <button class="btn-ghost" onclick="openEditPage(this)">Edit</button>
+              <div class="seg-checkbox checked" onclick="this.classList.toggle('checked')" style="width:18px;height:18px;border-radius:5px;"></div>
+            </div>
+          </div>
+          <div class="meta-ad">
+            <img src="japan-creative-2.png" alt="Wellpass Japan creative — after work refresh" style="width:100%; display:block;">
+            <div class="meta-ad-content">
+              <div class="meta-ad-brand">EGYM WELLPASS</div>
+              <div class="meta-ad-text">
+                仕事の後、ジムで汗を流しませんか？Wellpassなら、ヨガもボクシングも水泳も全部OK。アプリをダウンロードして、今日から健康的な毎日を。
+              </div>
+            </div>
+            <div class="meta-ad-bottom">
+              <span class="headline">仕事帰りにリフレッシュ！</span>
+              <span class="meta-ad-cta" style="background:#1877f2;">アプリをダウンロード</span>
+            </div>
+          </div>
+          <div class="creative-footer">
+            <span class="creative-tag">Tone: Energetic</span>
+            <span class="creative-tag">Format: Image ad</span>
+            <span class="creative-tag">Angle: Post-work routine</span>
+            <span class="creative-tag">Objective: App Install</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campaign 2: Lead Gen — LinkedIn Sponsored (B2B) -->
+    <div class="creatives-section">
+      <div class="creatives-section-header">
+        <h3>HR Directors, Enterprise (1,000+)</h3>
+        <span class="ch-badge-pill" style="background:#0077b5;">LinkedIn Sponsored</span>
+      </div>
+      <div class="creatives-grid">
+        <div class="creative-card">
+          <div class="creative-top-bar">
+            <span class="label">Creative 2.1 &mdash; Retention ROI</span>
+            <div class="actions">
+              <button class="btn-ghost" onclick="openEditPage(this)">Edit</button>
+              <div class="seg-checkbox checked" onclick="this.classList.toggle('checked')" style="width:18px;height:18px;border-radius:5px;"></div>
+            </div>
+          </div>
+          <div class="linkedin-ad">
+            <div class="linkedin-ad-header">
+              <div class="company-logo">EGYM</div>
+              <div class="company-info">
+                <div class="name">EGYM Wellpass</div>
+                <div class="meta">Sponsored &middot; 12,450 followers</div>
+              </div>
+            </div>
+            <div class="linkedin-ad-body">
+              従業員の健康福利厚生は、優秀な人材を確保する鍵です。87%の人事責任者が、福利厚生が従業員定着率を向上させたと報告。EGYM Wellpassで離職率を下げ、より健康的なチームを構築する方法をご覧ください。
+            </div>
+            <div class="linkedin-ad-image">Lifestyle: Modern Tokyo office with wellness area</div>
+            <div class="linkedin-ad-headline">健康福利厚生で優秀な人材を確保</div>
+            <span class="linkedin-ad-cta">Learn More</span>
+          </div>
+          <div class="creative-footer">
+            <span class="creative-tag">Tone: Professional</span>
+            <span class="creative-tag">Format: Single image</span>
+            <span class="creative-tag">Angle: Data-driven</span>
+            <span class="creative-tag">Objective: Lead Gen</span>
+          </div>
+        </div>
+
+        <div class="creative-card">
+          <div class="creative-top-bar">
+            <span class="label">Creative 2.2 &mdash; Case Study</span>
+            <div class="actions">
+              <button class="btn-ghost" onclick="openEditPage(this)">Edit</button>
+              <div class="seg-checkbox checked" onclick="this.classList.toggle('checked')" style="width:18px;height:18px;border-radius:5px;"></div>
+            </div>
+          </div>
+          <div class="linkedin-ad">
+            <div class="linkedin-ad-header">
+              <div class="company-logo">EGYM</div>
+              <div class="company-info">
+                <div class="name">EGYM Wellpass</div>
+                <div class="meta">Sponsored &middot; 12,450 followers</div>
+              </div>
+            </div>
+            <div class="linkedin-ad-body">
+              社員3,000名の企業が、1年間で離職率を23%削減。その方法は？従業員の健康福利厚生をアップグレードしただけです。ケーススタディをお読みください。
+            </div>
+            <div class="linkedin-ad-image">Case study: Employee satisfaction metrics dashboard</div>
+            <div class="linkedin-ad-headline">ケーススタディ：12ヶ月で離職率23%削減</div>
+            <span class="linkedin-ad-cta">ケーススタディを読む</span>
+          </div>
+          <div class="creative-footer">
+            <span class="creative-tag">Tone: Professional</span>
+            <span class="creative-tag">Format: Single image</span>
+            <span class="creative-tag">Angle: Case study</span>
+            <span class="creative-tag">Objective: Lead Gen</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="creatives-bottom-bar">
+      <div class="count">4 creatives generated across 2 campaigns (App Installs + Lead Gen)</div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       EDIT OVERLAY
+       ========================================== -->
+  <div class="edit-overlay" id="editOverlay">
+    <div class="edit-header">
+      <button class="btn-ghost" onclick="closeEditPage()">&#8592; Back to Creatives</button>
+      <span class="edit-creative-label" id="editLabel">Creative 1.1</span>
+    </div>
+    <div class="edit-layout">
+
+      <!-- Left: Edit Form -->
+      <div class="edit-form" id="editForm">
+
+        <div class="edit-field">
+          <div class="edit-field-header">
+            <label for="editHeadline">Headline</label>
+            <button class="variation-btn" onclick="generateVariations('headline')">
+              <span class="spinner"></span>
+              &#10022; Generate variations
+            </button>
+          </div>
+          <input type="text" id="editHeadline" oninput="updateEditPreview()">
+          <div class="variations-list" id="headlineVariations"></div>
+        </div>
+
+        <div class="edit-field">
+          <div class="edit-field-header">
+            <label for="editBody">Body Text</label>
+            <button class="variation-btn" onclick="generateVariations('body')">
+              <span class="spinner"></span>
+              &#10022; Generate variations
+            </button>
+          </div>
+          <textarea id="editBody" rows="4" oninput="updateEditPreview()"></textarea>
+          <div class="variations-list" id="bodyVariations"></div>
+        </div>
+
+        <div class="edit-field">
+          <label for="editCta">Call to Action</label>
+          <input type="text" id="editCta" oninput="updateEditPreview()">
+        </div>
+
+        <div class="edit-section-label">Image</div>
+        <div class="image-regen-section">
+          <div class="image-regen-row">
+            <input type="text" id="imageRegenFeedback" placeholder="e.g. Make it more vibrant, add more people...">
+            <button class="image-regen-btn" id="imageRegenBtn" onclick="regenerateImage()">
+              <span class="spinner"></span>
+              Regenerate
+            </button>
+          </div>
+        </div>
+
+        <div class="edit-section-label">Tags</div>
+        <div class="edit-tags-row">
+          <div class="edit-field">
+            <label for="editTone">Tone</label>
+            <select id="editTone" onchange="updateEditPreview()">
+              <option>Casual</option>
+              <option>Energetic</option>
+              <option>Professional</option>
+              <option>Inspirational</option>
+              <option>Urgent</option>
+            </select>
+          </div>
+          <div class="edit-field">
+            <label for="editFormat">Format</label>
+            <select id="editFormat" onchange="updateEditPreview()">
+              <option>Image ad</option>
+              <option>Single image</option>
+              <option>Video ad</option>
+              <option>Carousel</option>
+            </select>
+          </div>
+          <div class="edit-field">
+            <label for="editAngle">Angle</label>
+            <select id="editAngle" onchange="updateEditPreview()">
+              <option>Lifestyle</option>
+              <option>FOMO/benefit</option>
+              <option>Data-driven</option>
+              <option>Case study</option>
+              <option>Social proof</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="edit-actions">
+          <button class="btn btn-outline" onclick="closeEditPage()">Cancel</button>
+          <button class="btn btn-teal" onclick="saveEditChanges()">Save Changes</button>
+        </div>
+
+      </div>
+
+      <!-- Right: Live Preview -->
+      <div class="edit-preview">
+        <div class="edit-preview-card" id="editPreview"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==========================================
+       SCREEN 5: EXPORT CONFIRMATION
+       ========================================== -->
+  <div class="screen" id="screen5">
+    <div class="export-screen">
+      <div class="card export-card">
+        <div class="export-check">&#10003;</div>
+        <h2>Campaign Exported Successfully</h2>
+        <p class="subtitle">Your 2 campaigns and 4 creatives have been exported to Google Sheets</p>
+
+        <div class="mock-sheet">
+          <div class="mock-sheet-toolbar">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="title">EGYM_Wellpass_Japan_Q2_Campaign.xlsx</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Campaign</th>
+                <th>Ad Set</th>
+                <th>Channel</th>
+                <th>Headline</th>
+                <th>CTA</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>App Installs</td>
+                <td>Broad Fitness</td>
+                <td>Meta (IG + FB)</td>
+                <td>運動したい？会社が払ってくれる！</td>
+                <td>詳しくはこちら</td>
+                <td>Ready</td>
+              </tr>
+              <tr>
+                <td>App Installs</td>
+                <td>Broad Fitness</td>
+                <td>Meta (IG + FB)</td>
+                <td>仕事帰りにリフレッシュ！</td>
+                <td>アプリをダウンロード</td>
+                <td>Ready</td>
+              </tr>
+              <tr>
+                <td>Lead Gen</td>
+                <td>HR Directors</td>
+                <td>LinkedIn</td>
+                <td>健康福利厚生で優秀な人材を確保</td>
+                <td>Learn More</td>
+                <td>Ready</td>
+              </tr>
+              <tr>
+                <td>Lead Gen</td>
+                <td>HR Directors</td>
+                <td>LinkedIn</td>
+                <td>ケーススタディ：12ヶ月で離職率23%削減</td>
+                <td>ケーススタディを読む</td>
+                <td>Ready</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="export-buttons">
+          <button class="btn btn-teal">Open in Google Sheets</button>
+          <button class="btn btn-outline" onclick="goToScreen(1)">Back to Campaign</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // ===== SLIDE CONFIGURATION =====
+  const SLIDES = [
+    { screen: 'screen1', subslide: 1, progressStep: 1 },
+    { screen: 'screen1', subslide: 2, progressStep: 1 },
+    { screen: 'screen1', subslide: 3, progressStep: 1 },
+    { screen: 'screen1', subslide: 4, progressStep: 1 },
+    { screen: 'screen1', subslide: 5, progressStep: 1 },
+    { screen: 'screen1', subslide: 6, progressStep: 1 },
+    { screen: 'screen2', subslide: null, progressStep: 2 },
+    { screen: 'screen3', subslide: null, progressStep: 3 },
+    { screen: 'screen4', subslide: null, progressStep: 3 },
+    { screen: 'screen5', subslide: null, progressStep: 4 },
+  ];
+
+  let currentSlideIndex = 0;
+
+  function goToSlide(index) {
+    if (index < 0 || index >= SLIDES.length) return;
+    const prev = SLIDES[currentSlideIndex];
+    const next = SLIDES[index];
+    currentSlideIndex = index;
+
+    if (prev.screen !== next.screen) {
+      document.getElementById(prev.screen).classList.remove('active');
+      document.getElementById(next.screen).classList.add('active');
+    }
+
+    if (next.screen === 'screen1') {
+      updateChatSubslide(next.subslide);
+    }
+
+    updateProgress(next.progressStep);
+    updateArrows();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateChatSubslide(subslide) {
+    document.querySelectorAll('[data-subslide]').forEach(el => {
+      const s = parseInt(el.getAttribute('data-subslide'));
+      el.classList.toggle('visible', s <= subslide);
+    });
+  }
+
+  function nextSlide() { goToSlide(currentSlideIndex + 1); }
+  function prevSlide() { goToSlide(currentSlideIndex - 1); }
+
+  function updateArrows() {
+    document.getElementById('arrowLeft').classList.toggle('hidden', currentSlideIndex === 0);
+    document.getElementById('arrowRight').classList.toggle('hidden', currentSlideIndex === SLIDES.length - 1);
+  }
+
+  function updateProgress(step) {
+    const steps = document.querySelectorAll('.progress-step');
+    const connectors = document.querySelectorAll('.progress-connector');
+    steps.forEach((s, i) => {
+      const n = i + 1;
+      s.classList.remove('active', 'completed');
+      if (n < step) s.classList.add('completed');
+      else if (n === step) s.classList.add('active');
+    });
+    connectors.forEach((c, i) => {
+      c.classList.toggle('completed', i + 1 < step);
+    });
+  }
+
+  // Keyboard navigation (disabled when typing in inputs)
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); nextSlide(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prevSlide(); }
+  });
+
+  // Segment checkboxes
+  function toggleSeg(el) {
+    el.classList.toggle('checked');
+    const row = el.closest('.segment-row');
+    row.classList.toggle('unselected', !el.classList.contains('checked'));
+    updateSegCount();
+  }
+
+  function updateSegCount() {
+    const checked = document.querySelectorAll('.seg-checkbox.checked').length;
+    const total = document.querySelectorAll('.seg-checkbox').length;
+    document.getElementById('segCount').textContent = checked + ' of ' + total + ' ad sets selected';
+  }
+
+  // Legacy wrapper for "Back to Campaign" button
+  function goToScreen(n) {
+    const map = { 1: 0, 2: 6, 3: 7, 4: 8, 5: 9 };
+    if (map[n] !== undefined) goToSlide(map[n]);
+  }
+
+  // ===== EDIT OVERLAY =====
+  let currentEditCard = null;
+  let currentAdType = null; // 'meta' or 'linkedin'
+  let currentImageSrc = null;
+
+  const VARIATIONS = {
+    'Creative 1.1': {
+      headline: [
+        '你的雇主为你的健身买单！',
+        '一个APP，解锁9000+运动场馆',
+        '动起来！你的公司已经帮你买单了'
+      ],
+      body: [
+        '想要更健康的生活？你的公司已经为你安排好了。Wellpass让你在全国9,000+场馆自由运动，健身、瑜伽、游泳统统包含。',
+        '别让公司福利浪费了！Wellpass一个APP搞定所有运动——从健身房到瑜伽馆，随时随地，想练就练。'
+      ]
+    },
+    'Creative 1.2': {
+      headline: [
+        '健身不花钱？对，你没听错！',
+        '瑜伽、拳击、游泳——公司福利全包了',
+        '告别健身卡，一个APP全搞定'
+      ],
+      body: [
+        '你的公司已经为你准备了最好的健身福利。9,000+合作场馆，随时切换运动方式，开启你的健康新生活。',
+        '还在纠结办哪张健身卡？Wellpass一个APP覆盖瑜伽、游泳、攀岩等运动——而且公司买单！'
+      ]
+    },
+    'Creative 3.1': {
+      headline: [
+        '87%的HR认为健康福利提升留存率',
+        '员工健康投资的ROI超乎想象',
+        '打造健康团队，从Wellpass开始'
+      ],
+      body: [
+        '顶尖企业都在升级员工健康福利。数据显示，提供综合健身福利的企业员工留存率提升23%。了解EGYM Wellpass如何帮助您。',
+        '在人才竞争日益激烈的今天，员工健康福利已成为留住核心人才的关键差异化因素。'
+      ]
+    },
+    'Creative 3.2': {
+      headline: [
+        '一年内离职率降低23%的秘密',
+        '3,000人企业的健康福利转型之路',
+        '案例：升级福利方案后的惊人变化'
+      ],
+      body: [
+        '一家领先企业如何通过EGYM Wellpass在12个月内将员工离职率降低23%，同时提升团队满意度。阅读完整案例。',
+        '当这家3,000人的企业决定升级员工健康福利时，他们没想到效果会这么显著——离职率下降，满意度飙升。'
+      ]
+    }
+  };
+
+  const ALT_IMAGES = {
+    'china-creative.png': 'china-creatove-2.png',
+    'china-creatove-2.png': 'china-creative.png'
+  };
+
+  function openEditPage(btn) {
+    const card = btn.closest('.creative-card');
+    currentEditCard = card;
+
+    // Detect ad type
+    const metaAd = card.querySelector('.meta-ad');
+    const linkedinAd = card.querySelector('.linkedin-ad');
+    currentAdType = metaAd ? 'meta' : 'linkedin';
+
+    // Read label
+    const label = card.querySelector('.creative-top-bar .label').textContent.trim();
+    document.getElementById('editLabel').textContent = label;
+
+    // Read current values
+    if (currentAdType === 'meta') {
+      const img = card.querySelector('.meta-ad img');
+      currentImageSrc = img ? img.getAttribute('src') : '';
+      document.getElementById('editHeadline').value = card.querySelector('.meta-ad-bottom .headline').textContent.trim();
+      document.getElementById('editBody').value = card.querySelector('.meta-ad-text').textContent.trim();
+      document.getElementById('editCta').value = card.querySelector('.meta-ad-cta').textContent.trim();
+    } else {
+      currentImageSrc = '';
+      document.getElementById('editHeadline').value = card.querySelector('.linkedin-ad-headline').textContent.trim();
+      document.getElementById('editBody').value = card.querySelector('.linkedin-ad-body').textContent.trim();
+      document.getElementById('editCta').value = card.querySelector('.linkedin-ad-cta').textContent.trim();
+    }
+
+    // Read tags
+    const tags = card.querySelectorAll('.creative-tag');
+    tags.forEach(tag => {
+      const text = tag.textContent.trim();
+      if (text.startsWith('Tone:')) document.getElementById('editTone').value = text.replace('Tone: ', '');
+      if (text.startsWith('Format:')) document.getElementById('editFormat').value = text.replace('Format: ', '');
+      if (text.startsWith('Angle:')) document.getElementById('editAngle').value = text.replace('Angle: ', '');
+    });
+
+    // Clear previous state
+    document.getElementById('imageRegenFeedback').value = '';
+    document.querySelectorAll('.variations-list').forEach(el => el.classList.remove('visible'));
+
+    // Build preview and show
+    updateEditPreview();
+    document.getElementById('editOverlay').classList.add('active');
+    document.getElementById('arrowLeft').classList.add('hidden');
+    document.getElementById('arrowRight').classList.add('hidden');
+  }
+
+  function closeEditPage() {
+    document.getElementById('editOverlay').classList.remove('active');
+    currentEditCard = null;
+    updateArrows();
+  }
+
+  function updateEditPreview() {
+    const headline = document.getElementById('editHeadline').value;
+    const body = document.getElementById('editBody').value;
+    const cta = document.getElementById('editCta').value;
+    const tone = document.getElementById('editTone').value;
+    const format = document.getElementById('editFormat').value;
+    const angle = document.getElementById('editAngle').value;
+    const preview = document.getElementById('editPreview');
+
+    let html = '';
+    if (currentAdType === 'meta') {
+      html = `
+        <img src="${currentImageSrc}" alt="Ad creative" style="width:100%; display:block;">
+        <div class="meta-ad-content">
+          <div class="meta-ad-brand">EGYM WELLPASS</div>
+          <div class="meta-ad-text">${body}</div>
+        </div>
+        <div class="meta-ad-bottom">
+          <span class="headline">${headline}</span>
+          <span class="meta-ad-cta" style="background:#1877f2;">${cta}</span>
+        </div>
+        <div class="creative-footer">
+          <span class="creative-tag">Tone: ${tone}</span>
+          <span class="creative-tag">Format: ${format}</span>
+          <span class="creative-tag">Angle: ${angle}</span>
+        </div>`;
+    } else {
+      html = `
+        <div class="linkedin-ad">
+          <div class="linkedin-ad-header">
+            <div class="company-logo">EGYM</div>
+            <div class="company-info">
+              <div class="name">EGYM Wellpass</div>
+              <div class="meta">Sponsored &middot; 12,450 followers</div>
+            </div>
+          </div>
+          <div class="linkedin-ad-body">${body}</div>
+          <div class="linkedin-ad-image">Lifestyle: Modern office with wellness area</div>
+          <div class="linkedin-ad-headline">${headline}</div>
+          <span class="linkedin-ad-cta">${cta}</span>
+        </div>
+        <div class="creative-footer">
+          <span class="creative-tag">Tone: ${tone}</span>
+          <span class="creative-tag">Format: ${format}</span>
+          <span class="creative-tag">Angle: ${angle}</span>
+        </div>`;
+    }
+    preview.innerHTML = html;
+  }
+
+  function saveEditChanges() {
+    if (!currentEditCard) return;
+
+    const headline = document.getElementById('editHeadline').value;
+    const body = document.getElementById('editBody').value;
+    const cta = document.getElementById('editCta').value;
+    const tone = document.getElementById('editTone').value;
+    const format = document.getElementById('editFormat').value;
+    const angle = document.getElementById('editAngle').value;
+
+    if (currentAdType === 'meta') {
+      const img = currentEditCard.querySelector('.meta-ad img');
+      if (img) img.setAttribute('src', currentImageSrc);
+      currentEditCard.querySelector('.meta-ad-bottom .headline').textContent = headline;
+      currentEditCard.querySelector('.meta-ad-text').textContent = body;
+      currentEditCard.querySelector('.meta-ad-cta').textContent = cta;
+    } else {
+      currentEditCard.querySelector('.linkedin-ad-headline').textContent = headline;
+      currentEditCard.querySelector('.linkedin-ad-body').textContent = body;
+      currentEditCard.querySelector('.linkedin-ad-cta').textContent = cta;
+    }
+
+    // Update tags
+    const tags = currentEditCard.querySelectorAll('.creative-tag');
+    tags.forEach(tag => {
+      const text = tag.textContent.trim();
+      if (text.startsWith('Tone:')) tag.textContent = 'Tone: ' + tone;
+      if (text.startsWith('Format:')) tag.textContent = 'Format: ' + format;
+      if (text.startsWith('Angle:')) tag.textContent = 'Angle: ' + angle;
+    });
+
+    closeEditPage();
+  }
+
+  function generateVariations(fieldId) {
+    const label = document.getElementById('editLabel').textContent.trim();
+    const data = VARIATIONS[label];
+    if (!data || !data[fieldId]) return;
+
+    const btn = event.currentTarget;
+    const listEl = document.getElementById(fieldId + 'Variations');
+
+    // Toggle off if already visible
+    if (listEl.classList.contains('visible')) {
+      listEl.classList.remove('visible');
+      return;
+    }
+
+    // Show loading
+    btn.classList.add('loading');
+
+    setTimeout(() => {
+      btn.classList.remove('loading');
+
+      // Build variation options
+      const options = data[fieldId];
+      listEl.innerHTML = options.map(text =>
+        `<div class="variation-option" onclick="selectVariation('${fieldId}', this)">${text}</div>`
+      ).join('');
+      listEl.classList.add('visible');
+    }, 1000);
+  }
+
+  function selectVariation(fieldId, optionEl) {
+    const inputId = fieldId === 'headline' ? 'editHeadline' : 'editBody';
+    document.getElementById(inputId).value = optionEl.textContent;
+    optionEl.closest('.variations-list').classList.remove('visible');
+    updateEditPreview();
+  }
+
+  function regenerateImage() {
+    if (currentAdType !== 'meta') return;
+
+    const btn = document.getElementById('imageRegenBtn');
+    btn.classList.add('loading');
+
+    setTimeout(() => {
+      btn.classList.remove('loading');
+
+      // Swap to alternate image
+      const alt = ALT_IMAGES[currentImageSrc];
+      if (alt) {
+        currentImageSrc = alt;
+      }
+      updateEditPreview();
+      document.getElementById('imageRegenFeedback').value = '';
+    }, 1500);
+  }
+
+  // Initialize
+  updateChatSubslide(1);
+  updateArrows();
+</script>
+
+</body>
+</html>

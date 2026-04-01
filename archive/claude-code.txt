@@ -1,0 +1,453 @@
+/plan-campaign
+Read c:\Users\razva\Documents\Startup\wellpass\Pipeline\historical_data.csv
+Globpattern: "value_proposition.md"
+Found 1 file
+Read c:\Users\razva\Documents\Startup\wellpass\Pipeline\historical_data.csv
+Read c:\Users\razva\Documents\Startup\wellpass\Pipeline\value_proposition.md
+Read c:\Users\razva\Documents\Startup\wellpass\Pipeline\historical_data.csv (lines 2-81)
+Read c:\Users\razva\Documents\Startup\wellpass\Pipeline\historical_data.csv (lines 2-51)
+Read c:\Users\razva\Documents\Startup\wellpass\Pipeline\historical_data.csv (lines 2-31)
+Read c:\Users\razva\Documents\Startup\wellpass\Pipeline\historical_data.csv (lines 31-60)
+Got everything I need. Let me kick off the interview.
+
+Question 1 of 6
+
+What is the primary goal of this campaign?
+
+For example: brand awareness, lead generation (HR demo requests), employee sign-ups, or something else?
+
+Demand generation for corporates in germany for google Pmax
+Got it — PMax for corporate demand gen in Germany.
+
+Question 2 of 6
+
+Which market(s) are we targeting specifically? All of Germany, or are there priority city clusters or regions you want to focus on?
+
+(e.g., nationwide DE, or a cluster like Berlin/Munich/Hamburg/Frankfurt)
+
+Frankfurt
+Frankfurt it is — great market for B2B given the density of financial services and mid-size corporates there.
+
+Question 3 of 6
+
+Do you have a budget range or priority split in mind for this campaign? And since it's PMax, are there any specific channel mixes you want to lean into (e.g., Search-heavy, Display-heavy, YouTube excluded)?
+
+Id want image focused, so no youtube or text-only
+Perfect — image-first PMax, cutting out YouTube and text-only surfaces.
+
+Question 4 of 6
+
+Are there any messaging angles or audience segments you specifically want to test that we haven't tried before? Or are there themes from past campaigns you want to double down on?
+
+(For context: past campaigns have leaned heavily on flexibility/lifestyle, network size "13,500+ partners," and the zero-admin angle for HR.)
+
+What do you think would work best for frankfurt
+Based on the historical data and Frankfurt's market profile, here's what I'd prioritize:
+
+Double down on:
+
+Employer branding / talent acquisition angle — Frankfurt's financial and consulting sector has intense talent competition. The "real trump card in job interviews" framing from your value prop is unusually strong here.
+Tax efficiency framing — Frankfurt HR and CFOs are numbers-driven. Leading with the €50/month Sachbezug + up to €600/year in tax-free prevention grants (§3 Nr. 34 EStG) is a concrete ROI hook that resonates in this market.
+What to test new:
+
+Hyper-local density — "X Studios im Rhein-Main-Gebiet" with a map/location visual. The Frankfurt local search ad showed an 83% interaction rate, signaling strong geo-affinity. We haven't done this as a PMax image asset yet.
+Stress/burnout prevention angle — Financial sector employees face high burnout risk. Framing Wellpass as a burnout prevention tool (rather than just "fitness") taps into a real pain point that pure lifestyle ads miss.
+Do any of these resonate, or is there a direction you'd rather avoid? That'll take us to the last two questions.
+
+Yeah if you could generate some for each of these that would be great
+Will do — I'll build a segment around each. Two quick questions left before I generate.
+
+Question 5 of 6
+
+Any constraints on creative assets or visual direction? For example: must use brand colors, people vs. no people, lifestyle photography vs. graphic/minimal, any Frankfurt-specific imagery you like or want to avoid?
+
+check the @brand_guidelines.md and @/c:/Users/razva/Documents/Startup/wellpass/Pipeline/brand_assets/logo.png . Generally use egym colors
+Read c:\Users\razva\Documents\Startup\wellpass\Pipeline\brand_assets\logo.png
+Got it — clean wordmark with Wellpass Aqua + Premium Black. Brand direction is clear.
+
+Question 6 of 6 (last one)
+
+Any audiences, channels, or messaging styles to avoid? For example: competitors to not reference, tone that's too aggressive/salesy, segments already covered by other campaigns running in parallel?
+
+Professional style just like in @brand_guidelines.md
+Here's what I'm working with before I generate — does this look right?
+
+Objective: Demand generation targeting corporate decision-makers in Frankfurt
+Market: Frankfurt / Rhein-Main region, Germany
+Channel: Google PMax, image assets only (no YouTube, no text-only)
+Angles to cover: Employer branding/talent, tax ROI, hyper-local studio network, burnout prevention + one employee advocate segment (B2C reverse funnel into B2B)
+Creative: Professional tone, Wellpass Aqua (#00a7b5) + Premium Black (#2b2b2b) primary palette, Wellpass Orange (#fd763c) as accent, EGYM Wellpass wordmark, static images only
+Exclusions: No YouTube, no text-only assets
+Confirmed? If yes, I'll generate the full table now.
+
+yes
+Here's the full segmentation table:
+
+Ad Set / Audience	Channel	Tagline & Primary Text	Value Slice (The "USP")	Instructions
+HR Director – Talent Acquisition<br/>30–50 / Audience signals: HR Manager, HR Director, Head of People, Talent Acquisition, People & Culture; Frankfurt + 30 km; in-market: HR software & employee benefits	Google PMax — Display + Discovery (image assets only)	"Ihr stärkster Vorteil im Vorstellungsgespräch."<br/><br/>Fachkräfte haben die Wahl. Mit EGYM Wellpass bieten Sie Ihrem Team über 13.500 Sport- und Wellnessangebote als steuerfreien Benefit – und werden zur ersten Wahl für Top-Talente in Frankfurt.	Wellpass as a competitive edge in recruiting: employer branding during skilled worker shortage turns a corporate fitness benefit into a "real trump card in job interviews" (value_proposition.md, Persona 1).	Static image. Split composition: left half shows confident professional in business attire, right half transitions to an active lifestyle (gym/yoga). Dominant Wellpass Aqua gradient (#166e7a → #00a7b5) background. Tagline in bold Wellbeing White (#f7f5f2) type. EGYM Wellpass wordmark bottom-right in white. Visual inspiration: Ad #16 (251022_Corporates_Concepts_Oktober — highest-reach corporate DemandGen image, 7,975 impressions) for B2B composition and professional tone. Avoid casual gym-bro aesthetics.
+CFO / Managing Director – Tax ROI<br/>35–55 / Audience signals: CFO, Finance Director, Geschäftsführer, Managing Director; company size 50–500; Frankfurt Bankenviertel geo signal	Google PMax — Display + Discovery (image assets only)	"€50 steuerfrei. €600 Förderung. 0 € Aufwand."<br/><br/>EGYM Wellpass nutzt den steuerfreien Sachbezug (€50/Monat) und bis zu €600 steuerfreie Präventionszuschüsse pro Mitarbeiter jährlich (§3 Nr. 34 EStG) – mehr Netto für Ihr Team, weniger Lohnnebenkosten für Sie.	Hard financial ROI: tax-free benefits via Sachbezug + §3 Nr. 34 EStG prevention grants deliver higher perceived employee value than an equivalent salary increase at lower net cost to the employer (value_proposition.md, Persona 1 — Financial & Tax Optimization).	Static image. Data-forward minimal layout. Large "€50/Monat steuerfrei" stat in Wellpass Orange (#fd763c) as the hero element. Wellbeing White (#f7f5f2) background. Clean, structured typography in Premium Black (#2b2b2b). Secondary line: "§3 Nr. 34 EStG — bis zu €600 Prävention pro Mitarbeiter". EGYM Wellpass wordmark top-left. Keep imagery boardroom-adjacent — no gym equipment. Visual inspiration: Ad #50 (250917_Corporates_Concepts_September_3/4 — 5,648 impressions, second-best corporate image ad) for clean split layout. Use orange accent numbers to anchor the financial message.
+HR Manager – Hyper-Local Frankfurt<br/>28–50 / Audience signals: HR professionals, office managers, SME decision-makers; geo tightly targeted to Frankfurt Innenstadt, Westend, Sachsenhausen, Bornheim + 20 km radius	Google PMax — Display geo-targeted Frankfurt (image assets only)	"Fitness im Herzen von Frankfurt. Für Ihr ganzes Team."<br/><br/>Von der Innenstadt bis Sachsenhausen – EGYM Wellpass verbindet Ihr Team mit Hunderten von Sporteinrichtungen im Rhein-Main-Gebiet. Eine Mitgliedschaft, unlimitierter Zugang.	Hyper-local convenience: Frankfurt employees can train near the office, at home, or wherever they commute — making the benefit immediately tangible, not abstract (value_proposition.md, Persona 2 — High Accessibility).	Static image. Frankfurt skyline silhouette (graphic/illustrated, not generic stock photo) with Wellpass Aqua (#00a7b5) map-pin/network overlay showing studio location dots across the Rhein-Main area. Wellbeing White background. Tagline in bold Premium Black. CTA badge in Wellpass Orange. EGYM Wellpass wordmark prominent. Visual inspiration: Ad #43 (CAR_DE_Location carousel — highest overall display reach at 10,879 impressions, location-led "Wellpass in deiner Nähe" concept) for the location/proximity frame. Secondary reference: Ad #24 (Brand_Wellpass-Frankfurt local search, 83% interaction rate — confirms strong Frankfurt geo affinity). Prefer graphic/illustrated Frankfurt elements over generic city photography.
+HR Director – Burnout Prevention (Finance/Consulting)<br/>32–52 / Audience signals: HR Director, People & Culture, Chief People Officer at financial services, consulting, legal firms in Frankfurt; interests: mental health, employee wellness, stress management	Google PMax — Display + Discovery (image assets only)	"Weniger Fehlzeiten. Mehr Leistungsfähigkeit."<br/><br/>Mitarbeitende in der Finanzbranche gehören zu den am stärksten belasteten in Deutschland. EGYM Wellpass fördert physische und mentale Gesundheit – mit Yoga, Meditation, Präventionskursen und 6.500+ Online-Angeboten. Investieren Sie jetzt in Prävention.	Reduced absenteeism and preventive mental health support for high-stress industries — Wellpass provides "a vital balance to demanding workdays" and "actively promotes physical and mental health to lower sick days" (value_proposition.md, Persona 1 — Reduced Absenteeism).	Static image. Calm, serene mood — person doing yoga or seated meditation in soft natural light. Aqua-to-white gradient background (#84d0d3 → #f7f5f2). Overlay stat badge: "Bis zu 600 € steuerfreie Prävention pro Mitarbeiter". Soft, approachable typography. EGYM Wellpass wordmark in Aqua. Avoid high-intensity workout imagery — this is wellness/prevention, not performance. Visual inspiration: Ad #48 (250409_Corporates_Rebranding — 2,704 impressions, corporate brand tone) for layout, but shift color mood from bold Aqua to soft Aqua-4 (#84d0d3) and Wellbeing White to signal calm over energy.
+Employee Advocate – B2C Reverse Funnel<br/>24–40 / Audience signals: Full-time employed adults in Frankfurt; interests: fitness, yoga, wellness, work-life balance; individual contributor / mid-level seniority; explicitly exclude HR/C-Suite job titles	Google PMax — Display (image assets only)	"Dein Arbeitgeber zahlt mit. Du trainierst."<br/><br/>Mit EGYM Wellpass trainierst du in über 13.500 Sporteinrichtungen deutschlandweit – bezuschusst von deinem Arbeitgeber. Empfehle Wellpass deiner HR-Abteilung und starte direkt.	Employer-subsidized access to 13,500+ premium facilities with one membership — unlimited choice across gyms, yoga studios, pools, bouldering, and 6,500+ online courses (value_proposition.md, Persona 2 — Unlimited Choice & Flexibility). Drives bottom-up demand into the B2B funnel.	Static image. Energetic, aspirational lifestyle collage — diverse group of young Frankfurt professionals shown across different fitness settings (gym, yoga, outdoor run). Multi-activity grid or triptych layout. Wellpass Orange (#fd763c) as dominant accent for warmth and energy. EGYM Wellpass wordmark prominent in Aqua on white. CTA visually distinct. Visual inspiration: Ad #37 (250409_Employees_Rebranding — 1,354 impressions, best-performing employee-facing image ad) for activity variety collage and B2C lifestyle tone. Avoid any corporate/boardroom imagery — this must feel personal and inviting.
+Now saving to file.
+
+Write c:\Users\razva\Documents\Startup\wellpass\Pipeline\campaign_segments.md
+20 lines
+# Campaign Segments
+_Generated: 2026-03-31_
+
+## Campaign Brief
+- **Objective:** Demand generation for corporate decision-makers
+- **Market:** Frankfurt / Rhein-Main region, Germany
+- **Budget/Channels:** Google PMax, image assets only (no YouTube, no text-only)
+- **Messaging angles:** Employer branding/talent acquisition, tax ROI, hyper-local studio network, burnout prevention, employee advocate (B2C reverse funnel)
+- **Creative:** Professional tone, Wellpass Aqua (#00a7b5) + Premium Black (#2b2b2b) primary palette, Wellpass Orange (#fd763c) as accent, EGYM Wellpass wordmark, static images only
+
+## Audience Segmentation Table
+
+| Ad Set / Audience | Channel | Tagline & Primary Text | Value Slice (The "USP") | Instructions |
+|---|---|---|---|---|
+| **HR Director – Talent Acquisition**<br/>30–50 / Audience signals: HR Manager, HR Director, Head of People, Talent Acquisition, People & Culture; Frankfurt + 30 km; in-market: HR software & employee benefits | Google PMax — Display + Discovery (image assets only) | **"Ihr stärkster Vorteil im Vorstellungsgespräch."**<br/><br/>Fachkräfte haben die Wahl. Mit EGYM Wellpass bieten Sie Ihrem Team über 13.500 Sport- und Wellnessangebote als steuerfreien Benefit – und werden zur ersten Wahl für Top-Talente in Frankfurt. | Wellpass as a competitive edge in recruiting: employer branding during skilled worker shortage turns a corporate fitness benefit into a "real trump card in job interviews" (value_proposition.md, Persona 1). | Static image. Split composition: left half shows confident professional in business attire, right half transitions to an active lifestyle (gym/yoga). Dominant Wellpass Aqua gradient (#166e7a → #00a7b5) background. Tagline in bold Wellbeing White (#f7f5f2) type. EGYM Wellpass wordmark bottom-right in white. **Visual inspiration: Ad #16** (251022_Corporates_Concepts_Oktober — highest-reach corporate DemandGen image, 7,975 impressions) for B2B composition and professional tone. Avoid casual gym-bro aesthetics. |
+| **CFO / Managing Director – Tax ROI**<br/>35–55 / Audience signals: CFO, Finance Director, Geschäftsführer, Managing Director; company size 50–500; Frankfurt Bankenviertel geo signal | Google PMax — Display + Discovery (image assets only) | **"€50 steuerfrei. €600 Förderung. 0 € Aufwand."**<br/><br/>EGYM Wellpass nutzt den steuerfreien Sachbezug (€50/Monat) und bis zu €600 steuerfreie Präventionszuschüsse pro Mitarbeiter jährlich (§3 Nr. 34 EStG) – mehr Netto für Ihr Team, weniger Lohnnebenkosten für Sie. | Hard financial ROI: tax-free benefits via Sachbezug + §3 Nr. 34 EStG prevention grants deliver higher perceived employee value than an equivalent salary increase at lower net cost to the employer (value_proposition.md, Persona 1 — Financial & Tax Optimization). | Static image. Data-forward minimal layout. Large "€50/Monat steuerfrei" stat in Wellpass Orange (#fd763c) as the hero element. Wellbeing White (#f7f5f2) background. Clean, structured typography in Premium Black (#2b2b2b). Secondary line: "§3 Nr. 34 EStG — bis zu €600 Prävention pro Mitarbeiter". EGYM Wellpass wordmark top-left. Keep imagery boardroom-adjacent — no gym equipment. **Visual inspiration: Ad #50** (250917_Corporates_Concepts_September_3/4 — 5,648 impressions, second-best corporate image ad) for clean split layout. Use orange accent numbers to anchor the financial message. |
+| **HR Manager – Hyper-Local Frankfurt**<br/>28–50 / Audience signals: HR professionals, office managers, SME decision-makers; geo tightly targeted to Frankfurt Innenstadt, Westend, Sachsenhausen, Bornheim + 20 km radius | Google PMax — Display geo-targeted Frankfurt (image assets only) | **"Fitness im Herzen von Frankfurt. Für Ihr ganzes Team."**<br/><br/>Von der Innenstadt bis Sachsenhausen – EGYM Wellpass verbindet Ihr Team mit Hunderten von Sporteinrichtungen im Rhein-Main-Gebiet. Eine Mitgliedschaft, unlimitierter Zugang. | Hyper-local convenience: Frankfurt employees can train near the office, at home, or wherever they commute — making the benefit immediately tangible, not abstract (value_proposition.md, Persona 2 — High Accessibility). | Static image. Frankfurt skyline silhouette (graphic/illustrated, not generic stock photo) with Wellpass Aqua (#00a7b5) map-pin/network overlay showing studio location dots across the Rhein-Main area. Wellbeing White background. Tagline in bold Premium Black. CTA badge in Wellpass Orange. EGYM Wellpass wordmark prominent. **Visual inspiration: Ad #43** (CAR_DE_Location carousel — highest overall display reach at 10,879 impressions, location-led "Wellpass in deiner Nähe" concept) for the location/proximity frame. **Secondary reference: Ad #24** (Brand_Wellpass-Frankfurt local search, 83% interaction rate — confirms strong Frankfurt geo affinity). Prefer graphic/illustrated Frankfurt elements over generic city photography. |
+| **HR Director – Burnout Prevention (Finance/Consulting)**<br/>32–52 / Audience signals: HR Director, People & Culture, Chief People Officer at financial services, consulting, legal firms in Frankfurt; interests: mental health, employee wellness, stress management | Google PMax — Display + Discovery (image assets only) | **"Weniger Fehlzeiten. Mehr Leistungsfähigkeit."**<br/><br/>Mitarbeitende in der Finanzbranche gehören zu den am stärksten belasteten in Deutschland. EGYM Wellpass fördert physische und mentale Gesundheit – mit Yoga, Meditation, Präventionskursen und 6.500+ Online-Angeboten. Investieren Sie jetzt in Prävention. | Reduced absenteeism and preventive mental health support for high-stress industries — Wellpass provides "a vital balance to demanding workdays" and "actively promotes physical and mental health to lower sick days" (value_proposition.md, Persona 1 — Reduced Absenteeism). | Static image. Calm, serene mood — person doing yoga or seated meditation in soft natural light. Aqua-to-white gradient background (#84d0d3 → #f7f5f2). Overlay stat badge: "Bis zu 600 € steuerfreie Prävention pro Mitarbeiter". Soft, approachable typography. EGYM Wellpass wordmark in Aqua. Avoid high-intensity workout imagery — this is wellness/prevention, not performance. **Visual inspiration: Ad #48** (250409_Corporates_Rebranding — 2,704 impressions, corporate brand tone) for layout, but shift color mood from bold Aqua to soft Aqua-4 (#84d0d3) and Wellbeing White to signal calm over energy. |
+| **Employee Advocate – B2C Reverse Funnel**<br/>24–40 / Audience signals: Full-time employed adults in Frankfurt; interests: fitness, yoga, wellness, work-life balance; individual contributor / mid-level seniority; explicitly exclude HR/C-Suite job titles | Google PMax — Display (image assets only) | **"Dein Arbeitgeber zahlt mit. Du trainierst."**<br/><br/>Mit EGYM Wellpass trainierst du in über 13.500 Sporteinrichtungen deutschlandweit – bezuschusst von deinem Arbeitgeber. Empfehle Wellpass deiner HR-Abteilung und starte direkt. | Employer-subsidized access to 13,500+ premium facilities with one membership — unlimited choice across gyms, yoga studios, pools, bouldering, and 6,500+ online courses (value_proposition.md, Persona 2 — Unlimited Choice & Flexibility). Drives bottom-up demand into the B2B funnel. | Static image. Energetic, aspirational lifestyle collage — diverse group of young Frankfurt professionals shown across different fitness settings (gym, yoga, outdoor run). Multi-activity grid or triptych layout. Wellpass Orange (#fd763c) as dominant accent for warmth and energy. EGYM Wellpass wordmark prominent in Aqua on white. CTA visually distinct. **Visual inspiration: Ad #37** (250409_Employees_Rebranding — 1,354 impressions, best-performing employee-facing image ad) for activity variety collage and B2C lifestyle tone. Avoid any corporate/boardroom imagery — this must feel personal and inviting. |
+Saved to campaign_segments.md — run /generate-image-brief to create image briefs for any segment.
+
+What would you like to do next?
+
+A) Draft 2–3 primary text variations for a specific segment
+B) Identify which historical ads are most similar to a given segment
+C) Write a creative brief (visual description + copy) for a new ad
+D) Export the table as a CSV
+/generate-image-brief for HR Manager – Hyper-Local Frankfurt
+Got the segment. One quick question before I write the brief:
+
+Any specific visual direction or constraint for this ad? For example: must include the Wellpass app screen, prefer illustrated/graphic style over photography, specific Frankfurt landmark, particular color mood — or should I go with the defaults from the campaign plan?
+
+First give me the top 4 most relevant items form the historical data that we can repurpose the image from. And then I will give you these images, and we can edit them to match the new context
+Here are the top 4 from the historical data, ranked by relevance to the hyper-local Frankfurt angle:
+
+#1 — Ad #24 · Brand_Wellpass-Frankfurt · Most directly relevant
+Frankfurt-specific geo ad targeting the gym finder, with copy: "Fitness, Schwimmen, Klettern, Yoga u.v.m. in Frankfurt." Achieved an 83% interaction rate — the strongest geo-affinity signal in the entire dataset. This is the closest existing asset to what we're building.
+
+#2 — Ad #43 · CAR_DE_Location (carousel) · Best location-concept visual
+"Wellpass in deiner Nähe" / "Über 10.000 Sportangebote" carousel — 10,879 impressions, the highest display reach in the whole account. The proximity-and-variety concept is exactly right; we'd repurpose the visual into a single static frame rather than carousel.
+
+#3 — Ad #25 · Brand_Wellpass-Allgemein (local) · Best performing general local
+Geo-targeted locations ad, 2,586 impressions, using the gym finder URL and "Jetzt in deiner Nähe" hook. Good as a layout/composition reference for how local ads are structured visually.
+
+#4 — Ad #16 · 251022_Corporates_Concepts_Oktober · Best brand visual quality
+Highest-reach corporate DemandGen image at 7,975 impressions. Doesn't have the geo angle but represents the best available example of the brand's professional visual standard — useful for color palette, typography placement, and overall production quality to match.
+
+Send over the images for those 4 ads and I'll edit them to fit the hyper-local Frankfurt brief — adjusting copy overlays, color treatment, and any compositional elements needed to make them work for this segment.
+
+Can you give me the image ids of those?
+Important caveat first: Ads #24 and #25 are Responsive Search Ads — they have no image assets in the data, just ad copy. Only the two DemandGen ads have image IDs.
+
+Here's what the data shows:
+
+Ad #16 · 251022_Corporates_Concepts_Oktober
+
+Landscape images: 301908824413, 301908826111, 301908826171, 301908830422
+Square images: 301908826222, 301942898784, 301908826327, 301827682886
+Logo: 75086131571, 62344599804
+Ad #43 · CAR_DE_Location (carousel — 4 cards)
+
+Card 1: 234304523703 (landscape), 234304523625 (square)
+Card 2: 234209405402 (landscape), 234291456895 (square)
+Card 3: 234209496512 (landscape), 234291508909 (square)
+Card 4: 234210137546 (landscape), 234291508855 (square)
+Logo: 62344599804
+These IDs are Google Ads asset IDs — you'd retrieve the actual image files from your Google Ads account under Assets in the asset library. Want me to proceed with the image brief once you pull those?
+
+Ok in reference-ads/ you can find 4 images with these ids. For each of those create an image brief on how they can be adapted for this customer segment
+Globpattern: "reference-ads/*"
+Found 4 files
+Read c:\Users\razva\Documents\Startup\wellpass\Pipeline\reference-ads\301908824413.png
+Read c:\Users\razva\Documents\Startup\wellpass\Pipeline\reference-ads\301908826222.png
+Read c:\Users\razva\Documents\Startup\wellpass\Pipeline\reference-ads\234304523703.png
+Read c:\Users\razva\Documents\Startup\wellpass\Pipeline\reference-ads\image.png
+Here are the 4 production-ready briefs, one per reference image:
+
+Brief 1 — based on 301908824413.png (landscape, split layout)
+Segment: HR Manager – Hyper-Local Frankfurt
+Format: Static image, 16:9 landscape
+
+What to keep: The split-panel layout (photo left, stat box right), Wellpass Aqua (#00a7b5) stat box, orange "Mehr erfahren" CTA pill, EGYM Wellpass wordmark top-right.
+
+What to change:
+
+Replace the dumbbell athlete with a Frankfurt professional walking near a recognizable Frankfurt street or gym entrance — business casual, not sportswear
+Replace "82 Mrd. €" with "320+ Studios" in the same large bold white type
+Replace body copy with: "im Rhein-Main-Gebiet für Ihr Team"
+Replace bottom question with: "Eine Mitgliedschaft. Unlimitierter Zugang."
+Keywords: Frankfurt street, business casual professional, Wellpass Aqua stat panel, split layout, orange CTA button, clean corporate, warm left / teal right, EGYM Wellpass wordmark, local studio network
+
+What to avoid: Gym equipment, sportswear, sweat, generic stock smile, dark moody lighting
+
+Brief 2 — based on 301908826222.png (square, dark teal, phone mockup)
+Segment: HR Manager – Hyper-Local Frankfurt
+Format: Static image, 1:1 square
+
+What to keep: Deep teal background (#125a63), bold large-type headline treatment top-left, orange CTA button, phone mockup right-center, EGYM Wellpass wordmark bottom-left.
+
+What to change:
+
+Replace headline "19 Krankheitstage pro Arbeitnehmer in 2024" with "Hunderte Studios. Eine Mitgliedschaft. Frankfurt."
+Replace subtext with: "Verbinden Sie Ihr Team mit dem Rhein-Main-Netzwerk von EGYM Wellpass."
+Replace phone screen: swap the "Out of office" calendar notification for the Wellpass app gym finder map showing Frankfurt studio pins — show the map view centered on Frankfurt Innenstadt with 5–6 teal location markers visible
+Keywords: Deep teal background, bold white headline, Wellpass app on phone, Frankfurt gym finder map, location pins on screen, orange CTA, wordmark bottom-left, professional clean
+
+What to avoid: Sick-leave / absenteeism imagery, calendar apps, "Out of office" notifications, dark negative connotations
+
+Brief 3 — based on 234304523703.png (landscape, city skyline + aqua overlay)
+Segment: HR Manager – Hyper-Local Frankfurt
+Format: Static image, 16:9 landscape (this is the most minimal edit — only city and copy swap needed)
+
+What to keep: Entire layout structure. The aqua/teal color-wash overlay on the city skyline photo. Typography style and placement (white, top-left). Wordmark bottom-left.
+
+What to change:
+
+Swap the skyline for Frankfurt Skyline — must show the recognizable Frankfurt banking towers (Commerzbank Tower, Main Tower) along the Main river. Same aqua duotone treatment, same composition.
+Replace "Beliebte Sportangebote in Deutschland & Österreich" with "Fitness im Herzen von Frankfurt. Für Ihr ganzes Team."
+Keywords: Frankfurt skyline, banking towers, Main river, aqua duotone overlay, Wellpass Aqua color wash, white headline top-left, minimal composition, EGYM Wellpass wordmark, corporate city aesthetic
+
+What to avoid: Generic European city, Vienna, non-Frankfurt landmarks, bright tourist-y colors, any text or overlay beyond headline and wordmark
+
+Brief 4 — based on image.png (square, map pins)
+Segment: HR Manager – Hyper-Local Frankfurt
+Format: Static image, 1:1 square (closest match to segment — smallest edit needed)
+
+What to keep: Map background with Wellpass Aqua (#00a7b5) location pin markers, centered pill/badge stat, Wellbeing White (#f7f5f2) background tone, EGYM Wellpass wordmark bottom-left.
+
+What to change:
+
+Zoom the map to Frankfurt city specifically — show recognizable Frankfurt street grid with districts visible (Innenstadt, Sachsenhausen, Westend, Bockenheim, Bornheim). Same map style, same aqua pins.
+Update the pill badge text from "Über 10.000 Sportangebote" to "Hunderte Studios in Frankfurt & Umgebung"
+Increase pin density in the Frankfurt center to reinforce local saturation — more pins around the Bankenviertel area
+Keywords: Frankfurt city map, Wellpass Aqua location pins, street grid map, high pin density, Wellbeing White map background, centered stat badge, EGYM Wellpass wordmark, hyper-local, clean minimal
+
+What to avoid: National/Germany-wide map view, sparse pin distribution, dark map backgrounds, any non-Frankfurt geography
+
+Write c:\Users\razva\Documents\Startup\wellpass\Pipeline\image_brief_hr-hyper-local-frankfurt.md
+71 lines
+# Image Briefs — HR Manager: Hyper-Local Frankfurt
+_Generated: 2026-03-31_
+_Segment: HR Manager – Hyper-Local Frankfurt_
+_Tagline: "Fitness im Herzen von Frankfurt. Für Ihr ganzes Team."_
+
+---
+
+## Brief 1 — Adapted from `301908824413.png`
+**Format:** Static image, 16:9 landscape
+
+**What to keep:** Split-panel layout (photo left, stat box right), Wellpass Aqua (#00a7b5) stat box, orange "Mehr erfahren" CTA pill, EGYM Wellpass wordmark top-right.
+
+**What to change:**
+- Replace dumbbell athlete → Frankfurt professional walking near a gym entrance or Frankfurt street, business casual
+- Replace "82 Mrd. €" → **"320+ Studios"** in same large bold white type
+- Replace body copy → *"im Rhein-Main-Gebiet für Ihr Team"*
+- Replace bottom question → *"Eine Mitgliedschaft. Unlimitierter Zugang."*
+
+**Keywords:** Frankfurt street, business casual professional, Wellpass Aqua stat panel, split layout, orange CTA button, clean corporate, warm left / teal right, EGYM Wellpass wordmark, local studio network
+
+**What to avoid:** Gym equipment, sportswear, sweat, generic stock smile, dark moody lighting
+
+---
+
+## Brief 2 — Adapted from `301908826222.png`
+**Format:** Static image, 1:1 square
+
+**What to keep:** Deep teal background (#125a63), bold large-type headline top-left, orange CTA button, phone mockup right-center, EGYM Wellpass wordmark bottom-left.
+
+**What to change:**
+- Replace headline → **"Hunderte Studios. Eine Mitgliedschaft. Frankfurt."**
+- Replace subtext → *"Verbinden Sie Ihr Team mit dem Rhein-Main-Netzwerk von EGYM Wellpass."*
+- Replace phone screen → Wellpass app gym finder map view centered on Frankfurt Innenstadt, showing 5–6 teal location markers
+
+**Keywords:** Deep teal background, bold white headline, Wellpass app on phone, Frankfurt gym finder map, location pins on screen, orange CTA, wordmark bottom-left, professional clean
+
+**What to avoid:** Sick-leave/absenteeism imagery, calendar apps, "Out of office" notifications, dark negative connotations
+
+---
+
+## Brief 3 — Adapted from `234304523703.png`
+**Format:** Static image, 16:9 landscape
+_Minimal edit — city and copy swap only_
+
+**What to keep:** Full layout structure. Aqua/teal color-wash duotone overlay on city skyline. Typography style and placement (white, top-left). Wordmark bottom-left.
+
+**What to change:**
+- Swap skyline → **Frankfurt Skyline**: recognizable banking towers (Commerzbank Tower, Main Tower) along the Main river. Same aqua duotone treatment, same composition.
+- Replace copy → **"Fitness im Herzen von Frankfurt. Für Ihr ganzes Team."**
+
+**Keywords:** Frankfurt skyline, banking towers, Main river, aqua duotone overlay, Wellpass Aqua color wash, white headline top-left, minimal composition, EGYM Wellpass wordmark, corporate city aesthetic
+
+**What to avoid:** Generic European city, Vienna skyline, non-Frankfurt landmarks, bright tourist-y colors
+
+---
+
+## Brief 4 — Adapted from `image.png`
+**Format:** Static image, 1:1 square
+_Closest match to segment — minimal edit needed_
+
+**What to keep:** Map background with Wellpass Aqua (#00a7b5) location pin markers, centered pill/badge stat, Wellbeing White (#f7f5f2) background tone, EGYM Wellpass wordmark bottom-left.
+
+**What to change:**
+- Zoom map to **Frankfurt city specifically** — show Frankfurt street grid with districts (Innenstadt, Sachsenhausen, Westend, Bockenheim, Bornheim). Same map style, same aqua pins.
+- Update pill badge → **"Hunderte Studios in Frankfurt & Umgebung"**
+- Increase pin density around Frankfurt Bankenviertel/Innenstadt to reinforce local saturation
+
+**Keywords:** Frankfurt city map, Wellpass Aqua location pins, street grid map, high pin density, Wellbeing White map background, centered stat badge, EGYM Wellpass wordmark, hyper-local, clean minimal
+
+**What to avoid:** National/Germany-wide map view, sparse pin distribution, dark map backgrounds, non-Frankfurt geography
+Saved to image_brief_hr-hyper-local-frankfurt.md.
+
+My recommendation: Start with Brief 4 (the map pin image) and Brief 3 (the skyline). Both need the least editing — essentially a geography swap — and the map concept is the most directly on-strategy for the hyper-local angle. Brief 3 becomes uniquely Frankfurt with just a skyline photo swap.
+
+Would you like to generate briefs for another segment, or shall I generate the actual images now using the briefs?
+
+/nano-banana generate an image for each of the 4 briefs
+I'll run all 4 edits in parallel now.
+
+Bash Generate Brief 1 — split layout, Frankfurt professional + local studio count
+IN
+cd "c:\Users\razva\Documents\Startup\wellpass\Pipeline" && node image-gen/generate.mjs \
+  --input "reference-ads/301908824413.png" \
+  --prompt "Edit this ad. Keep the exact split-panel layout (photo left, stat box right), Wellpass Aqua teal stat box, orange 'Mehr erfahren' CTA button, EGYM WELLPASS wordmark top-right, and all colors. Changes: Replace the woman with dumbbell with a well-dressed Frankfurt professional in business casual attire walking near a modern Frankfurt street or gym entrance. Replace the large stat '82 Mrd. €' with '320+ Studios' in the same large bold white typography. Replace the body copy below the stat with 'im Rhein-Main-Gebiet für Ihr Team'. Replace the bottom question text with 'Eine Mitgliedschaft. Unlimitierter Zugang.' Keep font style, colors, and all layout elements identical." \
+  --output "frankfurt-brief1-split" \
+  --model gemini-3-pro-image-preview
+
+OUT
+Command running in background with ID: bv1c4lgnr. Output is being written to: C:\Users\razva\AppData\Local\Temp\claude\c--Users-razva-Documents-Startup-wellpass-Pipeline\2d19049e-424c-48e0-ba75-ef4a4deffcd4\tasks\bv1c4lgnr.output
+Bash Generate Brief 2 — dark teal square, phone with Frankfurt map
+IN
+cd "c:\Users\razva\Documents\Startup\wellpass\Pipeline" && node image-gen/generate.mjs \
+  --input "reference-ads/301908826222.png" \
+  --prompt "Edit this ad. Keep the deep teal (#125a63) background, bold large headline typography style top-left, orange CTA button, phone mockup positioned right-center, EGYM WELLPASS wordmark bottom-left, and all colors. Changes: Replace headline '19 Krankheitstage pro Arbeitnehmer in 2024' with 'Hunderte Studios. Eine Mitgliedschaft. Frankfurt.' Replace subtext 'Aktiv werden und Krankheitstage nachhaltig senken!' with 'Verbinden Sie Ihr Team mit dem Rhein-Main-Netzwerk von EGYM Wellpass.' Replace the phone screen content — remove the Out of Office calendar notification and replace with a Wellpass app gym finder map view showing Frankfurt Innenstadt with 5-6 teal Wellpass Aqua location pin markers on a map. Keep all other design elements, font styles, and layout identical." \
+  --output "frankfurt-brief2-phone" \
+  --model gemini-3-pro-image-preview
+
+OUT
+Command running in background with ID: bsze4kikg. Output is being written to: C:\Users\razva\AppData\Local\Temp\claude\c--Users-razva-Documents-Startup-wellpass-Pipeline\2d19049e-424c-48e0-ba75-ef4a4deffcd4\tasks\bsze4kikg.output
+Bash Generate Brief 3 — Frankfurt skyline with aqua duotone overlay
+IN
+cd "c:\Users\razva\Documents\Startup\wellpass\Pipeline" && node image-gen/generate.mjs \
+  --input "reference-ads/234304523703.png" \
+  --prompt "Edit this ad. Keep the entire layout structure, aqua teal duotone color-wash overlay style on the city skyline, white typography placement top-left, EGYM WELLPASS wordmark bottom-left, and all composition. Changes only: Replace the current city skyline photo with the Frankfurt skyline — specifically showing the recognizable Frankfurt banking towers (Commerzbank Tower, Main Tower skyscrapers) along the Main river, with the same Wellpass Aqua teal duotone color treatment applied. Replace the headline text 'Beliebte Sportangebote in Deutschland & Österreich' with 'Fitness im Herzen von Frankfurt. Für Ihr ganzes Team.' Keep font style, color, and position identical to the original." \
+  --output "frankfurt-brief3-skyline" \
+  --model gemini-3-pro-image-preview
+
+OUT
+Command running in background with ID: bor3v6g01. Output is being written to: C:\Users\razva\AppData\Local\Temp\claude\c--Users-razva-Documents-Startup-wellpass-Pipeline\2d19049e-424c-48e0-ba75-ef4a4deffcd4\tasks\bor3v6g01.output
+Bash Generate Brief 4 — Frankfurt map with high-density location pins
+IN
+cd "c:\Users\razva\Documents\Startup\wellpass\Pipeline" && node image-gen/generate.mjs \
+  --input "reference-ads/image.png" \
+  --prompt "Edit this ad. Keep the map background style with Wellpass Aqua teal location pin markers, the centered pill/badge stat element, Wellbeing White background tone, EGYM WELLPASS wordmark bottom-left, and overall clean minimal layout. Changes: Zoom the map view to show Frankfurt city specifically — replace the current map with Frankfurt's recognizable street grid showing districts like Innenstadt, Sachsenhausen, Westend, Bockenheim, and Bornheim. Increase the density of teal location pins especially around Frankfurt city center and Bankenviertel area. Update the centered pill badge text from 'Über 10.000 Sportangebote' to 'Hunderte Studios in Frankfurt & Umgebung'. Keep all colors, fonts, and layout style identical." \
+  --output "frankfurt-brief4-map" \
+  --model gemini-3-pro-image-preview
+
+OUT
+Command running in background with ID: bus8czfv8. Output is being written to: C:\Users\razva\AppData\Local\Temp\claude\c--Users-razva-Documents-Startup-wellpass-Pipeline\2d19049e-424c-48e0-ba75-ef4a4deffcd4\tasks\bus8czfv8.output
+All 4 running in parallel. I'll display them as they come in — waiting for results now.
+
+TaskOutput task: "bv1c4lgnr"
+OUT
+<tool_use_error>No task found with ID: bv1c4lgnr</tool_use_error>
+TaskOutput task: "bsze4kikg"
+OUT
+<tool_use_error>No task found with ID: bsze4kikg</tool_use_error>
+TaskOutput task: "bor3v6g01"
+OUT
+<retrieval_status>success</retrieval_status>
+
+<task_id>bor3v6g01</task_id>
+
+<task_type>local_bash</task_type>
+
+<status>completed</status>
+
+<exit_code>0</exit_code>
+
+<output>
+[dotenv@17.3.1] injecting env (1) from image-gen\.env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+Input: C:\Users\razva\Documents\Startup\wellpass\Pipeline\reference-ads\234304523703.png
+Model: gemini-3-pro-image-preview
+Generating 1 image...
+Saved: C:\Users\razva\Documents\Startup\wellpass\nanobanana-output\frankfurt-brief3-skyline.png
+</output>
+TaskOutput task: "bus8czfv8"
+OUT
+<retrieval_status>success</retrieval_status>
+
+<task_id>bus8czfv8</task_id>
+
+<task_type>local_bash</task_type>
+
+<status>completed</status>
+
+<exit_code>0</exit_code>
+
+<output>
+[dotenv@17.3.1] injecting env (1) from image-gen\.env -- tip: ⚙️  enable debug logging with { debug: true }
+Input: C:\Users\razva\Documents\Startup\wellpass\Pipeline\reference-ads\234209405402.png
+Model: gemini-3-pro-image-preview
+Generating 1 image...
+Saved: C:\Users\razva\Documents\Startup\wellpass\nanobanana-output\frankfurt-brief4-map.png
+</output>
+Read c:\Users\razva\Documents\Startup\wellpass\nanobanana-output\frankfurt-brief3-skyline.png
+Read c:\Users\razva\Documents\Startup\wellpass\nanobanana-output\frankfurt-brief4-map.png
+Globpattern: "nanobanana-output/frankfurt-brief*.png"
+No files found
+Briefs 3 and 4 are excellent. Let me check on 1 and 2.
+
+Globpattern: "nanobanana-output/frankfurt*.png"
+No files found
+Globpattern: "**/nanobanana-output/*.png"
+Found 6 files
+All 4 are there. Let me show them all.
+
+Read c:\Users\razva\Documents\Startup\wellpass\nanobanana-output\frankfurt-brief1-split.png
+Read c:\Users\razva\Documents\Startup\wellpass\nanobanana-output\frankfurt-brief2-phone.png
+All 4 generated. Here's the full set:
+
+Brief 1 — Split layout, Frankfurt professional
+Strong execution. The business-casual professional walking in front of an EGYM Wellpass-branded building is a nice bonus. The "320+ Studios / im Rhein-Main-Gebiet" stat panel reads clearly. Minor note: the CTA button lost its orange fill — worth a quick re-edit to restore it.
+
+Brief 2 — Dark teal, phone mockup
+Very strong. Bold three-line headline lands well, the phone shows "Gym finder" with Frankfurt Innenstadt on screen. The "Wellpass Aqua" placeholder labels on the map pins are a generation artifact — in production those would be real studio names. Overall the layout and hierarchy are solid.
+
+Brief 3 — Frankfurt skyline with aqua duotone
+Clean and immediately recognizable — the Main Tower and Commerzbank Tower are clearly Frankfurt. The aqua duotone treatment transferred well from the original. Best of the four for brand consistency.
+
+Brief 4 — Frankfurt map with location pins
+Excellent. Districts are labeled (Bockenheim, Westend, Bankenviertel, Innenstadt, Sachsenhausen, Bornheim), pin density is high around the center, and the "Hunderte Studios in Frankfurt & Umgebung" badge lands perfectly. Ready to use with minimal changes.
+
+Want to iterate on any of these (e.g. fix Brief 1's orange button, swap the map pin labels in Brief 2, or try a variation)?
+
+That's just the late notification for Brief 1 — already displayed above along with all 4. We're good!
+
+To recap what's ready in nanobanana-output/:
+
+frankfurt-brief1-split.png
+frankfurt-brief2-phone.png
+frankfurt-brief3-skyline.png
+frankfurt-brief4-map.png
+Want to iterate on any of them, or move on to a different segment?
+
+Late notification for Brief 2 as well — already shown above. All 4 are complete and displayed.
+
+What would you like to do next?
+
+Iterate on any of the 4 images (e.g. fix the orange CTA on Brief 1, clean up the map pin labels in Brief 2)
+Generate briefs for another segment from the campaign plan
+Draft copy variations for any of the segments
+Late notification for Brief 3 — already displayed. All good.
+
+What's next?
+
+Late notification for Brief 4 — all already shown.
+
+All 4 done. What's next?

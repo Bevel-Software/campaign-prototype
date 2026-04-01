@@ -1,0 +1,2915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Campaign Generator — Canvas</title>
+<style>
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #f0f0f2;
+    color: #1d1d1f;
+    height: 100vh;
+    overflow: hidden;
+    line-height: 1.47059;
+  }
+
+  /* ===== DESIGN TOKENS ===== */
+  :root {
+    --teal: #135E69;
+    --teal-light: #1a7a87;
+    --teal-dark: #0e4a53;
+    --teal-10: rgba(19, 94, 105, 0.08);
+    --teal-15: rgba(19, 94, 105, 0.12);
+    --teal-20: rgba(19, 94, 105, 0.18);
+    --orange: #FF8F3D;
+    --white: #ffffff;
+    --bg: #f0f0f2;
+    --gray-50: #fafafa;
+    --gray-100: #f5f5f7;
+    --gray-200: #e8e8ed;
+    --gray-300: #d2d2d7;
+    --gray-400: #aeaeb2;
+    --gray-500: #86868b;
+    --gray-600: #6e6e73;
+    --gray-700: #48484a;
+    --gray-900: #1d1d1f;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+    --shadow-md: 0 2px 8px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.1);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.08), 0 16px 48px rgba(0,0,0,0.12);
+    --radius: 20px;
+    --radius-md: 16px;
+    --radius-sm: 12px;
+    --spring: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --chat-width: 380px;
+    --toolbar-h: 48px;
+  }
+
+  /* ===== TOOLBAR ===== */
+  .toolbar {
+    height: var(--toolbar-h);
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 0.5px solid rgba(0,0,0,0.09);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    position: relative;
+    z-index: 100;
+  }
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .toolbar-logo {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    letter-spacing: -0.02em;
+  }
+  .toolbar-logo span { font-weight: 400; color: var(--gray-600); }
+  .toolbar-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--gray-300);
+  }
+  .toolbar-badge {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    font-weight: 500;
+  }
+  .toolbar-center {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tb-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--gray-600);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+  .tb-btn:hover { background: var(--gray-100); color: var(--gray-900); border-color: var(--gray-300); }
+  .tb-btn.primary { background: var(--teal); color: var(--white); border-color: var(--teal); }
+  .tb-btn.primary:hover { background: var(--teal-light); }
+  .zoom-display {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    min-width: 38px;
+    text-align: center;
+    user-select: none;
+  }
+
+  /* ===== MAIN LAYOUT ===== */
+  .app-layout {
+    display: flex;
+    height: calc(100vh - var(--toolbar-h));
+  }
+
+  /* ===== CANVAS ===== */
+  .canvas-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+    background-color: var(--bg);
+    background-image: radial-gradient(circle, var(--gray-300) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .canvas-area.grabbing { cursor: grabbing; }
+  .canvas-transform {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    will-change: transform;
+  }
+
+  /* ===== EMPTY STATE ===== */
+  .canvas-empty {
+    position: absolute;
+    top: 50%;
+    left: calc(50% - var(--chat-width) / 2);
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+    transition: opacity 0.5s var(--spring);
+  }
+  .canvas-empty.hidden { opacity: 0; pointer-events: none; }
+  .canvas-empty-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 1.5rem;
+    color: var(--white);
+    opacity: 0.8;
+    box-shadow: 0 0 0 8px rgba(19,94,105,0.06), 0 0 0 16px rgba(19,94,105,0.03);
+  }
+  .canvas-empty h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+  }
+  .canvas-empty p {
+    font-size: 0.82rem;
+    color: var(--gray-500);
+    max-width: 280px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  /* ===== CANVAS CARDS (BASE) ===== */
+  .canvas-card {
+    position: absolute;
+    background: var(--white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    cursor: grab;
+    transition: box-shadow 0.25s var(--spring), opacity 0.4s var(--spring);
+    user-select: none;
+    opacity: 0;
+  }
+  .canvas-card.visible { opacity: 1; }
+  .canvas-card.grabbing { cursor: grabbing; }
+  .canvas-card:hover { box-shadow: var(--shadow-md); }
+  .canvas-card.selected {
+    box-shadow: 0 0 0 3px var(--teal), 0 0 24px rgba(19,94,105,0.18);
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+  .canvas-card.dragging {
+    box-shadow: var(--shadow-lg);
+    z-index: 50;
+    transition: none;
+  }
+
+  /* ===== SETTINGS CARD ===== */
+  .canvas-card.card-settings { width: 340px; }
+  .settings-card-header {
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    color: var(--white);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .settings-card-header .icon {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .settings-card-header .title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .settings-card-header .subtitle {
+    font-size: 0.68rem;
+    opacity: 0.75;
+    margin-top: 1px;
+  }
+  .settings-card-body {
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .settings-card-row {
+    display: flex;
+    gap: 10px;
+  }
+  .settings-card-field {
+    flex: 1;
+  }
+  .settings-card-field .field-label {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 3px;
+  }
+  .settings-card-field .field-value {
+    font-size: 0.78rem;
+    color: var(--gray-900);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  .settings-card-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+  }
+  .settings-card-badge {
+    font-size: 0.65rem;
+    padding: 3px 10px;
+    border-radius: 980px;
+    font-weight: 500;
+  }
+  .settings-card-badge.b2c { background: var(--teal-10); color: var(--teal); }
+  .settings-card-badge.b2b { background: rgba(0,119,181,0.08); color: #0077b5; }
+  .settings-card-badge.channel { background: var(--gray-100); color: var(--gray-600); }
+
+  /* ===== SEGMENT CARD ===== */
+  .canvas-card.card-segment { width: 260px; }
+  .segment-card-accent {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+  }
+  .segment-card-accent.b2c { background: var(--teal); }
+  .segment-card-accent.b2b { background: #0077b5; }
+  .segment-card-top {
+    padding: 12px 16px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .segment-card-icon {
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--white);
+    flex-shrink: 0;
+  }
+  .segment-card-icon.b2c { background: var(--teal); }
+  .segment-card-icon.b2b { background: #0077b5; }
+  .segment-card-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+  .segment-card-body {
+    padding: 0 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .segment-card-detail {
+    font-size: 0.7rem;
+    color: var(--gray-600);
+    line-height: 1.4;
+    display: flex;
+    gap: 6px;
+  }
+  .segment-card-detail .detail-label {
+    color: var(--gray-400);
+    font-weight: 500;
+    flex-shrink: 0;
+    min-width: 52px;
+  }
+  .segment-card-tagline {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    font-style: italic;
+    padding: 8px 16px;
+    border-top: 0.5px solid var(--gray-200);
+    line-height: 1.4;
+  }
+
+  /* ===== ASSET CARD (reference image) ===== */
+  .canvas-card.card-asset { width: 260px; }
+  .asset-card-header {
+    padding: 8px 14px;
+    background: var(--gray-50);
+    border-bottom: 0.5px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .asset-card-header .icon {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+  }
+  .asset-card-header .label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    letter-spacing: -0.01em;
+  }
+  .asset-card-header .source-badge {
+    margin-left: auto;
+    font-size: 0.58rem;
+    font-weight: 500;
+    color: var(--teal);
+    background: var(--teal-10);
+    padding: 2px 7px;
+    border-radius: 980px;
+  }
+  .asset-card-image {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    display: block;
+  }
+  .asset-card-footer {
+    padding: 8px 14px;
+    font-size: 0.66rem;
+    color: var(--gray-500);
+    line-height: 1.4;
+    border-top: 0.5px solid var(--gray-200);
+  }
+
+  /* ===== BRIEF CARD ===== */
+  .canvas-card.card-brief { width: 260px; border: 1.5px dashed var(--gray-300); box-shadow: none; }
+  .canvas-card.card-brief:hover { box-shadow: var(--shadow-sm); }
+  .canvas-card.card-brief.selected { border-color: var(--teal); box-shadow: 0 0 0 2px var(--teal), 0 0 20px rgba(19,94,105,0.12); }
+  .brief-card-header {
+    padding: 10px 16px;
+    border-bottom: 1px dashed var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brief-card-header .icon {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+  }
+  .brief-card-header .label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    letter-spacing: -0.01em;
+  }
+  .brief-card-body {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .brief-card-field .brief-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+  }
+  .brief-card-field .brief-value {
+    font-size: 0.72rem;
+    color: var(--gray-700);
+    line-height: 1.45;
+  }
+  .brief-card-keywords {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+  }
+  .brief-keyword {
+    font-size: 0.6rem;
+    padding: 2px 7px;
+    background: var(--gray-100);
+    color: var(--gray-600);
+    border-radius: 980px;
+    font-weight: 500;
+  }
+
+  /* ===== CREATIVE CARD (Meta ad) ===== */
+  .canvas-card.card-creative { width: 280px; }
+  .canvas-card.card-variation { width: 252px; }
+  .card-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 0.5px solid var(--gray-200);
+  }
+  .card-top-bar .label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    letter-spacing: -0.01em;
+  }
+  .meta-ad { padding: 0; }
+  .meta-ad img { width: 100%; height: 180px; object-fit: cover; display: block; }
+  .meta-ad-content { padding: 12px 14px; }
+  .meta-ad-brand {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .meta-ad-text {
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--gray-700);
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .meta-ad-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--gray-50);
+    border-top: 0.5px solid var(--gray-200);
+  }
+  .meta-ad-bottom .headline {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    letter-spacing: -0.01em;
+    flex: 1;
+    margin-right: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .meta-ad-cta {
+    padding: 5px 12px;
+    background: #1877f2;
+    color: var(--white);
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .linkedin-ad { padding: 14px; }
+  .linkedin-ad-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .linkedin-ad-header .company-logo {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 0.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .linkedin-ad-header .company-info .name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gray-900);
+  }
+  .linkedin-ad-header .company-info .meta {
+    font-size: 0.65rem;
+    color: var(--gray-500);
+  }
+  .linkedin-ad-body {
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--gray-700);
+    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .linkedin-ad-image {
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(135deg, var(--teal), #1a8a97, var(--teal-light));
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.7rem;
+    margin-bottom: 10px;
+  }
+  .linkedin-ad-headline {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .linkedin-ad-cta {
+    display: inline-block;
+    padding: 4px 12px;
+    border: 1.5px solid #0077b5;
+    border-radius: 980px;
+    color: #0077b5;
+    font-size: 0.7rem;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .card-footer {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    padding: 8px 14px 10px;
+    border-top: 0.5px solid var(--gray-200);
+  }
+  .card-tag {
+    font-size: 0.62rem;
+    color: var(--gray-600);
+    background: var(--gray-100);
+    padding: 2px 8px;
+    border-radius: 980px;
+    font-weight: 500;
+  }
+
+  /* ===== SVG OVERLAY (connection lines) ===== */
+  .svg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 60;
+  }
+  .flow-line {
+    stroke: var(--gray-400);
+    stroke-width: 1.5;
+    stroke-dasharray: 6, 4;
+    fill: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .flow-line.visible {
+    opacity: 0.45;
+    animation: dashFlow 1.2s linear infinite;
+  }
+  .flow-line.teal { stroke: var(--teal); }
+  .flow-line.blue { stroke: #0077b5; }
+  @keyframes dashFlow {
+    to { stroke-dashoffset: -10; }
+  }
+
+  /* Connection line (selected card to chat) */
+  .connection-line {
+    stroke: var(--teal);
+    stroke-width: 1.5;
+    stroke-dasharray: 6, 4;
+    fill: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .connection-line.visible {
+    opacity: 0.5;
+    animation: dashFlow 1s linear infinite;
+  }
+
+  /* ===== CONTEXT MENU ===== */
+  .context-menu {
+    position: fixed;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
+    min-width: 200px;
+    padding: 6px;
+    z-index: 500;
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+    transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+  .context-menu.visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+  }
+  .context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: background 0.1s ease;
+    font-family: inherit;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+  .context-menu-item:hover { background: var(--teal-10); color: var(--teal-dark); }
+  .context-menu-item .icon {
+    font-size: 0.85rem;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .context-menu-sep {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 4px 8px;
+  }
+
+  /* ===== CHAT PANEL ===== */
+  .chat-panel {
+    width: var(--chat-width);
+    background: var(--white);
+    border-left: 0.5px solid rgba(0,0,0,0.09);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 70;
+  }
+  .chat-header {
+    padding: 14px 18px;
+    border-bottom: 0.5px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .chat-header-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+  .chat-header-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .chat-header-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    letter-spacing: -0.02em;
+  }
+  .chat-header-context {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+  }
+
+  /* Chat input context (selected card as context chip above input) */
+  .chat-input-context {
+    display: none;
+  }
+  .chat-input-context.has-context {
+    display: block;
+    margin-bottom: 8px;
+  }
+  .chat-input-context-card {
+    background: var(--white);
+    border: 1.5px solid var(--teal);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: opacity 0.2s var(--spring);
+  }
+  .chat-input-context-header {
+    background: var(--teal-10);
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chat-input-context-header .ctx-type {
+    font-size: 0.58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--teal);
+    background: rgba(19,94,105,0.12);
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .chat-input-context-header .ctx-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--teal-dark);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .chat-input-context-header .ctx-close {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(19,94,105,0.12);
+    color: var(--teal);
+    font-size: 0.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.1s ease;
+    line-height: 1;
+  }
+  .chat-input-context-header .ctx-close:hover { background: rgba(19,94,105,0.22); }
+  .chat-input-context-body {
+    padding: 6px 10px 8px;
+    font-size: 0.68rem;
+    color: var(--gray-600);
+    line-height: 1.45;
+    max-height: 64px;
+    overflow: hidden;
+  }
+  .chat-input-context-body .ctx-field {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 2px;
+  }
+  .chat-input-context-body .ctx-field-label {
+    color: var(--gray-400);
+    font-weight: 500;
+    flex-shrink: 0;
+    min-width: 48px;
+  }
+
+  /* Chat messages */
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
+  .msg {
+    display: flex;
+    gap: 8px;
+    max-width: 95%;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.35s var(--spring), transform 0.35s var(--spring);
+  }
+  .msg.visible { opacity: 1; transform: translateY(0); }
+  .msg.agent { align-self: flex-start; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .msg-avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.55rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .msg.agent .msg-avatar {
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    color: var(--white);
+  }
+  .msg.user .msg-avatar {
+    background: var(--gray-200);
+    color: var(--gray-600);
+  }
+  .msg-bubble {
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    letter-spacing: -0.01em;
+  }
+  .msg.agent .msg-bubble {
+    background: var(--gray-100);
+    color: var(--gray-700);
+  }
+  .msg.user .msg-bubble {
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    color: var(--white);
+  }
+  .msg-bubble strong { font-weight: 600; }
+
+  /* Tool call messages */
+  .tool-msg {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-left: 34px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .tool-msg.visible { opacity: 1; transform: translateY(0); }
+  .tool-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: var(--teal-10);
+    border-radius: 980px;
+    font-size: 0.72rem;
+    color: var(--teal);
+    font-weight: 500;
+    width: fit-content;
+  }
+  .tool-pill::before {
+    content: "";
+    width: 12px; height: 12px;
+    background: var(--teal);
+    border-radius: 50%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 7px;
+    flex-shrink: 0;
+  }
+  .tool-result {
+    background: var(--gray-50);
+    border-left: 3px solid var(--teal);
+    border-radius: 0 8px 8px 0;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    color: var(--gray-700);
+    line-height: 1.5;
+  }
+  .tool-result strong { color: var(--gray-900); }
+
+  /* Typing indicator */
+  .typing-indicator {
+    display: flex;
+    gap: 8px;
+    align-self: flex-start;
+    padding-left: 34px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .typing-indicator.visible { opacity: 1; }
+  .typing-dot {
+    width: 6px; height: 6px;
+    background: var(--gray-400);
+    border-radius: 50%;
+    animation: typingBounce 1.4s infinite ease-in-out;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Chat input */
+  .chat-input-area {
+    padding: 12px 16px;
+    border-top: 0.5px solid var(--gray-200);
+    flex-shrink: 0;
+  }
+  .chat-input-field {
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    color: var(--gray-400);
+    background: var(--gray-100);
+    outline: none;
+    font-family: inherit;
+  }
+  .advance-hint {
+    text-align: center;
+    padding: 6px;
+    font-size: 0.65rem;
+    color: var(--gray-400);
+    letter-spacing: 0.02em;
+  }
+  .advance-hint kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 3px;
+    font-size: 0.6rem;
+    font-family: inherit;
+  }
+
+  /* ===== MINIMAP ===== */
+  .minimap {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    width: 180px;
+    height: 110px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 10px;
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-sm);
+    z-index: 80;
+    overflow: hidden;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.4s var(--spring);
+  }
+  .minimap.visible { opacity: 1; }
+  .minimap canvas { width: 100%; height: 100%; }
+
+  /* ===== INLINE EDITING ===== */
+  .inline-editable {
+    cursor: text;
+    transition: outline 0.15s ease, background 0.15s ease;
+    border-radius: 4px;
+    padding: 1px 3px;
+    margin: -1px -3px;
+  }
+  .inline-editable:hover {
+    background: rgba(19, 94, 105, 0.04);
+  }
+  .inline-editable.editing {
+    outline: 2px solid var(--teal);
+    background: rgba(19, 94, 105, 0.06);
+    cursor: text;
+    -webkit-line-clamp: unset !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  /* ===== EXPORT OVERLAY ===== */
+  .export-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .export-overlay.active { opacity: 1; pointer-events: auto; }
+  .export-card {
+    max-width: 620px;
+    width: 90%;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: 40px;
+    text-align: center;
+  }
+  .export-check {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 1.6rem;
+    color: var(--white);
+    box-shadow: 0 0 0 10px rgba(19,94,105,0.08);
+  }
+  .export-card h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 6px;
+    letter-spacing: -0.03em;
+  }
+  .export-card .subtitle {
+    font-size: 0.88rem;
+    color: var(--gray-500);
+    margin-bottom: 24px;
+  }
+  .mock-sheet {
+    background: var(--white);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 24px;
+    text-align: left;
+    box-shadow: var(--shadow-sm);
+  }
+  .mock-sheet-toolbar {
+    background: #34a853;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  }
+  .mock-sheet-toolbar .dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.35); }
+  .mock-sheet-toolbar .title { color: var(--white); font-size: 0.72rem; font-weight: 500; margin-left: 4px; }
+  .mock-sheet table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+  .mock-sheet th { background: var(--gray-50); padding: 8px 10px; text-align: left; font-weight: 600; color: var(--gray-700); border-bottom: 0.5px solid var(--gray-200); }
+  .mock-sheet td { padding: 7px 10px; border-bottom: 0.5px solid var(--gray-100); color: var(--gray-700); }
+  .mock-sheet tr:last-child td { border-bottom: none; }
+  .export-buttons { display: flex; gap: 10px; justify-content: center; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 22px;
+    border-radius: 980px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s var(--spring);
+    font-family: inherit;
+  }
+  .btn-teal { background: var(--teal); color: var(--white); }
+  .btn-teal:hover { background: var(--teal-light); }
+  .btn-outline { background: transparent; color: var(--teal); border: 1.5px solid var(--teal); }
+  .btn-outline:hover { background: var(--teal-10); }
+
+  /* ===== SETTINGS PANEL ===== */
+  .settings-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .settings-overlay.active { opacity: 1; pointer-events: auto; }
+  .settings-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 480px;
+    height: 100vh;
+    background: var(--white);
+    box-shadow: var(--shadow-lg);
+    z-index: 201;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s var(--spring);
+  }
+  .settings-overlay.active .settings-panel { transform: translateX(0); }
+  .settings-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 0.5px solid var(--gray-200);
+    flex-shrink: 0;
+  }
+  .settings-panel-header h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    letter-spacing: -0.02em;
+  }
+  .settings-close {
+    width: 30px; height: 30px;
+    border: none;
+    background: var(--gray-100);
+    border-radius: 8px;
+    color: var(--gray-600);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+  .settings-close:hover { background: var(--gray-200); }
+  .settings-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .settings-panel-body::-webkit-scrollbar { width: 4px; }
+  .settings-panel-body::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
+
+  .settings-section-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .settings-section-desc {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .connectors-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .connector-card {
+    background: var(--gray-50);
+    border: 1.5px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: border-color 0.15s ease;
+  }
+  .connector-card.active { border-color: var(--teal); background: rgba(19,94,105,0.03); }
+  .connector-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--white);
+    flex-shrink: 0;
+  }
+  .connector-icon.meta { background: #1877f2; }
+  .connector-icon.linkedin { background: #0077b5; }
+  .connector-icon.salesforce { background: #00a1e0; font-size: 0.55rem; }
+  .connector-icon.google { background: #34a853; }
+  .connector-icon.google-ads { background: #4285f4; }
+  .connector-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .connector-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 2px;
+  }
+  .connector-desc {
+    font-size: 0.66rem;
+    color: var(--gray-500);
+    line-height: 1.4;
+  }
+  .connector-toggle {
+    position: relative;
+    width: 38px;
+    height: 22px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .connector-toggle input { opacity: 0; width: 0; height: 0; }
+  .connector-toggle .slider {
+    position: absolute;
+    inset: 0;
+    background: var(--gray-300);
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .connector-toggle .slider::before {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--white);
+    top: 2px; left: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+  }
+  .connector-toggle input:checked + .slider { background: var(--teal); }
+  .connector-toggle input:checked + .slider::before { transform: translateX(16px); }
+
+  .settings-panel-footer {
+    padding: 16px 24px;
+    border-top: 0.5px solid var(--gray-200);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes cardSpawnIn {
+    0% { opacity: 0; transform: scale(0.85) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes variationSpawn {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 3px var(--teal), 0 0 20px rgba(19,94,105,0.15); }
+    50% { box-shadow: 0 0 0 3px var(--teal), 0 0 28px rgba(19,94,105,0.25); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== TOOLBAR ===== -->
+<div class="toolbar">
+  <div class="toolbar-left">
+    <div class="toolbar-logo">EGYM <span>Wellpass</span></div>
+    <div class="toolbar-divider"></div>
+    <div class="toolbar-badge">Powered by Bevel</div>
+  </div>
+  <div class="toolbar-center">
+    <button class="tb-btn" onclick="zoomBy(-0.15)" title="Zoom out">-</button>
+    <span class="zoom-display" id="zoomDisplay">100%</span>
+    <button class="tb-btn" onclick="zoomBy(0.15)" title="Zoom in">+</button>
+    <button class="tb-btn" onclick="fitAll()" title="Fit all cards">Fit All</button>
+  </div>
+  <div class="toolbar-right">
+    <button class="tb-btn" onclick="openSettings()">&#9881; Settings</button>
+    <button class="tb-btn primary" onclick="openExport()">Export</button>
+  </div>
+</div>
+
+<!-- ===== MAIN LAYOUT ===== -->
+<div class="app-layout">
+
+  <!-- Canvas Area -->
+  <div class="canvas-area" id="canvasArea">
+    <div class="canvas-transform" id="canvasTransform"></div>
+    <svg class="svg-overlay" id="svgOverlay">
+      <path class="connection-line" id="connectionLine"/>
+      <g id="flowLines"></g>
+    </svg>
+    <div class="canvas-empty" id="canvasEmpty">
+      <div class="canvas-empty-icon">&#10022;</div>
+      <h3>Your Campaign Canvas</h3>
+      <p>Start a conversation to build your campaign. Cards will appear here as you plan.</p>
+    </div>
+    <div class="minimap" id="minimap">
+      <canvas id="minimapCanvas" width="360" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- Chat Panel -->
+  <div class="chat-panel" id="chatPanel">
+    <div class="chat-header">
+      <div class="chat-header-icon">&#10022;</div>
+      <div class="chat-header-text">
+        <div class="chat-header-title">Campaign Agent</div>
+        <div class="chat-header-context" id="chatContext">Ready to build your campaign</div>
+      </div>
+    </div>
+    <!-- context badge removed — card preview now in input area -->
+    <div class="chat-messages" id="chatMessages">
+      <div class="typing-indicator" id="typingIndicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    </div>
+    <div class="chat-input-area" id="chatInputArea">
+      <div class="chat-input-context" id="chatInputContext"></div>
+      <input class="chat-input-field" type="text" placeholder="Type a message..." disabled>
+      <div class="advance-hint"><kbd>&darr;</kbd> or <kbd>&rarr;</kbd> to advance &middot; Right-click canvas for actions</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== CONTEXT MENU ===== -->
+<div class="context-menu" id="contextMenu"></div>
+
+<!-- ===== EXPORT OVERLAY ===== -->
+<div class="export-overlay" id="exportOverlay" onclick="if(event.target===this)closeExport()">
+  <div class="export-card">
+    <div class="export-check">&#10003;</div>
+    <h2>Campaign Exported Successfully</h2>
+    <p class="subtitle">Your 2 campaigns and 4 creatives have been exported to Google Sheets</p>
+    <div class="mock-sheet">
+      <div class="mock-sheet-toolbar">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="title">EGYM_Wellpass_Japan_Q2_Campaign.xlsx</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Campaign</th><th>Ad Set</th><th>Channel</th><th>Headline</th><th>CTA</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>App Installs</td><td>Broad Fitness</td><td>Meta</td><td>Want to work out? Your company pays!</td><td>Learn More</td><td>Ready</td></tr>
+          <tr><td>App Installs</td><td>Young Pros</td><td>Meta</td><td>Refresh after work!</td><td>Download the App</td><td>Ready</td></tr>
+          <tr><td>Lead Gen</td><td>HR Directors</td><td>LinkedIn</td><td>Retain top talent with wellness benefits</td><td>Learn More</td><td>Ready</td></tr>
+          <tr><td>Lead Gen</td><td>C-Suite SME</td><td>LinkedIn</td><td>Case Study: 23% turnover reduction</td><td>Read Case Study</td><td>Ready</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="export-buttons">
+      <button class="btn btn-teal" onclick="closeExport()">Open in Google Sheets</button>
+      <button class="btn btn-outline" onclick="closeExport()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS PANEL ===== -->
+<div class="settings-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettings()">
+  <div class="settings-panel">
+    <div class="settings-panel-header">
+      <h3>Settings</h3>
+      <button class="settings-close" onclick="closeSettings()">&times;</button>
+    </div>
+    <div class="settings-panel-body">
+
+      <!-- Connectors Section -->
+      <div>
+        <div class="settings-section-title">Connectors</div>
+        <div class="settings-section-desc">Integrations with external platforms. Campaign agents use these to pull data and deploy ads.</div>
+        <div class="connectors-grid">
+          <div class="connector-card active">
+            <div class="connector-icon meta">f</div>
+            <div class="connector-info">
+              <div class="connector-name">Meta Ad Library</div>
+              <div class="connector-desc">Competitor ad research (read-only)</div>
+            </div>
+            <label class="connector-toggle"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="connector-card active">
+            <div class="connector-icon google">G</div>
+            <div class="connector-info">
+              <div class="connector-name">Google Analytics</div>
+              <div class="connector-desc">Website traffic, conversion data</div>
+            </div>
+            <label class="connector-toggle"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="connector-card active">
+            <div class="connector-icon salesforce">SF</div>
+            <div class="connector-info">
+              <div class="connector-name">Salesforce</div>
+              <div class="connector-desc">CRM data, lead tracking, attribution</div>
+            </div>
+            <label class="connector-toggle"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Sources Section -->
+      <div>
+        <div class="settings-section-title">Data Sources</div>
+        <div class="settings-section-desc">Connected files and databases the agent uses for campaign planning.</div>
+        <div class="connectors-grid">
+          <div class="connector-card active">
+            <div class="connector-icon" style="background:var(--teal);">&#128196;</div>
+            <div class="connector-info">
+              <div class="connector-name">DACH Campaign Data</div>
+              <div class="connector-desc">Historical performance, 47 creatives</div>
+            </div>
+            <label class="connector-toggle"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="connector-card active">
+            <div class="connector-icon" style="background:var(--teal);">&#127912;</div>
+            <div class="connector-info">
+              <div class="connector-name">Brand Guidelines</div>
+              <div class="connector-desc">Colors, tone, logo, positioning</div>
+            </div>
+            <label class="connector-toggle"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="connector-card active">
+            <div class="connector-icon" style="background:var(--teal);">&#128101;</div>
+            <div class="connector-info">
+              <div class="connector-name">Personas & Value Props</div>
+              <div class="connector-desc">B2C and B2B target personas</div>
+            </div>
+            <label class="connector-toggle"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="connector-card">
+            <div class="connector-icon" style="background:var(--gray-400);">&#128200;</div>
+            <div class="connector-info">
+              <div class="connector-name">Market Research</div>
+              <div class="connector-desc">Japan market data, competitor analysis</div>
+            </div>
+            <label class="connector-toggle"><input type="checkbox"><span class="slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="settings-panel-footer">
+      <button class="btn btn-outline" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-teal" onclick="closeSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================================================================
+// STATE
+// ===================================================================
+const state = {
+  canvas: { x: 0, y: 0, scale: 1 },
+  cards: [],
+  selectedCardId: null,
+  chatStep: -1,
+  maxStep: -1,
+  isPanning: false,
+  isDragging: false,
+  dragCardId: null,
+  dragStart: { x: 0, y: 0, cardX: 0, cardY: 0, moved: false },
+  panStart: { x: 0, y: 0, cx: 0, cy: 0 },
+  // Track which canvas actions have fired
+  spawned: { settings: false, segments: false, assets: false, briefs: false, creatives: false, variations: false, moreWeight: false },
+  // Inline editing
+  editingElement: null,
+  editOriginalText: '',
+};
+
+const canvasArea = document.getElementById('canvasArea');
+const canvasTransform = document.getElementById('canvasTransform');
+const chatMessages = document.getElementById('chatMessages');
+const typingIndicator = document.getElementById('typingIndicator');
+const svgOverlay = document.getElementById('svgOverlay');
+
+// ===================================================================
+// CARD DATA
+// ===================================================================
+// Settings data starts empty — gets filled progressively by chat
+const SETTINGS_DATA = {
+  name: 'EGYM Wellpass Campaign',
+  objectives: [],
+  market: '',
+  budget: '',
+  split: '',
+  timeline: '',
+  channels: [],
+  positioning: '',
+};
+
+// The data that gets populated at each step
+const SETTINGS_STEP0 = {
+  name: 'EGYM Wellpass Japan Expansion',
+  objectives: [
+    { label: 'App Installs', type: 'b2c' },
+    { label: 'Lead Generation', type: 'b2b' },
+  ],
+  market: 'Tokyo, Osaka, Yokohama, Nagoya',
+  budget: '¥2,000,000',
+  split: '65/35 (B2C/B2B)',
+  timeline: '8 weeks from May 1',
+};
+
+const SETTINGS_STEP1 = {
+  channels: [
+    { label: 'Meta (IG + FB)', type: 'channel' },
+    { label: 'LinkedIn', type: 'channel' },
+  ],
+  positioning: 'Freedom to move',
+};
+
+const SEGMENT_DATA = [
+  {
+    id: 'seg-1',
+    group: 'b2c',
+    name: 'Broad Fitness Interests',
+    channel: 'Meta',
+    targeting: '18-44, gym/fitness/yoga interests',
+    tagline: 'Fitness Freedom — Your company pays!',
+  },
+  {
+    id: 'seg-2',
+    group: 'b2c',
+    name: 'Young Professionals 25-34',
+    channel: 'Meta',
+    targeting: '25-34, urban professionals, work-life balance',
+    tagline: 'Refresh After Work — unwind your way',
+  },
+  {
+    id: 'seg-3',
+    group: 'b2b',
+    name: 'HR Directors (Enterprise)',
+    channel: 'LinkedIn',
+    targeting: '35-55, HR Director/VP People, 500+ employees',
+    tagline: 'Retain top talent with wellness benefits',
+  },
+  {
+    id: 'seg-4',
+    group: 'b2b',
+    name: 'C-Suite (SME)',
+    channel: 'LinkedIn',
+    targeting: '35-55, CEO/COO/GM, 50-500 employees',
+    tagline: '23% turnover reduction in 12 months',
+  },
+];
+
+const BRIEF_DATA = [
+  {
+    id: 'brief-1',
+    segmentId: 'seg-1',
+    direction: 'Lifestyle imagery: young person enjoying diverse sports. Japanese cultural adaptation of "Freedom to move." Energetic, aspirational tone.',
+    format: 'Static image (1080x1080, 1200x628)',
+    keywords: ['lifestyle', 'diverse sports', 'company pays', 'energetic'],
+  },
+  {
+    id: 'brief-2',
+    segmentId: 'seg-2',
+    direction: 'Post-work wellness routine. Young professional transitioning from office to gym/yoga. Emphasize "refresh" and stress relief.',
+    format: 'Static image (1080x1080, 1200x628)',
+    keywords: ['post-work', 'refresh', 'young professionals', 'Tokyo'],
+  },
+  {
+    id: 'brief-3',
+    segmentId: 'seg-3',
+    direction: 'Data-driven: employee retention ROI stats. Professional tone, modern office setting. Lead with "87% of HR leaders" stat.',
+    format: 'Single image LinkedIn (1200x627)',
+    keywords: ['data-driven', 'retention ROI', 'professional', 'enterprise'],
+  },
+  {
+    id: 'brief-4',
+    segmentId: 'seg-4',
+    direction: 'Case study angle: 3,000-employee company reduced turnover by 23%. Dashboard/metrics visual. Trust-building tone.',
+    format: 'Single image LinkedIn (1200x627)',
+    keywords: ['case study', 'metrics', 'turnover reduction', 'SME'],
+  },
+];
+
+const CREATIVE_DATA = [
+  {
+    id: 'c1',
+    briefId: 'brief-1',
+    type: 'meta',
+    group: 'b2c',
+    label: 'Creative 1.1 — Fitness Freedom',
+    image: '../japan-creative.png',
+    brand: 'EGYM WELLPASS',
+    body: 'Want to work out? Your company pays! 9,000+ gyms & studios, unlimited access. Yoga, weights, swimming, bouldering — anytime, anywhere you like.',
+    headline: 'Want to work out? Your company pays!',
+    cta: 'Learn More',
+    tags: ['Tone: Casual', 'Format: Image ad', 'Angle: Lifestyle', 'Objective: App Install'],
+  },
+  {
+    id: 'c2',
+    briefId: 'brief-2',
+    type: 'meta',
+    group: 'b2c',
+    label: 'Creative 1.2 — Refresh After Work',
+    image: '../japan-creative-2.png',
+    brand: 'EGYM WELLPASS',
+    body: 'After work, hit the gym and break a sweat. With Wellpass, yoga, boxing, swimming — it\u2019s all included. Download the app and start your healthy lifestyle today.',
+    headline: 'Refresh after work!',
+    cta: 'Download the App',
+    tags: ['Tone: Energetic', 'Format: Image ad', 'Angle: Post-work routine', 'Objective: App Install'],
+  },
+  {
+    id: 'c3',
+    briefId: 'brief-3',
+    type: 'linkedin',
+    group: 'b2b',
+    label: 'Creative 2.1 — Retention ROI',
+    body: 'Employee wellness benefits are key to retaining top talent. 87% of HR leaders report that benefits improved employee retention. See how EGYM Wellpass can reduce turnover and build a healthier team.',
+    imageText: 'Lifestyle: Modern Tokyo office with wellness area',
+    headline: 'Retain top talent with wellness benefits',
+    cta: 'Learn More',
+    tags: ['Tone: Professional', 'Format: Single image', 'Angle: Data-driven', 'Objective: Lead Gen'],
+  },
+  {
+    id: 'c4',
+    briefId: 'brief-4',
+    type: 'linkedin',
+    group: 'b2b',
+    label: 'Creative 2.2 — Case Study',
+    body: 'A 3,000-employee company reduced turnover by 23% in one year. How? They simply upgraded their employee wellness benefits. Read the full case study.',
+    imageText: 'Case study: Employee satisfaction metrics dashboard',
+    headline: 'Case Study: 23% turnover reduction in 12 months',
+    cta: 'Read Case Study',
+    tags: ['Tone: Professional', 'Format: Single image', 'Angle: Case study', 'Objective: Lead Gen'],
+  },
+];
+
+const ASSET_DATA = [
+  { id: 'asset-1', segmentId: 'seg-1', image: '../reference-1.jpg', source: 'DACH Library', caption: 'Top B2C creative — lifestyle, broad fitness (7.9K impressions)' },
+  { id: 'asset-2', segmentId: 'seg-2', image: '../reference-2.jpg', source: 'DACH Library', caption: 'B2C post-work creative — young professionals (5.6K impressions)' },
+  { id: 'asset-3', segmentId: 'seg-3', image: '../reference-1.jpg', source: 'DACH Library', caption: 'B2B corporate creative — HR targeting (3.2K impressions)' },
+  { id: 'asset-4', segmentId: 'seg-4', image: '../reference-2.jpg', source: 'DACH Library', caption: 'B2B case study creative — C-Suite targeting (2.7K impressions)' },
+];
+
+const VARIATION_DATA = [
+  { headline: 'Your company pays for your fitness!', label: 'Var A', image: '../japan-variation-1.png' },
+  { headline: 'One app, 9,000+ gyms', label: 'Var B', image: '../japan-variation-2.png' },
+  { headline: 'Get moving! Your company has you covered!', label: 'Var C', image: '../japan-variation-3.png' },
+];
+
+// ===================================================================
+// CHAT SCRIPT
+// ===================================================================
+const SCRIPT = [
+  // Step 0: User brief → fills entire settings card + loads data
+  {
+    messages: [
+      { role: 'user', text: 'Expand Wellpass to <strong>Japan</strong>. 10K B2C app installs, 50 B2B demo requests, 8 weeks. Use our DACH playbook.' },
+      { role: 'tool', label: 'Load DACH data + brand strategy', result: 'Past performance: <strong>63K+ B2C</strong> reach, <strong>28K+ B2B</strong> reach. Brand: <strong>\u201cFreedom to move\u201d</strong>, energetic tone, employer-paid benefit.' },
+      { role: 'agent', text: 'Got it \u2014 campaign card updated. Two campaigns: <strong>App Installs</strong> (Meta) and <strong>Lead Gen</strong> (LinkedIn). Ready for segments.' },
+    ],
+    canvasAction: 'updateSettingsFull',
+  },
+  // Step 1: Segments
+  {
+    messages: [
+      { role: 'user', text: 'Generate the audience segments.' },
+      { role: 'agent', text: 'Here are <strong>4 segments</strong> based on your DACH personas, adapted for Japan.' },
+    ],
+    canvasAction: 'spawnSegments',
+  },
+  // Step 2: Segment selected (trigger)
+  {
+    messages: [
+      { role: 'agent', text: 'Segment in context. Let me fetch <strong>reference assets</strong> from your DACH library.' },
+    ],
+    canvasAction: null,
+    trigger: 'cardSelect',
+  },
+  // Step 3: Fetch assets + generate briefs together
+  {
+    messages: [
+      { role: 'tool', label: 'Fetch DACH creative library', result: 'Loaded <strong>4 reference assets</strong> — top-performing creatives matched to each segment.' },
+      { role: 'agent', text: 'Fetched your <strong>reference assets</strong> and generated <strong>image briefs</strong> from them. <strong>Double-click any text</strong> to edit before generating creatives.' },
+    ],
+    canvasAction: 'spawnAssetsAndBriefs',
+  },
+  // Step 4: Creatives
+  {
+    messages: [
+      { role: 'user', text: 'Briefs look good. Generate the creatives.' },
+      { role: 'agent', text: 'Creatives generated. <strong>\u00a51.3M</strong> B2C + <strong>\u00a5700K</strong> B2B.' },
+    ],
+    canvasAction: 'spawnCreatives',
+  },
+  // Step 6: Creative selected (trigger)
+  {
+    messages: [
+      { role: 'agent', text: 'Creative in context. <strong>Double-click</strong> to edit text, or ask for variations.' },
+    ],
+    canvasAction: null,
+    trigger: 'creativeSelect',
+  },
+  // Step 7: Variations
+  {
+    messages: [
+      { role: 'user', text: 'Generate 3 variations.' },
+      { role: 'agent', text: '<strong>3 variations</strong> branching from this creative. Click any to select.' },
+    ],
+    canvasAction: 'spawnVariations',
+  },
+  // Step 8: Variation selected (trigger)
+  {
+    messages: [
+      { role: 'agent', text: 'Var C selected \u2014 male model, 25kg dumbbell. Want to adjust?' },
+    ],
+    canvasAction: null,
+    trigger: 'varSelect',
+  },
+  // Step 9: More weight
+  {
+    messages: [
+      { role: 'user', text: 'More weight \u2014 heavier dumbbell.' },
+      { role: 'agent', text: 'Done. Right-click to export when ready.' },
+    ],
+    canvasAction: 'spawnMoreWeight',
+  },
+];
+
+// ===================================================================
+// CANVAS: PAN & ZOOM
+// ===================================================================
+function updateCanvasTransform() {
+  canvasTransform.style.transform = `translate(${state.canvas.x}px, ${state.canvas.y}px) scale(${state.canvas.scale})`;
+  document.getElementById('zoomDisplay').textContent = Math.round(state.canvas.scale * 100) + '%';
+  const gridSize = 24 * state.canvas.scale;
+  canvasArea.style.backgroundSize = `${gridSize}px ${gridSize}px`;
+  canvasArea.style.backgroundPosition = `${state.canvas.x % gridSize}px ${state.canvas.y % gridSize}px`;
+  updateConnectionLine();
+  updateFlowLines();
+  renderMinimap();
+}
+
+canvasArea.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('.canvas-card') || e.target.closest('.minimap')) return;
+  state.isPanning = true;
+  state.panStart = { x: e.clientX, y: e.clientY, cx: state.canvas.x, cy: state.canvas.y };
+  canvasArea.classList.add('grabbing');
+  canvasArea.setPointerCapture(e.pointerId);
+  if (state.selectedCardId) deselectCard();
+});
+
+canvasArea.addEventListener('pointermove', (e) => {
+  if (state.isPanning) {
+    state.canvas.x = state.panStart.cx + (e.clientX - state.panStart.x);
+    state.canvas.y = state.panStart.cy + (e.clientY - state.panStart.y);
+    updateCanvasTransform();
+  }
+  if (state.isDragging && state.dragCardId) {
+    const dx = e.clientX - state.dragStart.x;
+    const dy = e.clientY - state.dragStart.y;
+    if (!state.dragStart.moved && Math.abs(dx) + Math.abs(dy) > 4) {
+      state.dragStart.moved = true;
+      const el = document.getElementById('card-' + state.dragCardId);
+      if (el) { el.classList.add('dragging', 'grabbing'); }
+    }
+    if (state.dragStart.moved) {
+      const card = state.cards.find(c => c.id === state.dragCardId);
+      if (!card) return;
+      card.x = state.dragStart.cardX + dx / state.canvas.scale;
+      card.y = state.dragStart.cardY + dy / state.canvas.scale;
+      const el = document.getElementById('card-' + card.id);
+      if (el) { el.style.left = card.x + 'px'; el.style.top = card.y + 'px'; }
+      updateConnectionLine();
+      updateFlowLines();
+      renderMinimap();
+    }
+  }
+});
+
+canvasArea.addEventListener('pointerup', () => {
+  if (state.isPanning) { state.isPanning = false; canvasArea.classList.remove('grabbing'); }
+  if (state.isDragging) {
+    state.isDragging = false;
+    const el = document.getElementById('card-' + state.dragCardId);
+    if (el) { el.classList.remove('dragging', 'grabbing'); }
+    state.dragCardId = null;
+  }
+});
+
+canvasArea.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const rect = canvasArea.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+  const oldScale = state.canvas.scale;
+  const delta = e.deltaY > 0 ? -0.08 : 0.08;
+  const newScale = Math.min(3, Math.max(0.15, oldScale + delta));
+  state.canvas.x = mouseX - (mouseX - state.canvas.x) * (newScale / oldScale);
+  state.canvas.y = mouseY - (mouseY - state.canvas.y) * (newScale / oldScale);
+  state.canvas.scale = newScale;
+  updateCanvasTransform();
+}, { passive: false });
+
+function zoomBy(delta) {
+  const rect = canvasArea.getBoundingClientRect();
+  const cx = rect.width / 2, cy = rect.height / 2;
+  const oldScale = state.canvas.scale;
+  const newScale = Math.min(3, Math.max(0.15, oldScale + delta));
+  state.canvas.x = cx - (cx - state.canvas.x) * (newScale / oldScale);
+  state.canvas.y = cy - (cy - state.canvas.y) * (newScale / oldScale);
+  state.canvas.scale = newScale;
+  updateCanvasTransform();
+}
+
+function fitAll() {
+  if (state.cards.length === 0) return;
+  const rect = canvasArea.getBoundingClientRect();
+  const padding = 80;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  state.cards.forEach(c => {
+    minX = Math.min(minX, c.x);
+    minY = Math.min(minY, c.y);
+    maxX = Math.max(maxX, c.x + c.width);
+    maxY = Math.max(maxY, c.y + c.height);
+  });
+  const contentW = maxX - minX;
+  const contentH = maxY - minY;
+  const scaleX = (rect.width - padding * 2) / contentW;
+  const scaleY = (rect.height - padding * 2) / contentH;
+  const scale = Math.min(scaleX, scaleY, 1.2);
+  state.canvas.scale = Math.max(0.15, Math.min(3, scale));
+  state.canvas.x = (rect.width - contentW * state.canvas.scale) / 2 - minX * state.canvas.scale;
+  state.canvas.y = (rect.height - contentH * state.canvas.scale) / 2 - minY * state.canvas.scale;
+  updateCanvasTransform();
+}
+
+// ===================================================================
+// CARD: DRAG & SELECT
+// ===================================================================
+function startCardDrag(e, cardId) {
+  e.stopPropagation();
+  const card = state.cards.find(c => c.id === cardId);
+  if (!card) return;
+  state.isDragging = true;
+  state.dragCardId = cardId;
+  state.dragStart = { x: e.clientX, y: e.clientY, cardX: card.x, cardY: card.y, moved: false };
+  selectCard(cardId);
+}
+
+function selectCard(cardId) {
+  if (state.selectedCardId === cardId) return;
+  deselectCard();
+  state.selectedCardId = cardId;
+  const el = document.getElementById('card-' + cardId);
+  if (el) el.classList.add('selected');
+  const card = state.cards.find(c => c.id === cardId);
+  if (card) {
+    // Update chat header context
+    document.getElementById('chatContext').textContent = card.label;
+    // Show card as context in the input area
+    showInputContext(card);
+  }
+  updateConnectionLine();
+
+  // Trigger chat steps based on card type
+  if (!card) return;
+
+  // After segments spawned, first card select triggers step 2
+  if (state.chatStep === 1 && state.spawned.segments) {
+    advanceChat(); // step 2: segment selected
+  }
+  // After creatives spawned, creative select triggers step 5
+  if (state.chatStep === 4 && state.spawned.creatives && card.cardType === 'creative') {
+    advanceChat(); // step 5: creative selected
+  }
+  // After variations spawned, variation select triggers step 7
+  if (state.chatStep === 6 && state.spawned.variations && card.cardType === 'variation') {
+    advanceChat(); // step 7: var selected
+  }
+}
+
+function deselectCard() {
+  if (!state.selectedCardId) return;
+  const el = document.getElementById('card-' + state.selectedCardId);
+  if (el) el.classList.remove('selected');
+  state.selectedCardId = null;
+  document.getElementById('chatContext').textContent = 'Ready to build your campaign';
+  document.getElementById('connectionLine').classList.remove('visible');
+  // Remove card context from input area
+  clearInputContext();
+}
+
+// ===================================================================
+// INPUT CONTEXT (selected card shown inside the input area)
+// ===================================================================
+function showInputContext(card) {
+  const container = document.getElementById('chatInputContext');
+  const typeName = card.cardType.charAt(0).toUpperCase() + card.cardType.slice(1);
+  let bodyHTML = '';
+
+  switch (card.cardType) {
+    case 'settings':
+      bodyHTML = `
+        <div class="ctx-field"><span class="ctx-field-label">Market</span><span>${card.data.market}</span></div>
+        <div class="ctx-field"><span class="ctx-field-label">Budget</span><span>${card.data.budget} (${card.data.split})</span></div>`;
+      break;
+    case 'segment':
+      bodyHTML = `
+        <div class="ctx-field"><span class="ctx-field-label">Channel</span><span>${card.data.channel}</span></div>
+        <div class="ctx-field"><span class="ctx-field-label">Targeting</span><span>${card.data.targeting}</span></div>`;
+      break;
+    case 'asset':
+      bodyHTML = `
+        <div class="ctx-field"><span class="ctx-field-label">Source</span><span>${card.data.source}</span></div>
+        <div class="ctx-field"><span class="ctx-field-label">Detail</span><span>${card.data.caption}</span></div>`;
+      break;
+    case 'brief':
+      bodyHTML = `
+        <div class="ctx-field"><span class="ctx-field-label">Direction</span><span>${card.data.direction}</span></div>`;
+      break;
+    case 'creative':
+    case 'variation':
+      bodyHTML = `
+        <div class="ctx-field"><span class="ctx-field-label">Headline</span><span>${card.data.headline}</span></div>
+        <div class="ctx-field"><span class="ctx-field-label">CTA</span><span>${card.data.cta}</span></div>`;
+      break;
+  }
+
+  container.innerHTML = `
+    <div class="chat-input-context-card">
+      <div class="chat-input-context-header">
+        <span class="ctx-type">${typeName}</span>
+        <span class="ctx-label">${card.label}</span>
+        <button class="ctx-close" onclick="deselectCard()" title="Remove context">&times;</button>
+      </div>
+      <div class="chat-input-context-body">${bodyHTML}</div>
+    </div>`;
+  container.classList.add('has-context');
+}
+
+function clearInputContext() {
+  const container = document.getElementById('chatInputContext');
+  container.innerHTML = '';
+  container.classList.remove('has-context');
+}
+
+// ===================================================================
+// CARD RENDERERS
+// ===================================================================
+function renderCard(card) {
+  const el = document.createElement('div');
+  el.className = 'canvas-card card-' + card.cardType;
+  el.id = 'card-' + card.id;
+  el.style.left = card.x + 'px';
+  el.style.top = card.y + 'px';
+  el.addEventListener('pointerdown', (e) => startCardDrag(e, card.id));
+  el.addEventListener('click', (e) => { e.stopPropagation(); selectCard(card.id); });
+
+  switch (card.cardType) {
+    case 'settings': el.innerHTML = renderSettingsHTML(card); break;
+    case 'segment': el.innerHTML = renderSegmentHTML(card); break;
+    case 'asset': el.innerHTML = renderAssetHTML(card); break;
+    case 'brief': el.innerHTML = renderBriefHTML(card); break;
+    case 'creative': el.innerHTML = renderCreativeHTML(card); break;
+    case 'variation': el.innerHTML = renderVariationHTML(card); break;
+  }
+
+  canvasTransform.appendChild(el);
+  return el;
+}
+
+function renderSettingsHTML(card) {
+  const d = card.data;
+  const empty = '<span style="color:var(--gray-300);font-style:italic">—</span>';
+  const hasBadges = d.objectives.length > 0 || d.channels.length > 0;
+  const hasDetails = d.market || d.budget;
+  return `
+    <div class="settings-card-header">
+      <div class="icon">&#9881;</div>
+      <div>
+        <div class="title">${d.name}</div>
+        <div class="subtitle">Campaign Settings</div>
+      </div>
+    </div>
+    <div class="settings-card-body">
+      ${hasBadges ? `<div class="settings-card-badges">
+        ${d.objectives.map(o => `<span class="settings-card-badge ${o.type}">${o.label}</span>`).join('')}
+        ${d.channels.map(c => `<span class="settings-card-badge channel">${c.label}</span>`).join('')}
+      </div>` : ''}
+      <div class="settings-card-row">
+        <div class="settings-card-field">
+          <div class="field-label">Market</div>
+          <div class="field-value inline-editable" data-card-id="${card.id}" data-field="market">${d.market || empty}</div>
+        </div>
+      </div>
+      <div class="settings-card-row">
+        <div class="settings-card-field">
+          <div class="field-label">Budget</div>
+          <div class="field-value inline-editable" data-card-id="${card.id}" data-field="budget">${d.budget || empty}</div>
+        </div>
+        <div class="settings-card-field">
+          <div class="field-label">Split</div>
+          <div class="field-value">${d.split || empty}</div>
+        </div>
+      </div>
+      <div class="settings-card-row">
+        <div class="settings-card-field">
+          <div class="field-label">Timeline</div>
+          <div class="field-value">${d.timeline || empty}</div>
+        </div>
+        <div class="settings-card-field">
+          <div class="field-label">Positioning</div>
+          <div class="field-value">${d.positioning || empty}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderSegmentHTML(card) {
+  const d = card.data;
+  return `
+    <div class="segment-card-accent ${d.group}"></div>
+    <div class="segment-card-top">
+      <div class="segment-card-icon ${d.group}">${d.channel === 'Meta' ? 'M' : 'in'}</div>
+      <div class="segment-card-name inline-editable" data-card-id="${card.id}" data-field="name">${d.name}</div>
+    </div>
+    <div class="segment-card-body">
+      <div class="segment-card-detail">
+        <span class="detail-label">Channel</span>
+        <span>${d.channel}</span>
+      </div>
+      <div class="segment-card-detail">
+        <span class="detail-label">Targeting</span>
+        <span>${d.targeting}</span>
+      </div>
+    </div>
+    <div class="segment-card-tagline inline-editable" data-card-id="${card.id}" data-field="tagline">${d.tagline}</div>`;
+}
+
+function renderAssetHTML(card) {
+  const d = card.data;
+  return `
+    <div class="asset-card-header">
+      <span class="icon">&#128444;</span>
+      <span class="label">Reference Asset</span>
+      <span class="source-badge">${d.source}</span>
+    </div>
+    <img class="asset-card-image" src="${d.image}" alt="Reference" draggable="false">
+    <div class="asset-card-footer">${d.caption}</div>`;
+}
+
+function renderBriefHTML(card) {
+  const d = card.data;
+  return `
+    <div class="brief-card-header">
+      <span class="icon">&#9998;</span>
+      <span class="label">Image Brief</span>
+    </div>
+    <div class="brief-card-body">
+      <div class="brief-card-field">
+        <div class="brief-label">Direction</div>
+        <div class="brief-value inline-editable" data-card-id="${card.id}" data-field="direction">${d.direction}</div>
+      </div>
+      <div class="brief-card-field">
+        <div class="brief-label">Format</div>
+        <div class="brief-value">${d.format}</div>
+      </div>
+      <div class="brief-card-keywords">
+        ${d.keywords.map(k => `<span class="brief-keyword">${k}</span>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderCreativeHTML(card) {
+  const d = card.data;
+  let html = `<div class="card-top-bar"><span class="label">${card.label}</span></div>`;
+  if (d.type === 'meta') {
+    html += `
+      <div class="meta-ad">
+        <img src="${d.image}" alt="Creative" style="width:100%;display:block;" draggable="false">
+        <div class="meta-ad-content">
+          <div class="meta-ad-brand">${d.brand}</div>
+          <div class="meta-ad-text inline-editable" data-card-id="${card.id}" data-field="body">${d.body}</div>
+        </div>
+        <div class="meta-ad-bottom">
+          <span class="headline inline-editable" data-card-id="${card.id}" data-field="headline">${d.headline}</span>
+          <span class="meta-ad-cta">${d.cta}</span>
+        </div>
+      </div>`;
+  } else {
+    html += `
+      <div class="linkedin-ad">
+        <div class="linkedin-ad-header">
+          <div class="company-logo">EGYM</div>
+          <div class="company-info">
+            <div class="name">EGYM Wellpass</div>
+            <div class="meta">Sponsored &middot; 12,450 followers</div>
+          </div>
+        </div>
+        <div class="linkedin-ad-body inline-editable" data-card-id="${card.id}" data-field="body">${d.body}</div>
+        <div class="linkedin-ad-image">${d.imageText || ''}</div>
+        <div class="linkedin-ad-headline inline-editable" data-card-id="${card.id}" data-field="headline">${d.headline}</div>
+        <span class="linkedin-ad-cta">${d.cta}</span>
+      </div>`;
+  }
+  html += `<div class="card-footer">${(d.tags || []).map(t => `<span class="card-tag">${t}</span>`).join('')}</div>`;
+  return html;
+}
+
+function renderVariationHTML(card) {
+  // Variations reuse creative rendering
+  return renderCreativeHTML(card);
+}
+
+// ===================================================================
+// CANVAS ACTIONS
+// ===================================================================
+function spawnInitialSettings() {
+  // Spawn the blank settings card on load
+  state.spawned.settings = true;
+
+  const rect = canvasArea.getBoundingClientRect();
+  const baseX = (rect.width / 2 - 170) / state.canvas.scale - state.canvas.x / state.canvas.scale;
+  const baseY = 80;
+
+  const card = {
+    id: 'settings',
+    cardType: 'settings',
+    label: SETTINGS_DATA.name,
+    x: baseX,
+    y: baseY,
+    width: 340,
+    height: 260,
+    parentId: null,
+    data: SETTINGS_DATA,
+  };
+  state.cards.push(card);
+
+  const el = renderCard(card);
+  el.classList.add('visible');
+  document.getElementById('canvasEmpty').classList.add('hidden');
+  document.getElementById('minimap').classList.add('visible');
+  renderMinimap();
+  fitAll();
+}
+
+function updateSettingsFull() {
+  // Fill in all settings at once from user brief + brand strategy
+  Object.assign(SETTINGS_DATA, SETTINGS_STEP0, SETTINGS_STEP1);
+  const card = state.cards.find(c => c.id === 'settings');
+  if (card) {
+    card.label = SETTINGS_DATA.name;
+    card.data = SETTINGS_DATA;
+    rerenderSettingsCard();
+  }
+}
+
+function rerenderSettingsCard() {
+  const card = state.cards.find(c => c.id === 'settings');
+  if (!card) return;
+  const el = document.getElementById('card-settings');
+  if (!el) return;
+  el.innerHTML = renderSettingsHTML(card);
+  // Brief flash animation to draw attention to the update
+  el.style.transition = 'box-shadow 0.3s ease';
+  el.style.boxShadow = '0 0 0 3px var(--orange), 0 0 20px rgba(255,143,61,0.2)';
+  setTimeout(() => {
+    el.style.boxShadow = '';
+    el.style.transition = '';
+  }, 800);
+}
+
+function spawnSegments() {
+  if (state.spawned.segments) return;
+  state.spawned.segments = true;
+
+  const parent = state.cards.find(c => c.id === 'settings');
+  if (!parent) return;
+
+  const segWidth = 260;
+  const gap = 30;
+  const totalWidth = SEGMENT_DATA.length * segWidth + (SEGMENT_DATA.length - 1) * gap;
+  const startX = parent.x + parent.width / 2 - totalWidth / 2;
+  const yOffset = parent.y + parent.height + 100;
+
+  SEGMENT_DATA.forEach((seg, i) => {
+    const card = {
+      id: seg.id,
+      cardType: 'segment',
+      label: seg.name,
+      x: startX + i * (segWidth + gap),
+      y: yOffset,
+      width: segWidth,
+      height: 170,
+      parentId: 'settings',
+      data: seg,
+    };
+    state.cards.push(card);
+
+    setTimeout(() => {
+      const el = renderCard(card);
+      el.style.animation = 'cardSpawnIn 0.5s var(--spring-bounce) forwards';
+      el.classList.add('visible');
+      updateFlowLines();
+      renderMinimap();
+    }, 200 + i * 120);
+  });
+
+  setTimeout(() => { updateFlowLines(); fitAll(); }, 200 + SEGMENT_DATA.length * 120 + 400);
+}
+
+function spawnAssets() {
+  if (state.spawned.assets) return;
+  state.spawned.assets = true;
+
+  const assetWidth = 260;
+  let delay = 0;
+
+  ASSET_DATA.forEach((asset, i) => {
+    const seg = state.cards.find(c => c.id === asset.segmentId);
+    if (!seg) return;
+
+    const assetCard = {
+      id: asset.id,
+      cardType: 'asset',
+      label: 'Reference — ' + SEGMENT_DATA[i].name.split(' ')[0],
+      x: seg.x + seg.width / 2 - assetWidth / 2,
+      y: seg.y + seg.height + 80,
+      width: assetWidth,
+      height: 210,
+      parentId: seg.id,
+      data: asset,
+    };
+    state.cards.push(assetCard);
+
+    setTimeout(() => {
+      const el = renderCard(assetCard);
+      el.style.animation = 'cardSpawnIn 0.45s var(--spring-bounce) forwards';
+      el.classList.add('visible');
+      updateFlowLines();
+      renderMinimap();
+    }, delay += 150);
+  });
+
+  setTimeout(() => { updateFlowLines(); fitAll(); }, delay + 400);
+}
+
+function spawnAssetsAndBriefs() {
+  spawnAssets();
+  // Delay briefs so assets render first
+  const assetDelay = ASSET_DATA.length * 150 + 300;
+  setTimeout(() => spawnBriefs(), assetDelay);
+}
+
+function spawnBriefs() {
+  if (state.spawned.briefs) return;
+  state.spawned.briefs = true;
+
+  const briefWidth = 260;
+  let delay = 0;
+
+  BRIEF_DATA.forEach((brief, i) => {
+    // Parent below the asset card, not the segment
+    const asset = state.cards.find(c => c.id === ASSET_DATA[i].id);
+    const fallback = state.cards.find(c => c.id === brief.segmentId);
+    const parent = asset || fallback;
+    if (!parent) return;
+
+    const briefCard = {
+      id: brief.id,
+      cardType: 'brief',
+      label: 'Brief — ' + SEGMENT_DATA[i].name.split(' ')[0],
+      x: parent.x + parent.width / 2 - briefWidth / 2,
+      y: parent.y + parent.height + 80,
+      width: briefWidth,
+      height: 200,
+      parentId: parent.id,
+      data: brief,
+    };
+    state.cards.push(briefCard);
+
+    setTimeout(() => {
+      const el = renderCard(briefCard);
+      el.style.animation = 'cardSpawnIn 0.45s var(--spring-bounce) forwards';
+      el.classList.add('visible');
+      updateFlowLines();
+      renderMinimap();
+    }, delay += 150);
+  });
+
+  setTimeout(() => { updateFlowLines(); fitAll(); }, delay + 400);
+}
+
+function spawnCreatives() {
+  if (state.spawned.creatives) return;
+  state.spawned.creatives = true;
+
+  const creativeWidth = 280;
+  let delay = 0;
+
+  CREATIVE_DATA.forEach((creative, i) => {
+    const brief = state.cards.find(c => c.id === creative.briefId);
+    if (!brief) return;
+
+    const creativeCard = {
+      id: creative.id,
+      cardType: 'creative',
+      label: creative.label,
+      x: brief.x + brief.width / 2 - creativeWidth / 2,
+      y: brief.y + brief.height + 80,
+      width: creativeWidth,
+      height: 380,
+      parentId: creative.briefId,
+      data: creative,
+    };
+    state.cards.push(creativeCard);
+
+    setTimeout(() => {
+      const el = renderCard(creativeCard);
+      el.style.animation = 'cardSpawnIn 0.45s var(--spring-bounce) forwards';
+      el.classList.add('visible');
+      updateFlowLines();
+      renderMinimap();
+    }, delay += 150);
+  });
+
+  setTimeout(() => { updateFlowLines(); fitAll(); }, delay + 600);
+}
+
+function spawnVariations() {
+  if (state.spawned.variations) return;
+  state.spawned.variations = true;
+
+  const parentId = state.selectedCardId || 'c1';
+  const parent = state.cards.find(c => c.id === parentId && c.cardType === 'creative');
+  if (!parent) {
+    // Fallback to first creative
+    const fallback = state.cards.find(c => c.cardType === 'creative');
+    if (!fallback) return;
+    return spawnVariationsFrom(fallback);
+  }
+  spawnVariationsFrom(parent);
+}
+
+function spawnVariationsFrom(parent) {
+  const varWidth = 252;
+  VARIATION_DATA.forEach((v, i) => {
+    const offsetX = (i - 1) * (varWidth + 20);
+    const card = {
+      id: `${parent.id}-var${i}`,
+      cardType: 'variation',
+      label: `${v.label} — ${v.headline.slice(0, 22)}...`,
+      x: parent.x + parent.width / 2 - varWidth / 2 + offsetX,
+      y: parent.y + parent.height + 100,
+      width: varWidth,
+      height: 340,
+      parentId: parent.id,
+      data: {
+        ...parent.data,
+        id: `${parent.id}-var${i}`,
+        label: `${v.label} — ${v.headline.slice(0, 22)}...`,
+        headline: v.headline,
+        image: v.image || parent.data.image,
+      },
+    };
+    state.cards.push(card);
+
+    setTimeout(() => {
+      const el = renderCard(card);
+      el.style.animation = 'variationSpawn 0.5s var(--spring-bounce) forwards';
+      el.classList.add('visible');
+      updateFlowLines();
+      renderMinimap();
+    }, 200 + i * 150);
+  });
+
+  setTimeout(() => { updateFlowLines(); fitAll(); }, 900);
+}
+
+function spawnMoreWeight() {
+  if (state.spawned.moreWeight) return;
+  state.spawned.moreWeight = true;
+
+  const varC = state.cards.find(c => c.id && c.id.endsWith('-var2'));
+  const parent = varC || state.cards.find(c => c.cardType === 'variation' && c.id === state.selectedCardId);
+  if (!parent) return;
+
+  const card = {
+    id: parent.id + '-edit',
+    cardType: 'variation',
+    label: 'Edited — More Weight',
+    x: parent.x,
+    y: parent.y + parent.height + 100,
+    width: 252,
+    height: 340,
+    parentId: parent.id,
+    data: {
+      ...parent.data,
+      id: parent.id + '-edit',
+      label: 'Edited — More Weight',
+      image: '../more-weight.png',
+    },
+  };
+
+  state.cards.push(card);
+  setTimeout(() => {
+    const el = renderCard(card);
+    el.style.animation = 'variationSpawn 0.5s var(--spring-bounce) forwards';
+    el.classList.add('visible');
+    selectCard(card.id);
+    updateFlowLines();
+    renderMinimap();
+  }, 300);
+
+  setTimeout(() => fitAll(), 800);
+}
+
+// ===================================================================
+// FLOW LINES (parent → child connections)
+// ===================================================================
+function updateFlowLines() {
+  const g = document.getElementById('flowLines');
+  g.innerHTML = '';
+
+  state.cards.forEach(card => {
+    if (!card.parentId) return;
+    const parent = state.cards.find(c => c.id === card.parentId);
+    if (!parent) return;
+
+    const px = state.canvas.x + (parent.x + parent.width / 2) * state.canvas.scale;
+    const py = state.canvas.y + (parent.y + parent.height) * state.canvas.scale;
+    const cx = state.canvas.x + (card.x + card.width / 2) * state.canvas.scale;
+    const cy = state.canvas.y + card.y * state.canvas.scale;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const midY = (py + cy) / 2;
+    path.setAttribute('d', `M ${px} ${py} C ${px} ${midY}, ${cx} ${midY}, ${cx} ${cy}`);
+
+    // Color based on group
+    let lineClass = 'flow-line visible';
+    if (card.data && card.data.group === 'b2c') lineClass += ' teal';
+    else if (card.data && card.data.group === 'b2b') lineClass += ' blue';
+
+    path.setAttribute('class', lineClass);
+    g.appendChild(path);
+  });
+}
+
+// ===================================================================
+// CONNECTION LINE (selected card → chat panel)
+// ===================================================================
+function updateConnectionLine() {
+  const line = document.getElementById('connectionLine');
+  if (!state.selectedCardId) { line.classList.remove('visible'); return; }
+  const card = state.cards.find(c => c.id === state.selectedCardId);
+  if (!card) return;
+
+  const areaRect = canvasArea.getBoundingClientRect();
+  const chatRect = document.getElementById('chatPanel').getBoundingClientRect();
+  const cardRight = state.canvas.x + (card.x + card.width) * state.canvas.scale;
+  const cardCenterY = state.canvas.y + (card.y + card.height / 2) * state.canvas.scale;
+  const chatLeft = chatRect.left - areaRect.left;
+  const chatCenterY = chatRect.height / 2;
+
+  const d = `M ${cardRight} ${cardCenterY} C ${cardRight + 60} ${cardCenterY}, ${chatLeft - 60} ${chatCenterY}, ${chatLeft} ${chatCenterY}`;
+  line.setAttribute('d', d);
+  line.classList.add('visible');
+}
+
+// ===================================================================
+// CONTEXT MENU (right-click)
+// ===================================================================
+const contextMenu = document.getElementById('contextMenu');
+
+function showContextMenu(x, y, items) {
+  contextMenu.innerHTML = items.map(item => {
+    if (item.sep) return '<div class="context-menu-sep"></div>';
+    return `<button class="context-menu-item" onclick="${item.action}"><span class="icon">${item.icon}</span>${item.label}</button>`;
+  }).join('');
+
+  // Position with boundary detection
+  contextMenu.style.left = x + 'px';
+  contextMenu.style.top = y + 'px';
+  contextMenu.classList.add('visible');
+
+  // Flip if near edge
+  requestAnimationFrame(() => {
+    const rect = contextMenu.getBoundingClientRect();
+    if (rect.right > window.innerWidth - 8) contextMenu.style.left = (x - rect.width) + 'px';
+    if (rect.bottom > window.innerHeight - 8) contextMenu.style.top = (y - rect.height) + 'px';
+  });
+}
+
+function hideContextMenu() {
+  contextMenu.classList.remove('visible');
+}
+
+canvasArea.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  hideContextMenu();
+
+  // Check if right-clicked on a card
+  const cardEl = e.target.closest('.canvas-card');
+  if (cardEl) {
+    const cardId = cardEl.id.replace('card-', '');
+    selectCard(cardId);
+    const card = state.cards.find(c => c.id === cardId);
+    if (!card) return;
+
+    const items = getContextMenuItems(card);
+    showContextMenu(e.clientX, e.clientY, items);
+    return;
+  }
+
+  // Right-clicked on empty canvas
+  const items = [];
+  if (state.spawned.settings && !state.spawned.segments) {
+    items.push({ icon: '&#9783;', label: 'Generate Segments', action: 'advanceToAction("spawnSegments")' });
+  }
+  if (state.spawned.segments && !state.spawned.assets) {
+    items.push({ icon: '&#128444;', label: 'Fetch Brand Assets', action: 'advanceToAction("spawnAssets")' });
+  }
+  if (state.spawned.assets && !state.spawned.briefs) {
+    items.push({ icon: '&#9998;', label: 'Generate Briefs', action: 'advanceToAction("spawnBriefs")' });
+  }
+  if (state.spawned.briefs && !state.spawned.creatives) {
+    items.push({ icon: '&#127912;', label: 'Generate Creatives', action: 'advanceToAction("spawnCreatives")' });
+  }
+  if (items.length > 0) showContextMenu(e.clientX, e.clientY, items);
+});
+
+function getContextMenuItems(card) {
+  const items = [];
+  switch (card.cardType) {
+    case 'settings':
+      if (!state.spawned.segments)
+        items.push({ icon: '&#9783;', label: 'Generate Segments', action: 'advanceToAction("spawnSegments")' });
+      break;
+    case 'segment':
+      if (!state.spawned.assets)
+        items.push({ icon: '&#128444;', label: 'Fetch Brand Assets', action: 'advanceToAction("spawnAssets")' });
+      if (state.spawned.assets && !state.spawned.briefs)
+        items.push({ icon: '&#9998;', label: 'Generate Brief', action: 'advanceToAction("spawnBriefs")' });
+      break;
+    case 'asset':
+      if (!state.spawned.briefs)
+        items.push({ icon: '&#9998;', label: 'Generate Brief', action: 'advanceToAction("spawnBriefs")' });
+      break;
+    case 'brief':
+      if (!state.spawned.creatives)
+        items.push({ icon: '&#127912;', label: 'Generate Creative', action: 'advanceToAction("spawnCreatives")' });
+      break;
+    case 'creative':
+      if (!state.spawned.variations)
+        items.push({ icon: '&#10022;', label: 'Generate Variations', action: 'advanceToAction("spawnVariations")' });
+      break;
+    case 'variation':
+      if (!state.spawned.moreWeight)
+        items.push({ icon: '&#9998;', label: 'Edit Variation', action: 'advanceToAction("spawnMoreWeight")' });
+      if (state.spawned.moreWeight && card.id && card.id.includes('-edit'))
+        items.push({ icon: '&#128230;', label: 'Export Campaign', action: 'hideContextMenu(); openExport()' });
+      break;
+  }
+  return items;
+}
+
+function advanceToAction(action) {
+  hideContextMenu();
+  // Find the chat step that triggers this action and advance to it
+  for (let i = state.chatStep + 1; i < SCRIPT.length; i++) {
+    if (SCRIPT[i].canvasAction === action) {
+      // Advance chat to that step
+      while (state.chatStep < i) advanceChat();
+      return;
+    }
+  }
+  // Fallback: just advance
+  advanceChat();
+}
+
+// Hide context menu on any click
+document.addEventListener('click', () => hideContextMenu());
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideContextMenu(); });
+
+// ===================================================================
+// INLINE EDITING (double-click to edit text)
+// ===================================================================
+document.addEventListener('dblclick', (e) => {
+  const editableEl = e.target.closest('.inline-editable');
+  if (!editableEl) return;
+  e.stopPropagation();
+  e.preventDefault();
+
+  // Save current editing state
+  if (state.editingElement && state.editingElement !== editableEl) {
+    finishInlineEdit(state.editingElement, true);
+  }
+
+  const cardId = editableEl.dataset.cardId;
+  const field = editableEl.dataset.field;
+  if (!cardId || !field) return;
+
+  state.editingElement = editableEl;
+  state.editOriginalText = editableEl.textContent;
+
+  editableEl.contentEditable = 'true';
+  editableEl.classList.add('editing');
+  editableEl.focus();
+
+  // Select all text
+  const range = document.createRange();
+  range.selectNodeContents(editableEl);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  // Listen for finish
+  editableEl.addEventListener('keydown', handleEditKeydown);
+  editableEl.addEventListener('blur', handleEditBlur);
+});
+
+function handleEditKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    finishInlineEdit(e.target, true);
+  }
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    finishInlineEdit(e.target, false);
+  }
+  // Stop propagation so arrow keys don't advance chat
+  e.stopPropagation();
+}
+
+function handleEditBlur(e) {
+  // Small delay to allow for intentional clicks
+  setTimeout(() => finishInlineEdit(e.target, true), 100);
+}
+
+function finishInlineEdit(el, save) {
+  if (!el || el.contentEditable !== 'true') return;
+
+  el.removeEventListener('keydown', handleEditKeydown);
+  el.removeEventListener('blur', handleEditBlur);
+  el.contentEditable = 'false';
+  el.classList.remove('editing');
+
+  const newText = el.textContent.trim();
+  const cardId = el.dataset.cardId;
+  const field = el.dataset.field;
+
+  if (!save || !newText) {
+    // Revert
+    el.textContent = state.editOriginalText;
+  } else {
+    // Save to card data
+    const card = state.cards.find(c => c.id === cardId);
+    if (card && card.data) {
+      card.data[field] = newText;
+      card.label = card.data.name || card.data.label || card.label;
+      console.log('Edited:', cardId, field, newText);
+    }
+  }
+
+  state.editingElement = null;
+  state.editOriginalText = '';
+}
+
+// ===================================================================
+// MINIMAP
+// ===================================================================
+function renderMinimap() {
+  if (state.cards.length === 0) return;
+  const canvas = document.getElementById('minimapCanvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  state.cards.forEach(c => {
+    minX = Math.min(minX, c.x);
+    minY = Math.min(minY, c.y);
+    maxX = Math.max(maxX, c.x + c.width);
+    maxY = Math.max(maxY, c.y + c.height);
+  });
+
+  const pad = 40;
+  minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+  const contentW = maxX - minX, contentH = maxY - minY;
+  const scale = Math.min(w / contentW, h / contentH);
+  const offX = (w - contentW * scale) / 2;
+  const offY = (h - contentH * scale) / 2;
+
+  // Draw flow lines
+  ctx.strokeStyle = '#aeaeb2';
+  ctx.lineWidth = 0.8;
+  ctx.globalAlpha = 0.4;
+  state.cards.forEach(card => {
+    if (!card.parentId) return;
+    const parent = state.cards.find(c => c.id === card.parentId);
+    if (!parent) return;
+    ctx.beginPath();
+    ctx.moveTo(offX + (parent.x + parent.width / 2 - minX) * scale, offY + (parent.y + parent.height - minY) * scale);
+    ctx.lineTo(offX + (card.x + card.width / 2 - minX) * scale, offY + (card.y - minY) * scale);
+    ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
+
+  // Draw cards
+  const typeColors = { settings: '#135E69', segment: '#1a7a87', brief: '#aeaeb2', creative: '#135E69', variation: '#FF8F3D' };
+  state.cards.forEach(c => {
+    const isSelected = c.id === state.selectedCardId;
+    ctx.fillStyle = isSelected ? '#FF8F3D' : (typeColors[c.cardType] || '#135E69');
+    ctx.globalAlpha = c.cardType === 'brief' ? 0.4 : (c.cardType === 'variation' ? 0.7 : 1);
+    ctx.fillRect(offX + (c.x - minX) * scale, offY + (c.y - minY) * scale, c.width * scale, c.height * scale);
+    ctx.globalAlpha = 1;
+  });
+
+  // Draw viewport
+  const areaRect = canvasArea.getBoundingClientRect();
+  const vpX = -state.canvas.x / state.canvas.scale;
+  const vpY = -state.canvas.y / state.canvas.scale;
+  const vpW = areaRect.width / state.canvas.scale;
+  const vpH = areaRect.height / state.canvas.scale;
+  ctx.strokeStyle = '#1d1d1f';
+  ctx.lineWidth = 1.5;
+  ctx.globalAlpha = 0.35;
+  ctx.strokeRect(offX + (vpX - minX) * scale, offY + (vpY - minY) * scale, vpW * scale, vpH * scale);
+  ctx.globalAlpha = 1;
+}
+
+// Minimap click to navigate
+document.getElementById('minimap').addEventListener('click', (e) => {
+  if (state.cards.length === 0) return;
+  const canvas = document.getElementById('minimapCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) / rect.width * canvas.width;
+  const my = (e.clientY - rect.top) / rect.height * canvas.height;
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  state.cards.forEach(c => {
+    minX = Math.min(minX, c.x - 40); minY = Math.min(minY, c.y - 40);
+    maxX = Math.max(maxX, c.x + c.width + 40); maxY = Math.max(maxY, c.y + c.height + 40);
+  });
+  const contentW = maxX - minX, contentH = maxY - minY;
+  const scale = Math.min(canvas.width / contentW, canvas.height / contentH);
+  const offX = (canvas.width - contentW * scale) / 2;
+  const offY = (canvas.height - contentH * scale) / 2;
+
+  const worldX = (mx - offX) / scale + minX;
+  const worldY = (my - offY) / scale + minY;
+
+  const areaRect = canvasArea.getBoundingClientRect();
+  state.canvas.x = -worldX * state.canvas.scale + areaRect.width / 2;
+  state.canvas.y = -worldY * state.canvas.scale + areaRect.height / 2;
+  updateCanvasTransform();
+});
+
+// ===================================================================
+// CHAT ENGINE
+// ===================================================================
+function advanceChat() {
+  const nextStep = state.chatStep + 1;
+  if (nextStep >= SCRIPT.length) return;
+
+  // Skip trigger steps if not triggered by the right action
+  const step = SCRIPT[nextStep];
+  if (step.trigger) {
+    // Trigger steps are only advanced by card selection logic, not arrow keys
+    // If manually advancing (arrow key), skip trigger steps
+    if (!step._triggered) {
+      step._triggered = true;
+    }
+  }
+
+  state.chatStep = nextStep;
+  if (nextStep > state.maxStep) state.maxStep = nextStep;
+
+  const messages = step.messages;
+  let delay = 0;
+
+  messages.forEach((msg) => {
+    delay += 80;
+    setTimeout(() => appendMessage(msg), delay);
+    delay += msg.role === 'tool' ? 250 : 350;
+  });
+
+  if (step.canvasAction) {
+    setTimeout(() => {
+      if (step.canvasAction === 'updateSettingsFull') updateSettingsFull();
+      if (step.canvasAction === 'spawnSegments') spawnSegments();
+      if (step.canvasAction === 'spawnAssets') spawnAssets();
+      if (step.canvasAction === 'spawnAssetsAndBriefs') spawnAssetsAndBriefs();
+      if (step.canvasAction === 'spawnBriefs') spawnBriefs();
+      if (step.canvasAction === 'spawnCreatives') spawnCreatives();
+      if (step.canvasAction === 'spawnVariations') spawnVariations();
+      if (step.canvasAction === 'spawnMoreWeight') spawnMoreWeight();
+    }, delay + 200);
+  }
+}
+
+function appendMessage(msg) {
+  typingIndicator.classList.remove('visible');
+  const container = document.createElement('div');
+
+  if (msg.role === 'user') {
+    container.className = 'msg user';
+    container.innerHTML = `<div class="msg-avatar">JV</div><div class="msg-bubble">${msg.text}</div>`;
+  } else if (msg.role === 'agent') {
+    container.className = 'msg agent';
+    container.innerHTML = `<div class="msg-avatar">&#10022;</div><div class="msg-bubble">${msg.text}</div>`;
+  } else if (msg.role === 'tool') {
+    container.className = 'tool-msg';
+    container.innerHTML = `<div class="tool-pill">${msg.label}</div><div class="tool-result">${msg.result}</div>`;
+  }
+
+  chatMessages.insertBefore(container, typingIndicator);
+  requestAnimationFrame(() => {
+    container.classList.add('visible');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  });
+}
+
+// ===================================================================
+// EXPORT
+// ===================================================================
+function openExport() { document.getElementById('exportOverlay').classList.add('active'); }
+function closeExport() { document.getElementById('exportOverlay').classList.remove('active'); }
+function openSettings() {
+  document.getElementById('settingsOverlay').classList.add('active');
+  // Wire up toggle interactions
+  document.querySelectorAll('.connector-toggle input').forEach(input => {
+    input.onchange = () => {
+      input.closest('.connector-card').classList.toggle('active', input.checked);
+    };
+  });
+}
+function closeSettings() { document.getElementById('settingsOverlay').classList.remove('active'); }
+
+// ===================================================================
+// KEYBOARD NAVIGATION
+// ===================================================================
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.contentEditable === 'true') return;
+
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    advanceChat();
+  }
+  if (e.key === 'Escape') {
+    if (document.getElementById('settingsOverlay').classList.contains('active')) {
+      closeSettings();
+    } else if (document.getElementById('exportOverlay').classList.contains('active')) {
+      closeExport();
+    } else if (contextMenu.classList.contains('visible')) {
+      hideContextMenu();
+    } else {
+      deselectCard();
+    }
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key === '0') {
+    e.preventDefault();
+    state.canvas.scale = 1;
+    state.canvas.x = 0;
+    state.canvas.y = 0;
+    updateCanvasTransform();
+  }
+});
+
+// ===================================================================
+// INIT
+// ===================================================================
+updateCanvasTransform();
+// Spawn blank settings card on load
+setTimeout(() => spawnInitialSettings(), 100);
+</script>
+</body>
+</html>
