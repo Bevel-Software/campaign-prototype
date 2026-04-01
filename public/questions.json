@@ -1,0 +1,96 @@
+{
+  "brand": "EGYM Wellpass",
+  "basePrompt": "Create a professional advertising creative image for EGYM Wellpass, a corporate wellness benefit that gives employees access to 9,000+ gyms and studios. The ad should be visually striking, modern, and ready for social media",
+  "questions": [
+    {
+      "id": "audience",
+      "text": "Who is this ad for?",
+      "choices": [
+        {
+          "label": "Young professionals",
+          "promptFragment": "targeting young urban professionals aged 25-34 in a modern city setting"
+        },
+        {
+          "label": "Fitness enthusiasts",
+          "promptFragment": "targeting fitness enthusiasts who love diverse workouts like yoga, weights, and swimming"
+        },
+        {
+          "label": "HR Directors",
+          "promptFragment": "targeting HR Directors and people leaders at enterprise companies"
+        }
+      ]
+    },
+    {
+      "id": "tone",
+      "text": "What tone should it have?",
+      "choices": [
+        {
+          "label": "Energetic & motivating",
+          "promptFragment": "with an energetic, high-energy, motivating tone using vibrant colors and dynamic composition"
+        },
+        {
+          "label": "Calm & mindful",
+          "promptFragment": "with a calm, mindful, zen-like tone using soft colors and serene composition"
+        },
+        {
+          "label": "Professional & data-driven",
+          "promptFragment": "with a professional, corporate tone using clean lines, subtle colors, and trust-building elements"
+        }
+      ]
+    },
+    {
+      "id": "visual",
+      "text": "What should the visual focus on?",
+      "choices": [
+        {
+          "label": "Person exercising",
+          "promptFragment": "showing a happy person actively exercising in a bright, modern gym environment"
+        },
+        {
+          "label": "Lifestyle moment",
+          "promptFragment": "showing a lifestyle moment of someone transitioning from work to wellness, feeling refreshed"
+        },
+        {
+          "label": "Group activity",
+          "promptFragment": "showing a diverse group of people enjoying a fitness class together"
+        }
+      ]
+    },
+    {
+      "id": "message",
+      "text": "What's the key message?",
+      "choices": [
+        {
+          "label": "Your company pays!",
+          "promptFragment": "with text overlay: 'Want to work out? Your company pays!' emphasizing the free employee benefit"
+        },
+        {
+          "label": "9,000+ gyms",
+          "promptFragment": "with text overlay: '9,000+ gyms & studios' emphasizing the massive variety and choice"
+        },
+        {
+          "label": "Work-life balance",
+          "promptFragment": "with text overlay: 'Refresh after work' emphasizing stress relief and work-life balance"
+        }
+      ]
+    },
+    {
+      "id": "cta",
+      "text": "Call to action?",
+      "choices": [
+        {
+          "label": "Download the App",
+          "promptFragment": "with a clear 'Download Now' call to action button in the design"
+        },
+        {
+          "label": "Learn More",
+          "promptFragment": "with a subtle 'Learn More' call to action, keeping the focus on the visual"
+        },
+        {
+          "label": "Start Free Trial",
+          "promptFragment": "with a prominent 'Start Your Free Trial' call to action button"
+        }
+      ]
+    }
+  ]
+}
