@@ -1,0 +1,825 @@
+import OpenAI from 'openai';
+import { z } from 'zod';
+import type {
+  AppState,
+  Action,
+  ChatMessage,
+  CanvasCard,
+  SettingsCard,
+  SegmentCard,
+  AssetCard,
+  BriefCard,
+  CreativeCard,
+  VariationCard,
+  SettingsCardData,
+  SegmentCardData,
+  AssetCardData,
+  BriefCardData,
+  CreativeCardData,
+} from './canvasTypes';
+import { computeChildPositions, computeInitialSettingsPosition, CARD_DIMENSIONS } from './layoutUtils';
+import { normalizeChannelList, normalizeObjectiveList } from './settingsData';
+
+// ===== Zod schemas for LLM response validation =====
+
+const toolMessageSchema = z.object({
+  label: z.string().optional().default('Processing'),
+  result: z.string().optional().default(''),
+});
+
+// Coerce objects/arrays to a flattened string so the LLM can return either shape
+const stringOrJsonField = z.union([
+  z.string(),
+  z.record(z.string(), z.unknown()).transform((obj) =>
+    Object.entries(obj).map(([k, v]) => `${k}: ${v}`).join(', '),
+  ),
+  z.array(z.unknown()).transform((arr) => arr.join(', ')),
+]).optional();
+
+const spawnSettingsSchema = z.object({
+  type: z.literal('spawn_settings'),
+  data: z.object({
+    name: z.string().optional(),
+    objectives: z.unknown().optional(),
+    market: z.string().optional(),
+    budget: stringOrJsonField,
+    split: stringOrJsonField,
+    timeline: stringOrJsonField,
+    channels: z.unknown().optional(),
+    positioning: z.string().optional(),
+  }).passthrough(),
+});
+
+const segmentSchema = z.object({
+  group: z.enum(['b2c', 'b2b']).optional(),
+  name: z.string().optional(),
+  channel: z.string().optional(),
+  targeting: z.string().optional(),
+  tagline: z.string().optional(),
+}).passthrough();
+
+const spawnSegmentsSchema = z.object({
+  type: z.literal('spawn_segments'),
+  segments: z.array(segmentSchema),
+});
+
+const spawnAssetsSchema = z.object({
+  type: z.literal('spawn_assets'),
+  assets: z.array(z.object({
+    segmentId: z.string().optional(),
+    segment_id: z.string().optional(),
+    image: z.string().optional(),
+    source: z.string().optional(),
+    caption: z.string().optional(),
+  }).passthrough()),
+});
+
+const keywordsField = z.union([
+  z.array(z.string()),
+  z.string().transform((s) => s.split(/\s*,\s*/).filter(Boolean)),
+]).optional();
+
+const spawnBriefsSchema = z.object({
+  type: z.literal('spawn_briefs'),
+  briefs: z.array(z.object({
+    segmentId: z.string().optional(),
+    segment_id: z.string().optional(),
+    brief: z.object({
+      direction: z.string().optional(),
+      format: z.string().optional(),
+      keywords: keywordsField,
+    }).passthrough().optional(),
+    direction: z.string().optional(),
+    format: z.string().optional(),
+    keywords: keywordsField,
+  }).passthrough()),
+});
+
+const generateCreativesSchema = z.object({
+  type: z.literal('generate_creatives'),
+  creatives: z.array(z.object({
+    briefId: z.string().optional(),
+    brief_id: z.string().optional(),
+    creative: z.object({
+      type: z.string().optional(),
+      group: z.string().optional(),
+      brand: z.string().optional(),
+      body: z.string().optional(),
+      headline: z.string().optional(),
+      cta: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+    }).passthrough().optional(),
+    type: z.string().optional(),
+    group: z.string().optional(),
+    brand: z.string().optional(),
+    body: z.string().optional(),
+    headline: z.string().optional(),
+    cta: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+  }).passthrough()),
+});
+
+const variationSpecSchema = z.object({
+  parentCreativeId: z.string().optional(),
+  parent_creative_id: z.string().optional(),
+  editInstruction: z.string().optional(),
+  edit_instruction: z.string().optional(),
+  instruction: z.string().optional(),
+}).passthrough();
+
+const spawnVariationSchema = z.object({
+  type: z.literal('spawn_variation'),
+  parentCreativeId: z.string().optional(),
+  parent_creative_id: z.string().optional(),
+  editInstruction: z.string().optional(),
+  edit_instruction: z.string().optional(),
+});
+
+const spawnVariationsSchema = z.object({
+  type: z.literal('spawn_variations'),
+  variations: z.array(variationSpecSchema).optional(),
+  editInstructions: z.array(z.string()).optional(),
+  edit_instructions: z.array(z.string()).optional(),
+  parentCreativeId: z.string().optional(),
+  parent_creative_id: z.string().optional(),
+});
+
+const updateCardSchema = z.object({
+  type: z.literal('update_card'),
+  cardId: z.string(),
+  updates: z.record(z.string(), z.unknown()),
+});
+
+const actionSchema = z.discriminatedUnion('type', [
+  spawnSettingsSchema,
+  spawnSegmentsSchema,
+  spawnAssetsSchema,
+  spawnBriefsSchema,
+  generateCreativesSchema,
+  spawnVariationSchema,
+  spawnVariationsSchema,
+  updateCardSchema,
+]);
+
+const llmResponseSchema = z.object({
+  reply: z.string().optional().default(''),
+  tool_messages: z.array(toolMessageSchema).optional().default([]),
+  actions: z.array(z.unknown()).optional().default([]),
+});
+
+export function validateAction(raw: unknown): z.infer<typeof actionSchema> | null {
+  const result = actionSchema.safeParse(raw);
+  if (result.success) return result.data;
+  console.warn('Invalid LLM action, skipping:', raw, result.error.format());
+  return null;
+}
+
+interface AgentResult {
+  reply: string;
+  toolMessages: ChatMessage[];
+  actions: Action[];
+  generationRequests: { cardId: string; prompt: string; previousImageDataUrl?: string }[];
+}
+
+const SYSTEM_PROMPT = `You are a campaign strategist AI. You help marketing teams plan and execute advertising campaigns.
+
+The user is working on an infinite canvas where campaign elements appear as cards. You converse naturally and output structured JSON actions to create/modify cards on the canvas.
+
+## Available card types
+- **settings**: Campaign overview (name, objectives, market, budget, timeline, channels, positioning)
+- **segment**: Audience segment (group b2c/b2b, name, channel, targeting, tagline)
+- **asset**: Reference image/asset from past campaigns (segmentId, image URL, source, caption)
+- **brief**: Creative brief for a segment (direction, format, keywords)
+- **creative**: Ad creative (type meta/linkedin, group, headline, body, cta, tags)
+- **variation**: A variation of an existing creative with edits
+
+## Your response format
+Always respond with valid JSON:
+{
+  "reply": "Your conversational message to the user (can include <strong>bold</strong> for emphasis)",
+  "tool_messages": [
+    {"label": "Tool name", "result": "Result description with <strong>highlights</strong>"}
+  ],
+  "actions": [
+    // One or more of these action types:
+    {"type": "spawn_settings", "data": {settings card data}},
+    {"type": "spawn_segments", "segments": [{segment data}, ...]},
+    {"type": "spawn_assets", "assets": [{"segmentId": "...", "image": "url", "source": "Library name", "caption": "description"}, ...]},
+    {"type": "spawn_briefs", "briefs": [{"segmentId": "...", "brief": {brief data}}, ...]},
+    {"type": "generate_creatives", "creatives": [{"briefId": "...", "creative": {creative text data}}, ...]},
+    {"type": "spawn_variation", "parentCreativeId": "...", "editInstruction": "..."},
+    {"type": "spawn_variations", "variations": [{"parentCreativeId": "...", "editInstruction": "..."}, ...]},
+    {"type": "update_card", "cardId": "...", "updates": {partial card data}}
+  ]
+}
+
+## Two-step brief → creative workflow
+Image creation follows a TWO-STEP approval flow:
+1. **Briefs first**: Use "spawn_briefs" to create editable brief cards (direction, format, keywords). Tell the user to review/edit them and confirm when ready.
+2. **Creatives after approval**: Only when the user explicitly approves briefs (e.g. "briefs look good", "generate creatives", "go ahead"), use "generate_creatives" with the briefId of each existing brief card on the canvas. This triggers image generation.
+
+IMPORTANT: "spawn_briefs" creates text-only planning cards — NO images are generated. "generate_creatives" creates ad cards WITH automatic image generation. Never skip the brief review step unless the user explicitly asks to go straight to creatives.
+
+## Guidelines
+- When the user describes a campaign, create a settings card with all relevant details
+- When asked to generate segments, create 3-4 audience segments (mix of b2c and b2b if applicable)
+- When asked for briefs or image briefs, use "spawn_briefs" — then tell the user: "Here are your image briefs. Double-click any text to edit, then tell me when you're ready to generate creatives."
+- When the user approves briefs, use "generate_creatives" and set each creative's briefId to the ID of the corresponding existing brief card from the canvas state
+- For Meta ads, use type "meta". For LinkedIn ads, use type "linkedin"
+- B2C segments typically use Meta (Instagram/Facebook), B2B segments use LinkedIn
+- Be specific with targeting, taglines, and creative direction — don't be generic
+- If the user has a card selected and gives an edit instruction, create a variation
+- If the user asks for multiple variants, use "spawn_variations" with one entry per requested edit
+- Always include tool_messages for any "work" you're doing (loading data, generating content, etc.)
+- Keep your reply concise and actionable
+`;
+
+function getAllKnownCards(state: AppState, result: AgentResult): CanvasCard[] {
+  return [
+    ...state.cards,
+    ...result.actions
+      .filter((a): a is Extract<Action, { type: 'ADD_CARD' }> => a.type === 'ADD_CARD')
+      .map((a) => a.card),
+    ...result.actions
+      .filter((a): a is Extract<Action, { type: 'ADD_CARDS' }> => a.type === 'ADD_CARDS')
+      .flatMap((a) => a.cards),
+  ];
+}
+
+interface VariationSpec {
+  parentCreativeId?: string;
+  editInstruction: string;
+}
+
+function parseVariationSpecs(action: any, state: AppState): VariationSpec[] {
+  const actionParentId = action.parentCreativeId || action.parent_creative_id || state.selectedCardId || undefined;
+  const specs: VariationSpec[] = [];
+
+  if (Array.isArray(action.variations)) {
+    for (const v of action.variations) {
+      const editInstruction = String(
+        v?.editInstruction ?? v?.edit_instruction ?? v?.instruction ?? '',
+      ).trim();
+      if (!editInstruction) continue;
+      specs.push({
+        parentCreativeId: v?.parentCreativeId || v?.parent_creative_id || actionParentId,
+        editInstruction,
+      });
+    }
+  }
+
+  if (Array.isArray(action.editInstructions) || Array.isArray(action.edit_instructions)) {
+    const edits = (action.editInstructions || action.edit_instructions) as unknown[];
+    for (const edit of edits) {
+      const editInstruction = String(edit ?? '').trim();
+      if (!editInstruction) continue;
+      specs.push({ parentCreativeId: actionParentId, editInstruction });
+    }
+  }
+
+  const singleEdit = String(
+    action.editInstruction ?? action.edit_instruction ?? '',
+  ).trim();
+  if (singleEdit) {
+    specs.push({
+      parentCreativeId: actionParentId,
+      editInstruction: singleEdit,
+    });
+  }
+
+  return specs;
+}
+
+function spawnVariations(
+  specs: VariationSpec[],
+  state: AppState,
+  result: AgentResult,
+  now: number,
+) {
+  if (specs.length === 0) return;
+
+  const allCards = getAllKnownCards(state, result);
+  const byParent = new Map<string, { parentCard: CreativeCard | VariationCard; edits: string[] }>();
+
+  for (const spec of specs) {
+    const parentId = spec.parentCreativeId || state.selectedCardId || undefined;
+    if (!parentId) continue;
+    const parentCard = allCards.find(
+      (c): c is CreativeCard | VariationCard =>
+        c.id === parentId && (c.cardType === 'creative' || c.cardType === 'variation'),
+    );
+    if (!parentCard) continue;
+
+    const group = byParent.get(parentId);
+    if (group) {
+      group.edits.push(spec.editInstruction);
+    } else {
+      byParent.set(parentId, { parentCard, edits: [spec.editInstruction] });
+    }
+  }
+
+  const cards: VariationCard[] = [];
+  const genRequests: AgentResult['generationRequests'] = [];
+  let seq = 0;
+
+  for (const [, group] of byParent) {
+    const { parentCard, edits } = group;
+    const positions = computeChildPositions(
+      parentCard,
+      edits.length,
+      CARD_DIMENSIONS.variation.width,
+    );
+    const parentData = parentCard.data as CreativeCardData;
+
+    for (let i = 0; i < edits.length; i++) {
+      const editInstruction = edits[i];
+      const basePrompt = parentData.prompt || state.basePrompt || 'Edit the image';
+      const prompt = `${basePrompt}. Edit: ${editInstruction}`;
+      const cardId = `var-${now}-${seq++}`;
+
+      const data: CreativeCardData = {
+        ...parentData,
+        imageDataUrl: null,
+        isGenerating: true,
+        error: null,
+        prompt,
+      };
+
+      cards.push({
+        id: cardId,
+        cardType: 'variation',
+        label: `Variation — ${editInstruction.slice(0, 25)}`,
+        x: positions[i]?.x || parentCard.x,
+        y: positions[i]?.y || parentCard.y + parentCard.height + 100,
+        width: CARD_DIMENSIONS.variation.width,
+        height: CARD_DIMENSIONS.variation.height,
+        parentId: parentCard.id,
+        data,
+      });
+
+      genRequests.push({
+        cardId,
+        prompt,
+        previousImageDataUrl: parentData.imageDataUrl || undefined,
+      });
+    }
+  }
+
+  if (cards.length > 0) {
+    result.actions.push({ type: 'ADD_CARDS', cards });
+    result.generationRequests.push(...genRequests);
+  }
+}
+
+function serializeCanvasState(state: AppState): string {
+  if (state.cards.length === 0) {
+    return 'Canvas is empty. No cards yet.';
+  }
+
+  const cardSummaries = state.cards.map((c) => {
+    switch (c.cardType) {
+      case 'settings':
+        return `[Settings] "${c.data.name}" — Market: ${c.data.market}, Budget: ${c.data.budget}`;
+      case 'segment':
+        return `[Segment: ${c.id}] "${c.data.name}" (${c.data.group}) — ${c.data.channel}, ${c.data.targeting}`;
+      case 'asset':
+        return `[Asset: ${c.id}] for segment ${c.data.segmentId} — "${c.data.caption}" (${c.data.source})`;
+      case 'brief':
+        return `[Brief: ${c.id}] for segment ${c.data.segmentId} — ${c.data.direction.slice(0, 80)}...`;
+      case 'creative':
+        return `[Creative: ${c.id}] ${c.data.type} ad — "${c.data.headline}" (${c.data.isGenerating ? 'generating image...' : c.data.imageDataUrl ? 'has image' : 'no image'})`;
+      case 'variation':
+        return `[Variation: ${c.id}] of ${c.parentId} — "${c.data.headline}"`;
+      default: {
+        const _exhaustive: never = c;
+        return `[Unknown: ${(_exhaustive as any).id}]`;
+      }
+    }
+  });
+
+  const selectedInfo = state.selectedCardId
+    ? `\nSelected card: ${state.selectedCardId}`
+    : '\nNo card selected.';
+
+  return cardSummaries.join('\n') + selectedInfo;
+}
+
+export async function processMessage(
+  userText: string,
+  state: AppState,
+): Promise<AgentResult> {
+  const openai = new OpenAI({
+    apiKey: state.apiKeys.openai!,
+    dangerouslyAllowBrowser: true,
+  });
+
+  const canvasState = serializeCanvasState(state);
+
+  const messages: OpenAI.ChatCompletionMessageParam[] = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    {
+      role: 'system',
+      content: `Current canvas state:\n${canvasState}\n\nBrand guidelines available: ${state.brandGuidelines ? 'Yes' : 'No'}\nBrand positioning available: ${state.brandPositioning ? 'Yes' : 'No'}`,
+    },
+  ];
+
+  // Include recent chat history for context (last 10 messages)
+  const recentMessages = state.messages.slice(-10);
+  for (const msg of recentMessages) {
+    if (msg.role === 'user') {
+      messages.push({ role: 'user', content: msg.text });
+    } else if (msg.role === 'agent') {
+      messages.push({ role: 'assistant', content: msg.text });
+    }
+  }
+
+  messages.push({ role: 'user', content: userText });
+
+  let rawResponse: string;
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-5-mini',
+      reasoning_effort: 'low',
+      messages,
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 4000,
+    });
+
+    rawResponse = completion.choices[0]?.message?.content || '{}';
+  } catch (err) {
+    // Retry once on failure
+    try {
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-5-mini',
+        reasoning_effort: 'low',
+        messages: [...messages, { role: 'user', content: 'Please respond with valid JSON.' }],
+        response_format: { type: 'json_object' },
+        max_completion_tokens: 4000,
+      });
+      rawResponse = completion.choices[0]?.message?.content || '{}';
+    } catch (retryErr) {
+      throw new Error(
+        retryErr instanceof Error ? retryErr.message : 'Failed to get response from OpenAI',
+      );
+    }
+  }
+
+  // Parse response
+  let rawParsed: unknown;
+  try {
+    rawParsed = JSON.parse(rawResponse);
+  } catch {
+    return {
+      reply: "I had trouble formatting my response. Let me try again — could you rephrase your request?",
+      toolMessages: [],
+      actions: [],
+      generationRequests: [],
+    };
+  }
+
+  // Validate top-level response shape
+  const parsed = llmResponseSchema.safeParse(rawParsed);
+  if (!parsed.success) {
+    console.warn('LLM response failed validation:', parsed.error.format());
+    return {
+      reply: (rawParsed as any)?.reply || "I had trouble formatting my response. Let me try again.",
+      toolMessages: [],
+      actions: [],
+      generationRequests: [],
+    };
+  }
+
+  // Convert parsed response to AgentResult
+  const result: AgentResult = {
+    reply: parsed.data.reply,
+    toolMessages: [],
+    actions: [],
+    generationRequests: [],
+  };
+
+  // Tool messages
+  for (const tm of parsed.data.tool_messages) {
+    result.toolMessages.push({
+      id: `tool-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      role: 'tool',
+      text: '',
+      toolLabel: tm.label,
+      toolResult: tm.result,
+      timestamp: Date.now(),
+    });
+  }
+
+  // Process actions (validate each individually so one bad action doesn't block others)
+  for (const rawAction of parsed.data.actions) {
+    const validatedAction = validateAction(rawAction);
+    if (validatedAction) {
+      processAction(validatedAction, state, result);
+    }
+  }
+
+  return result;
+}
+
+type ValidatedAction = z.infer<typeof actionSchema>;
+
+function processAction(action: ValidatedAction, state: AppState, result: AgentResult) {
+  const now = Date.now();
+
+  switch (action.type) {
+    case 'spawn_settings': {
+      const data: SettingsCardData = {
+        name: action.data?.name || 'New Campaign',
+        objectives: normalizeObjectiveList(action.data?.objectives),
+        market: action.data?.market || '',
+        budget: action.data?.budget || '',
+        split: action.data?.split || '',
+        timeline: action.data?.timeline || '',
+        channels: normalizeChannelList(action.data?.channels),
+        positioning: action.data?.positioning || '',
+      };
+
+      // Position in center of viewport
+      const pos = computeInitialSettingsPosition(
+        window.innerWidth - 380, // subtract chat panel
+        window.innerHeight - 48, // subtract toolbar
+      );
+
+      const card: SettingsCard = {
+        id: `settings-${now}`,
+        cardType: 'settings',
+        label: data.name,
+        x: pos.x,
+        y: pos.y,
+        width: CARD_DIMENSIONS.settings.width,
+        height: CARD_DIMENSIONS.settings.height,
+        parentId: null,
+        data,
+      };
+
+      result.actions.push({ type: 'ADD_CARD', card });
+      break;
+    }
+
+    case 'spawn_segments': {
+      const segments = action.segments || [];
+      const settingsCard = state.cards.find((c) => c.cardType === 'settings')
+        || (result.actions.find((a) => a.type === 'ADD_CARD' && (a as any).card?.cardType === 'settings') as any)?.card;
+
+      if (!settingsCard) break;
+
+      const positions = computeChildPositions(
+        settingsCard,
+        segments.length,
+        CARD_DIMENSIONS.segment.width,
+      );
+
+      const cards: SegmentCard[] = segments.map((seg: any, i: number) => {
+        const data: SegmentCardData = {
+          group: seg.group || 'b2c',
+          name: seg.name || `Segment ${i + 1}`,
+          channel: seg.channel || 'Meta',
+          targeting: seg.targeting || '',
+          tagline: seg.tagline || '',
+        };
+        return {
+          id: `seg-${now}-${i}`,
+          cardType: 'segment' as const,
+          label: data.name,
+          x: positions[i]?.x || 0,
+          y: positions[i]?.y || 0,
+          width: CARD_DIMENSIONS.segment.width,
+          height: CARD_DIMENSIONS.segment.height,
+          parentId: settingsCard.id,
+          data,
+        };
+      });
+
+      result.actions.push({ type: 'ADD_CARDS', cards });
+      break;
+    }
+
+    case 'spawn_assets': {
+      const assets = action.assets || [];
+      const allCards = getAllKnownCards(state, result);
+      const segmentCards = allCards.filter((c): c is SegmentCard => c.cardType === 'segment');
+
+      // Group assets by parent segment so we can position siblings correctly
+      const byParent = new Map<string, { parent: SegmentCard; items: typeof assets }>();
+      for (let i = 0; i < assets.length; i++) {
+        const a = assets[i];
+        const segId = a.segmentId || a.segment_id;
+        const parentCard = allCards.find(
+          (c): c is SegmentCard => c.id === segId && c.cardType === 'segment',
+        ) || segmentCards[i];
+        if (!parentCard) continue;
+        const group = byParent.get(parentCard.id);
+        if (group) { group.items.push(a); }
+        else { byParent.set(parentCard.id, { parent: parentCard, items: [a] }); }
+      }
+
+      const cards: AssetCard[] = [];
+      let seq = 0;
+      for (const [, { parent, items }] of byParent) {
+        const positions = computeChildPositions(parent, items.length, CARD_DIMENSIONS.asset.width);
+        for (let i = 0; i < items.length; i++) {
+          const a = items[i];
+          const data: AssetCardData = {
+            segmentId: parent.id,
+            image: a.image || '',
+            source: a.source || 'Library',
+            caption: a.caption || '',
+          };
+          cards.push({
+            id: `asset-${now}-${seq++}`,
+            cardType: 'asset',
+            label: `Reference — ${parent.label?.split(' ')[0] || 'Asset'}`,
+            x: positions[i]?.x || parent.x,
+            y: positions[i]?.y || parent.y + parent.height + 100,
+            width: CARD_DIMENSIONS.asset.width,
+            height: CARD_DIMENSIONS.asset.height,
+            parentId: parent.id,
+            data,
+          });
+        }
+      }
+
+      if (cards.length > 0) {
+        result.actions.push({ type: 'ADD_CARDS', cards });
+      }
+      break;
+    }
+
+    case 'spawn_briefs': {
+      const briefs = action.briefs || [];
+      const allCards = getAllKnownCards(state, result);
+      const segmentCards = allCards.filter((c): c is SegmentCard => c.cardType === 'segment');
+
+      // Group briefs by parent segment so siblings fan out correctly
+      const byParent = new Map<string, { parent: SegmentCard; items: typeof briefs }>();
+      for (let i = 0; i < briefs.length; i++) {
+        const b = briefs[i];
+        const segId = b.segmentId || b.segment_id;
+        const parentCard = allCards.find(
+          (c): c is SegmentCard => c.id === segId && c.cardType === 'segment',
+        ) || segmentCards[i];
+        if (!parentCard) continue;
+        const group = byParent.get(parentCard.id);
+        if (group) { group.items.push(b); }
+        else { byParent.set(parentCard.id, { parent: parentCard, items: [b] }); }
+      }
+
+      const cards: BriefCard[] = [];
+      let seq = 0;
+      for (const [, { parent, items }] of byParent) {
+        const positions = computeChildPositions(parent, items.length, CARD_DIMENSIONS.brief.width);
+        for (let i = 0; i < items.length; i++) {
+          const b = items[i];
+          const data: BriefCardData = {
+            segmentId: parent.id,
+            direction: b.brief?.direction || b.direction || '',
+            format: b.brief?.format || b.format || 'Static image (1080x1080)',
+            keywords: b.brief?.keywords || b.keywords || [],
+          };
+          cards.push({
+            id: `brief-${now}-${seq++}`,
+            cardType: 'brief',
+            label: `Brief — ${parent.label?.split(' ')[0] || 'Segment'}`,
+            x: positions[i]?.x || parent.x,
+            y: positions[i]?.y || parent.y + parent.height + 100,
+            width: CARD_DIMENSIONS.brief.width,
+            height: CARD_DIMENSIONS.brief.height,
+            parentId: parent.id,
+            data,
+          });
+        }
+      }
+
+      if (cards.length > 0) {
+        result.actions.push({ type: 'ADD_CARDS', cards });
+      }
+      break;
+    }
+
+    case 'generate_creatives': {
+      const creatives = action.creatives || [];
+      const allCards = getAllKnownCards(state, result);
+      const briefCards = allCards.filter((card): card is BriefCard => card.cardType === 'brief');
+
+      const cards: CreativeCard[] = [];
+      const genRequests: AgentResult['generationRequests'] = [];
+
+      for (let i = 0; i < creatives.length; i++) {
+        const c = creatives[i];
+        const briefId = c.briefId || c.brief_id;
+        const parentCard = allCards.find(
+          (card): card is BriefCard => card.id === briefId && card.cardType === 'brief',
+        ) || briefCards[i];
+
+        if (!parentCard) continue;
+
+        const positions = computeChildPositions(
+          parentCard,
+          1,
+          CARD_DIMENSIONS.creative.width,
+        );
+
+        const data: CreativeCardData = {
+          type: (c.creative?.type || c.type || 'meta') as CreativeCardData['type'],
+          group: (c.creative?.group || c.group || 'b2c') as CreativeCardData['group'],
+          imageDataUrl: null,
+          brand: c.creative?.brand || c.brand || 'EGYM WELLPASS',
+          body: c.creative?.body || c.body || '',
+          headline: c.creative?.headline || c.headline || '',
+          cta: c.creative?.cta || c.cta || 'Learn More',
+          prompt: '',
+          tags: c.creative?.tags || c.tags || [],
+          isGenerating: true,
+          error: null,
+        };
+
+        const cardId = `creative-${now}-${i}`;
+
+        // Build the image generation prompt from the brief + segment context
+        const briefData = parentCard.cardType === 'brief' ? parentCard.data : null;
+        const segmentCard = briefData
+          ? allCards.find((card) => card.id === (briefData as BriefCardData).segmentId)
+          : null;
+        const segmentData = segmentCard?.cardType === 'segment' ? segmentCard.data : null;
+
+        let prompt = state.basePrompt || 'Create a professional advertising creative image';
+        if (briefData) {
+          prompt += `. Creative direction: ${(briefData as BriefCardData).direction}`;
+          prompt += `. Format: ${(briefData as BriefCardData).format}`;
+        }
+        if (segmentData) {
+          prompt += `. Target audience: ${(segmentData as SegmentCardData).name} — ${(segmentData as SegmentCardData).targeting}`;
+          prompt += `. Key message: ${(segmentData as SegmentCardData).tagline}`;
+        }
+        if (data.headline) prompt += `. Headline: ${data.headline}`;
+
+        // Include asset references from matching segment
+        if (briefData) {
+          const segId = (briefData as BriefCardData).segmentId;
+          const assetCards = allCards.filter(
+            (card): card is AssetCard => card.cardType === 'asset' && card.data.segmentId === segId,
+          );
+          if (assetCards.length > 0) {
+            const refs = assetCards.map((a) => `${a.data.caption} (${a.data.source})`).join(', ');
+            prompt += `. Reference assets: ${refs}`;
+          }
+        }
+
+        data.prompt = prompt;
+
+        cards.push({
+          id: cardId,
+          cardType: 'creative',
+          label: `Creative ${i + 1} — ${data.headline.slice(0, 25)}`,
+          x: positions[0]?.x || parentCard.x,
+          y: positions[0]?.y || parentCard.y + parentCard.height + 100,
+          width: CARD_DIMENSIONS.creative.width,
+          height: CARD_DIMENSIONS.creative.height,
+          parentId: parentCard.id,
+          data,
+        });
+
+        genRequests.push({
+          cardId,
+          prompt,
+        });
+      }
+
+      if (cards.length > 0) {
+        result.actions.push({ type: 'ADD_CARDS', cards });
+      }
+      result.generationRequests.push(...genRequests);
+      break;
+    }
+
+    case 'spawn_variation':
+    case 'spawn_variations': {
+      const specs = parseVariationSpecs(action, state);
+      spawnVariations(specs, state, result, now);
+      break;
+    }
+
+    case 'update_card': {
+      if (action.cardId && action.updates) {
+        const safeUpdates: any = { ...action.updates };
+        if ('objectives' in safeUpdates) {
+          safeUpdates.objectives = normalizeObjectiveList(safeUpdates.objectives);
+        }
+        if ('channels' in safeUpdates) {
+          safeUpdates.channels = normalizeChannelList(safeUpdates.channels);
+        }
+
+        result.actions.push({
+          type: 'UPDATE_CARD_DATA',
+          cardId: action.cardId,
+          data: safeUpdates,
+        });
+      }
+      break;
+    }
+  }
+}
