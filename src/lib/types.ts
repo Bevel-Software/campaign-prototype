@@ -21,6 +21,7 @@ export interface Creative {
   prompt: string;
   timestamp: number;
   vote: 'up' | 'down' | null;
+  downvoteReason: string;
   annotation: string;
 }
 
@@ -46,6 +47,7 @@ export type Action =
   | { type: 'GENERATION_SUCCESS'; creative: Creative; fromQuestion: boolean }
   | { type: 'GENERATION_ERROR'; error: string }
   | { type: 'VOTE'; creativeId: string; direction: 'up' | 'down' }
+  | { type: 'SET_DOWNVOTE_REASON'; creativeId: string; reason: string }
   | { type: 'SELECT_CREATIVE'; index: number }
   | { type: 'SET_CUSTOM_EDIT'; text: string }
   | { type: 'CLEAR_ERROR' };

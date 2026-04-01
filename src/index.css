@@ -480,6 +480,27 @@ body {
   max-width: 160px;
   font-weight: 500;
 }
+.downvote-reason {
+  width: 100%;
+  max-width: 180px;
+  min-height: 60px;
+  padding: 8px 10px;
+  border: 1.5px solid rgba(255, 59, 48, 0.3);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-family: inherit;
+  resize: vertical;
+  background: rgba(255, 59, 48, 0.04);
+  color: var(--gray-800);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.downvote-reason::placeholder {
+  color: var(--gray-400);
+}
+.downvote-reason:focus {
+  border-color: #ff3b30;
+}
 
 /* ===== PROMPT PREVIEW (footer) ===== */
 .prompt-preview {

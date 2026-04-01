@@ -119,7 +119,16 @@ function reducer(state: AppState, action: FullAction): AppState {
       return {
         ...state,
         creatives: state.creatives.map((c) =>
-          c.id === action.creativeId ? { ...c, vote: action.direction } : c,
+          c.id === action.creativeId
+            ? { ...c, vote: action.direction, downvoteReason: action.direction === 'up' ? '' : c.downvoteReason }
+            : c,
+        ),
+      };
+    case 'SET_DOWNVOTE_REASON':
+      return {
+        ...state,
+        creatives: state.creatives.map((c) =>
+          c.id === action.creativeId ? { ...c, downvoteReason: action.reason } : c,
         ),
       };
     case 'SELECT_CREATIVE':
@@ -246,6 +255,7 @@ export default function App() {
           prompt,
           timestamp: Date.now(),
           vote: null,
+          downvoteReason: '',
           annotation,
         };
         dispatch({ type: 'GENERATION_SUCCESS', creative, fromQuestion });
@@ -395,6 +405,11 @@ export default function App() {
         <VotingPanel
           creative={selectedCreative}
           onVote={handleVote}
+          onDownvoteReasonChange={(reason) => {
+            if (selectedCreative) {
+              dispatch({ type: 'SET_DOWNVOTE_REASON', creativeId: selectedCreative.id, reason });
+            }
+          }}
           disabled={!selectedCreative || state.isGenerating}
         />
       </div>
