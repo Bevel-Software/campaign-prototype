@@ -41,12 +41,12 @@ const spawnSettingsSchema = z.object({
   data: z.object({
     name: z.string().optional(),
     objectives: z.unknown().optional(),
-    market: z.string().optional(),
+    market: stringOrJsonField,
     budget: stringOrJsonField,
     split: stringOrJsonField,
     timeline: stringOrJsonField,
     channels: z.unknown().optional(),
-    positioning: z.string().optional(),
+    positioning: stringOrJsonField,
   }).passthrough(),
 });
 
@@ -174,7 +174,7 @@ export function validateAction(raw: unknown): z.infer<typeof actionSchema> | nul
   return null;
 }
 
-interface AgentResult {
+export interface AgentResult {
   reply: string;
   toolMessages: ChatMessage[];
   actions: Action[];
@@ -220,8 +220,15 @@ Image creation follows a TWO-STEP approval flow:
 
 IMPORTANT: "spawn_briefs" creates text-only planning cards — NO images are generated. "generate_creatives" creates ad cards WITH automatic image generation. Never skip the brief review step unless the user explicitly asks to go straight to creatives.
 
+## Two-step settings → segments workflow
+Campaign setup follows a TWO-STEP approval flow:
+1. **Settings first**: When the user describes a campaign, create ONLY a settings card. Tell the user to review/edit the campaign details and confirm when ready.
+2. **Segments after approval**: Only when the user explicitly approves the settings (e.g. "looks good", "generate segments", "go ahead"), use "spawn_segments" to create audience segments.
+
+IMPORTANT: Never spawn segments in the same response as spawn_settings. Wait for the user to confirm the settings card first.
+
 ## Guidelines
-- When the user describes a campaign, create a settings card with all relevant details
+- When the user describes a campaign, create ONLY a settings card — do NOT generate segments yet. Ask the user to review the settings first.
 - When asked to generate segments, create 3-4 audience segments (mix of b2c and b2b if applicable)
 - When asked for briefs or image briefs, use "spawn_briefs" — then tell the user: "Here are your image briefs. Double-click any text to edit, then tell me when you're ready to generate creatives."
 - When the user approves briefs, use "generate_creatives" and set each creative's briefId to the ID of the corresponding existing brief card from the canvas state
@@ -381,7 +388,7 @@ function serializeCanvasState(state: AppState): string {
       case 'settings':
         return `[Settings] "${c.data.name}" — Market: ${c.data.market}, Budget: ${c.data.budget}`;
       case 'segment':
-        return `[Segment: ${c.id}] "${c.data.name}" (${c.data.group}) — ${c.data.channel}, ${c.data.targeting}`;
+        return `[Segment: ${c.id}]${c.data.isSelected ? ' ✓' : ''} "${c.data.name}" (${c.data.group}) — ${c.data.channel}, ${c.data.targeting}`;
       case 'asset':
         return `[Asset: ${c.id}] for segment ${c.data.segmentId} — "${c.data.caption}" (${c.data.source})`;
       case 'brief':
@@ -522,7 +529,7 @@ export async function processMessage(
 
 type ValidatedAction = z.infer<typeof actionSchema>;
 
-function processAction(action: ValidatedAction, state: AppState, result: AgentResult) {
+export function processAction(action: ValidatedAction, state: AppState, result: AgentResult) {
   const now = Date.now();
 
   switch (action.type) {
@@ -601,7 +608,6 @@ function processAction(action: ValidatedAction, state: AppState, result: AgentRe
     case 'spawn_assets': {
       const assets = action.assets || [];
       const allCards = getAllKnownCards(state, result);
-      const segmentCards = allCards.filter((c): c is SegmentCard => c.cardType === 'segment');
 
       // Group assets by parent segment so we can position siblings correctly
       const byParent = new Map<string, { parent: SegmentCard; items: typeof assets }>();
@@ -610,7 +616,7 @@ function processAction(action: ValidatedAction, state: AppState, result: AgentRe
         const segId = a.segmentId || a.segment_id;
         const parentCard = allCards.find(
           (c): c is SegmentCard => c.id === segId && c.cardType === 'segment',
-        ) || segmentCards[i];
+        );
         if (!parentCard) continue;
         const group = byParent.get(parentCard.id);
         if (group) { group.items.push(a); }
@@ -652,7 +658,6 @@ function processAction(action: ValidatedAction, state: AppState, result: AgentRe
     case 'spawn_briefs': {
       const briefs = action.briefs || [];
       const allCards = getAllKnownCards(state, result);
-      const segmentCards = allCards.filter((c): c is SegmentCard => c.cardType === 'segment');
 
       // Group briefs by parent segment so siblings fan out correctly
       const byParent = new Map<string, { parent: SegmentCard; items: typeof briefs }>();
@@ -661,7 +666,7 @@ function processAction(action: ValidatedAction, state: AppState, result: AgentRe
         const segId = b.segmentId || b.segment_id;
         const parentCard = allCards.find(
           (c): c is SegmentCard => c.id === segId && c.cardType === 'segment',
-        ) || segmentCards[i];
+        );
         if (!parentCard) continue;
         const group = byParent.get(parentCard.id);
         if (group) { group.items.push(b); }
@@ -703,7 +708,6 @@ function processAction(action: ValidatedAction, state: AppState, result: AgentRe
     case 'generate_creatives': {
       const creatives = action.creatives || [];
       const allCards = getAllKnownCards(state, result);
-      const briefCards = allCards.filter((card): card is BriefCard => card.cardType === 'brief');
 
       const cards: CreativeCard[] = [];
       const genRequests: AgentResult['generationRequests'] = [];
@@ -713,7 +717,7 @@ function processAction(action: ValidatedAction, state: AppState, result: AgentRe
         const briefId = c.briefId || c.brief_id;
         const parentCard = allCards.find(
           (card): card is BriefCard => card.id === briefId && card.cardType === 'brief',
-        ) || briefCards[i];
+        );
 
         if (!parentCard) continue;
 
