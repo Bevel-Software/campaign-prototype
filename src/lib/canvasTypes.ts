@@ -173,6 +173,8 @@ export type Action =
   | { type: 'SET_BASE_PROMPT'; payload: string }
   // API keys
   | { type: 'SET_API_KEYS'; payload: { openai: boolean; gemini: boolean } }
+  // Layout
+  | { type: 'AUTO_LAYOUT' }
   // Reset
   | { type: 'RESET_CANVAS' }
   // Error

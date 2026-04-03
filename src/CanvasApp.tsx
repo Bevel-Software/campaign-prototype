@@ -564,6 +564,10 @@ export default function CanvasApp() {
           });
         }}
         onFitAll={fitAll}
+        onCleanUp={() => {
+          dispatch({ type: 'AUTO_LAYOUT' });
+          setTimeout(() => fitAll(), 50);
+        }}
         onClearCanvas={handleClearCanvas}
       />
       {missingKeys.length > 0 && (

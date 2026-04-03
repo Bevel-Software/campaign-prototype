@@ -72,6 +72,66 @@ export function computeFitAllViewport(
 }
 
 /**
+ * Compute a clean auto-layout for all cards, organizing them into a hierarchical
+ * tree: roots across the top, children centered below their parents.
+ */
+export function computeCleanLayout(cards: CanvasCard[]): CanvasCard[] {
+  if (cards.length === 0) return cards;
+
+  const byId = new Map(cards.map((c) => [c.id, { ...c }]));
+  const roots = cards.filter((c) => c.parentId === null);
+
+  if (roots.length === 0) return cards;
+
+  // Measure the full width of a subtree so we can space roots apart
+  function subtreeWidth(card: CanvasCard): number {
+    const children = cards.filter((c) => c.parentId === card.id);
+    if (children.length === 0) return card.width;
+    const childW = children.map(subtreeWidth);
+    return Math.max(card.width, childW.reduce((sum, w) => sum + w, 0) + (children.length - 1) * GAP);
+  }
+
+  // Recursively position a card and its descendants
+  function layoutSubtree(cardId: string, x: number, y: number) {
+    const card = byId.get(cardId);
+    if (!card) return;
+
+    const children = cards.filter((c) => c.parentId === cardId);
+    const stWidth = subtreeWidth(card);
+
+    // Center the card within its subtree allocation
+    card.x = x + stWidth / 2 - card.width / 2;
+    card.y = y;
+
+    if (children.length === 0) return;
+
+    const childY = y + card.height + Y_OFFSET;
+    let childX = x + stWidth / 2;
+
+    // Total width of children's subtrees
+    const childSubtreeWidths = children.map(subtreeWidth);
+    const totalChildWidth = childSubtreeWidths.reduce((s, w) => s + w, 0) + (children.length - 1) * GAP;
+    childX = childX - totalChildWidth / 2;
+
+    for (let i = 0; i < children.length; i++) {
+      layoutSubtree(children[i].id, childX, childY);
+      childX += childSubtreeWidths[i] + GAP;
+    }
+  }
+
+  // Lay out each root tree side by side
+  const ROOT_GAP = 100;
+  let cursorX = 200;
+  for (const root of roots) {
+    const sw = subtreeWidth(root);
+    layoutSubtree(root.id, cursorX, 80);
+    cursorX += sw + ROOT_GAP;
+  }
+
+  return cards.map((c) => byId.get(c.id) || c);
+}
+
+/**
  * Compute the initial position for the first settings card, centered in the viewport.
  */
 export function computeInitialSettingsPosition(

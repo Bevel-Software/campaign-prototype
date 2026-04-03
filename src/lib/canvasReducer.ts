@@ -1,5 +1,5 @@
 import type { AppState, Action, CanvasCard } from './canvasTypes';
-import { computeChildPositions, CARD_DIMENSIONS } from './layoutUtils';
+import { computeChildPositions, computeCleanLayout, CARD_DIMENSIONS } from './layoutUtils';
 
 export const initialState: AppState = {
   apiKeys: {
@@ -163,6 +163,10 @@ export function canvasReducer(state: AppState, action: Action): AppState {
     // ===== API KEYS =====
     case 'SET_API_KEYS':
       return { ...state, apiKeys: action.payload };
+
+    // ===== LAYOUT =====
+    case 'AUTO_LAYOUT':
+      return { ...state, cards: computeCleanLayout(state.cards) };
 
     // ===== RESET =====
     case 'RESET_CANVAS':
