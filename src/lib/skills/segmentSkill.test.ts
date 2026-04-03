@@ -34,7 +34,7 @@ function makeSegments(count: number): SegmentCardData[] {
   return Array.from({ length: count }, (_, i) => ({
     group: i % 2 === 0 ? 'b2c' as const : 'b2b' as const,
     name: `Segment ${i + 1} Name`,
-    channel: i % 2 === 0 ? 'Meta' : 'LinkedIn',
+    channel: 'Meta',
     targeting: `Detailed targeting for segment ${i + 1} with specific criteria`,
     tagline: `Compelling tagline ${i + 1}`,
     funnelStage: FUNNEL_STAGES[i % 3],
@@ -135,7 +135,7 @@ describe('skillResponseSchema', () => {
         {
           group: 'b2b',
           name: 'HR Decision Makers',
-          channel: 'LinkedIn',
+          channel: 'Meta',
           targeting: 'HR directors and benefits managers at companies with 500+ employees, interested in employee wellness',
           tagline: 'Invest in your team',
           funnel_stage: 'consideration',
@@ -150,7 +150,7 @@ describe('skillResponseSchema', () => {
     const input = {
       segments: [
         { group: 'b2c', name: 'AB', channel: 'Meta', targeting: 'Detailed targeting text here for this segment', tagline: 'A tagline', funnel_stage: 'awareness' },
-        { group: 'b2b', name: 'OK Name', channel: 'LinkedIn', targeting: 'Another detailed targeting for segment', tagline: 'Another tagline', funnel_stage: 'awareness' },
+        { group: 'b2b', name: 'OK Name', channel: 'Meta', targeting: 'Another detailed targeting for segment', tagline: 'Another tagline', funnel_stage: 'awareness' },
       ],
     };
     const result = skillResponseSchema.safeParse(input);
@@ -161,7 +161,7 @@ describe('skillResponseSchema', () => {
     const input = {
       segments: [
         { group: 'b2c', name: 'Good Name', channel: 'Meta', targeting: 'too short', tagline: 'A tagline', funnel_stage: 'awareness' },
-        { group: 'b2b', name: 'Other Name', channel: 'LinkedIn', targeting: 'Another detailed targeting description here', tagline: 'Another tagline', funnel_stage: 'awareness' },
+        { group: 'b2b', name: 'Other Name', channel: 'Meta', targeting: 'Another detailed targeting description here', tagline: 'Another tagline', funnel_stage: 'awareness' },
       ],
     };
     const result = skillResponseSchema.safeParse(input);
@@ -172,7 +172,7 @@ describe('skillResponseSchema', () => {
     const input = {
       segments: [
         { name: 'No Group', channel: 'Meta', targeting: 'Detailed targeting description for this segment', tagline: 'A tagline', funnel_stage: 'awareness' },
-        { group: 'b2b', name: 'Has Group', channel: 'LinkedIn', targeting: 'Another detailed targeting for segment', tagline: 'Another tagline', funnel_stage: 'awareness' },
+        { group: 'b2b', name: 'Has Group', channel: 'Meta', targeting: 'Another detailed targeting for segment', tagline: 'Another tagline', funnel_stage: 'awareness' },
       ],
     };
     const result = skillResponseSchema.safeParse(input);
@@ -193,7 +193,7 @@ describe('skillResponseSchema', () => {
     const input = {
       segments: [
         { group: 'b2c', name: 'No Funnel', channel: 'Meta', targeting: 'Detailed targeting description for this segment', tagline: 'A tagline' },
-        { group: 'b2b', name: 'Also No Funnel', channel: 'LinkedIn', targeting: 'Another detailed targeting for segment', tagline: 'Another tagline' },
+        { group: 'b2b', name: 'Also No Funnel', channel: 'Meta', targeting: 'Another detailed targeting for segment', tagline: 'Another tagline' },
       ],
     };
     const result = skillResponseSchema.safeParse(input);
@@ -230,7 +230,7 @@ describe('generateSegments', () => {
       reasoning: 'Targeting both consumers and HR',
       segments: [
         { group: 'b2c', name: 'Young Pros', channel: 'Meta', targeting: 'Ages 25-34, urban fitness enthusiasts active on Instagram', tagline: 'Move more, stress less', funnel_stage: 'awareness' },
-        { group: 'b2b', name: 'HR Leaders', channel: 'LinkedIn', targeting: 'HR directors at mid-size companies seeking employee wellness solutions', tagline: 'Healthier teams, better results', funnel_stage: 'consideration' },
+        { group: 'b2b', name: 'HR Leaders', channel: 'Meta', targeting: 'HR directors at mid-size companies seeking employee wellness solutions', tagline: 'Healthier teams, better results', funnel_stage: 'consideration' },
       ],
     };
 
@@ -255,5 +255,79 @@ describe('generateSegments', () => {
       ...baseParams,
       _fetchFn: mockFetch,
     })).rejects.toThrow('Server error');
+  });
+});
+
+// ===== Group normalization =====
+
+describe('group normalization', () => {
+  it('normalizes "B2C" to "b2c"', () => {
+    const input = {
+      segments: [
+        { group: 'B2C', name: 'Test One', channel: 'Meta', targeting: 'Detailed targeting description for segment', tagline: 'A tagline', funnel_stage: 'awareness' },
+        { group: 'B2B', name: 'Test Two', channel: 'Meta', targeting: 'Another detailed targeting for segment', tagline: 'Another tagline', funnel_stage: 'awareness' },
+      ],
+    };
+    const result = skillResponseSchema.safeParse(input);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.segments[0].group).toBe('b2c');
+      expect(result.data.segments[1].group).toBe('b2b');
+    }
+  });
+
+  it('logs a warning when group is normalized', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const input = {
+      segments: [
+        { group: 'partner', name: 'Partner Seg', channel: 'Meta', targeting: 'Detailed targeting description for partner segment', tagline: 'A tagline', funnel_stage: 'awareness' },
+        { group: 'b2c', name: 'Normal Seg', channel: 'Meta', targeting: 'Detailed targeting description for normal segment', tagline: 'Another tagline', funnel_stage: 'awareness' },
+      ],
+    };
+    skillResponseSchema.safeParse(input);
+    expect(warnSpy).toHaveBeenCalledWith('[segmentSkill] normalizeGroup: "partner" → "b2c"');
+    warnSpy.mockRestore();
+  });
+
+  it('does not log when group is already valid', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const input = {
+      segments: [
+        { group: 'b2c', name: 'Consumer Seg', channel: 'Meta', targeting: 'Detailed targeting description for consumer segment', tagline: 'A tagline', funnel_stage: 'awareness' },
+        { group: 'b2b', name: 'Business Seg', channel: 'Meta', targeting: 'Detailed targeting description for business segment', tagline: 'Another tagline', funnel_stage: 'awareness' },
+      ],
+    };
+    skillResponseSchema.safeParse(input);
+    expect(warnSpy).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  it('normalizes "partner" or other non-b2b values to "b2c"', () => {
+    const input = {
+      segments: [
+        { group: 'partner', name: 'Partner Seg', channel: 'Meta', targeting: 'Detailed targeting description for partner segment', tagline: 'A tagline', funnel_stage: 'awareness' },
+        { group: 'b2b', name: 'HR Segment', channel: 'Meta', targeting: 'Detailed targeting description for HR segment', tagline: 'Another tagline', funnel_stage: 'awareness' },
+      ],
+    };
+    const result = skillResponseSchema.safeParse(input);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.segments[0].group).toBe('b2c');
+    }
+  });
+
+  it('normalizes "b2b2c" to "b2b" (contains b2b without b2c)', () => {
+    const input = {
+      segments: [
+        { group: 'b2b2c', name: 'Hybrid Seg', channel: 'Meta', targeting: 'Detailed targeting description for hybrid segment', tagline: 'A tagline', funnel_stage: 'awareness' },
+        { group: 'b2c', name: 'Consumer Seg', channel: 'Meta', targeting: 'Detailed targeting description for consumer seg', tagline: 'Another tagline', funnel_stage: 'awareness' },
+      ],
+    };
+    const result = skillResponseSchema.safeParse(input);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      // "b2b2c" contains both "b2b" and "b2c" — since it contains b2c too, falls to b2c
+      expect(result.data.segments[0].group).toBe('b2c');
+    }
   });
 });

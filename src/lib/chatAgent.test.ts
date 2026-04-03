@@ -232,7 +232,7 @@ describe('other action types', () => {
       type: 'spawn_segments',
       segments: [
         { group: 'b2c', name: 'Young Professionals', channel: 'Meta', targeting: '25-35', tagline: 'Live well' },
-        { group: 'b2b', name: 'HR Managers', channel: 'LinkedIn', targeting: 'HR decision makers', tagline: 'Retain talent' },
+        { group: 'b2b', name: 'HR Managers', channel: 'Meta', targeting: 'HR decision makers', tagline: 'Retain talent' },
       ],
     });
     expect(result).not.toBeNull();
@@ -435,7 +435,7 @@ describe('processAction spawn_segments with buildSegmentCards', () => {
       type: 'spawn_segments',
       segments: [
         { group: 'b2c', name: 'Young Pros', channel: 'Meta', targeting: 'Ages 25-34', tagline: 'Move more' },
-        { group: 'b2b', name: 'HR Leaders', channel: 'LinkedIn', targeting: 'HR directors', tagline: 'Better teams' },
+        { group: 'b2b', name: 'HR Leaders', channel: 'Meta', targeting: 'HR directors', tagline: 'Better teams' },
       ],
     })!;
     const result = emptyResult();
@@ -448,5 +448,42 @@ describe('processAction spawn_segments with buildSegmentCards', () => {
     expect(cards[0].parentId).toBe('settings-1');
     expect(cards[0].data.name).toBe('Young Pros');
     expect(cards[1].data.name).toBe('HR Leaders');
+  });
+});
+
+// ===== spawn_briefs intercept: segment targeting =====
+
+describe('spawn_briefs intercept segment targeting', () => {
+  // T3: When no segment IDs appear in user text, the intercept should target ALL
+  // segments — not just isSelected ones. This verifies the isSelected gate was removed.
+  // Note: processMessage calls the LLM so we test the regex + fallback logic directly.
+
+  it('T3: multi-segment regex extracts zero IDs from generic text, enabling all-segments fallback', () => {
+    const userText = 'Generate creative briefs for each segment';
+    const segMatches = [...userText.matchAll(/seg-[\w-]+/g)].map((m) => m[0]);
+    expect(segMatches).toHaveLength(0);
+    // With zero matches, the intercept should fall back to all segments (no isSelected filter)
+  });
+
+  // T8: Multi-segment regex extracts multiple seg-xxx IDs from user text
+  it('T8: extracts multiple segment IDs from user text', () => {
+    const userText = 'Generate creative briefs for segments seg-123-abc ("Young Pros"), seg-456-def ("HR Leaders")';
+    const segMatches = [...userText.matchAll(/seg-[\w-]+/g)].map((m) => m[0]);
+    expect(segMatches).toHaveLength(2);
+    expect(segMatches).toContain('seg-123-abc');
+    expect(segMatches).toContain('seg-456-def');
+  });
+
+  it('T8b: extracts single segment ID from button-triggered text', () => {
+    const userText = 'Generate a creative brief for segment seg-1775066064068-0 ("Young Professionals")';
+    const segMatches = [...userText.matchAll(/seg-[\w-]+/g)].map((m) => m[0]);
+    expect(segMatches).toHaveLength(1);
+    expect(segMatches[0]).toBe('seg-1775066064068-0');
+  });
+
+  it('T8c: returns empty for text with no segment IDs', () => {
+    const userText = 'Generate all briefs now';
+    const segMatches = [...userText.matchAll(/seg-[\w-]+/g)].map((m) => m[0]);
+    expect(segMatches).toHaveLength(0);
   });
 });

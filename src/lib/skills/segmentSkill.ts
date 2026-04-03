@@ -11,8 +11,17 @@ import { computeChildPositions, CARD_DIMENSIONS } from '../layoutUtils';
 
 const funnelStageEnum = z.string().transform((v) => v.toLowerCase()).pipe(z.enum(['awareness', 'consideration', 'conversion']));
 
+function normalizeGroup(v: string): 'b2c' | 'b2b' {
+  const lower = v.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const result = (lower === 'b2b' || lower.includes('b2b') && !lower.includes('b2c')) ? 'b2b' : 'b2c';
+  if (lower !== result) {
+    console.warn(`[segmentSkill] normalizeGroup: "${v}" → "${result}"`);
+  }
+  return result;
+}
+
 const skillSegmentSchema = z.object({
-  group: z.string().transform((v) => v.toLowerCase()).pipe(z.enum(['b2c', 'b2b'])),
+  group: z.string().transform(normalizeGroup).pipe(z.enum(['b2c', 'b2b'])),
   name: z.string().min(3),
   channel: z.string().min(2),
   targeting: z.string().min(20),

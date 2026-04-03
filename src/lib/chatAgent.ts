@@ -210,11 +210,11 @@ IMPORTANT: Always converse with the user in English. Your replies, explanations,
 The user is working on an infinite canvas where campaign elements appear as cards. You converse naturally and output structured JSON actions to create/modify cards on the canvas.
 
 ## Available card types
-- **settings**: Campaign overview (name, objectives, campaignObjective, audienceType, market, channels, positioning). IMPORTANT: "objectives" and "channels" must be arrays of strings, with each objective/channel as its own separate string. Do NOT combine multiple objectives into a single string. Example: ["Drive 10,000 sign-ups in 6 months", "Increase brand awareness by 30%"] not ["1) Drive 10,000 sign-ups... 2) Increase brand awareness..."]. Channels MUST only be "Google", "Meta", or "LinkedIn" — no other platforms. "campaignObjective" must be one of: "tofu" (top of funnel — reach/video views), "mofu" (middle of funnel — clicks/engagement), or "bofu" (bottom of funnel — leads/conversions). "audienceType" must be one of: "broad", "affinity", "employee_icp", or "corporate_icp".
+- **settings**: Campaign overview (name, objectives, campaignObjective, audienceType, market, channels, positioning). IMPORTANT: "objectives" and "channels" must be arrays of strings, with each objective/channel as its own separate string. Do NOT combine multiple objectives into a single string. Example: ["Drive 10,000 sign-ups in 6 months", "Increase brand awareness by 30%"] not ["1) Drive 10,000 sign-ups... 2) Increase brand awareness..."]. Channels MUST only be "Meta" — no other platforms. "campaignObjective" must be one of: "tofu" (top of funnel — reach/video views), "mofu" (middle of funnel — clicks/engagement), or "bofu" (bottom of funnel — leads/conversions). "audienceType" must be one of: "broad", "affinity", "employee_icp", or "corporate_icp".
 - **segment**: Audience segment (group b2c/b2b, name, channel, targeting, tagline)
 - **asset**: Reference image/asset from past campaigns (segmentId, image URL, source, caption)
 - **brief**: Creative brief for a segment (direction, format, keywords)
-- **creative**: Ad creative (type meta/linkedin, group, headline, body, cta, tags)
+- **creative**: Ad creative (type meta, group, headline, body, cta, tags)
 - **variation**: A variation of an existing creative with edits
 
 ## Your response format
@@ -255,17 +255,19 @@ IMPORTANT: Never spawn segments in the same response as spawn_settings. Wait for
 IMPORTANT: Never spawn assets (ad references) in the same response as spawn_segments. Wait for the user to confirm the segments first.
 IMPORTANT: Pick the best-matching ad per segment based on: audience match (B2B vs B2C), reach, messaging similarity, location relevance.
 
+## Selected card scoping rule
+CRITICAL: When a card is selected (shown as "Selected card: <id>" in the canvas state), ALL edit, update, variation, and generation actions MUST target ONLY that selected card. Never modify, regenerate, or create variations for cards that are not the selected card. If the user gives an instruction and a card is selected, assume the instruction applies to that card only — do not broadcast the action to other cards. If no card is selected and the user's instruction is ambiguous about which card to target, ask the user to select a card first.
+
 ## Guidelines
 - When the user describes a campaign, create ONLY a settings card — do NOT generate segments yet. Ask the user to review the settings first.
 - When asked to generate segments, emit a spawn_segments action with an empty segments array: {"type": "spawn_segments", "segments": []}. The segment generation system will handle the details. Your reply should tell the user that segments are being generated. Do NOT spawn assets yet — wait for user to confirm segments first.
 - When the user confirms segments, shortlist 1 historical reference ad for each segment using "spawn_assets". For each asset set: caption = ad text snippet, source = "Historical Ad Library", image = ad's image description, and reason = a short explanation of why this ad was picked (e.g. "Highest reach B2B ad at 202k, employer-benefit messaging matches this segment"). Then in your reply, ask the user whether they'd like to use these inspirations or swap any out before moving to briefs.
-- When asked for briefs or image briefs, emit a spawn_briefs action with an empty briefs array: {"type": "spawn_briefs", "briefs": []}. The brief generation system will handle the details using the full brand context. ONLY do this if at least one segment is marked with ✓ (isSelected). If no segments are selected, ask the user to select segments first. Then tell the user: "Here are your image briefs. Double-click any text to edit, then tell me when you're ready to generate creatives."
+- When asked for briefs or image briefs, emit a spawn_briefs action with an empty briefs array: {"type": "spawn_briefs", "briefs": []}. The brief generation system will handle the details using the full brand context and historical ads. If the request names specific segments (e.g. "Generate a creative brief for segment seg-xxx"), ALWAYS emit spawn_briefs — the system will target those segments directly. For general brief requests (no specific segment named), the system will generate briefs for all segments on the canvas. Then tell the user: "Here are your image briefs. Double-click any text to edit, then tell me when you're ready to generate creatives."
 - When the user approves briefs, use "generate_creatives" ONLY for briefs whose parent segment is marked with ✓ (isSelected). Set each creative's briefId to the ID of the corresponding existing brief card from the canvas state
-- For Meta ads, use type "meta". For LinkedIn ads, use type "linkedin"
-- B2C segments typically use Meta (Instagram/Facebook), B2B segments use LinkedIn
+- All segments use Meta (Instagram/Facebook). Ad type is always "meta"
 - Be specific with targeting, taglines, and creative direction — don't be generic
-- If the user has a card selected and gives an edit instruction, create a variation
-- If the user asks for multiple variants, use "spawn_variations" with one entry per requested edit
+- If the user has a card selected and gives an edit instruction, create a variation or update ONLY for that selected card — never for other cards
+- If the user asks for multiple variants, use "spawn_variations" with one entry per requested edit, all targeting the selected card
 - Always include tool_messages for any "work" you're doing (loading data, generating content, etc.)
 - Keep your reply concise and actionable
 `;
@@ -612,20 +614,27 @@ export async function processMessage(
     // Intercept spawn_briefs with empty array — delegate to brief skill
     if (validatedAction.type === 'spawn_briefs' && (!validatedAction.briefs || validatedAction.briefs.length === 0)) {
       const settingsCard = state.cards.find((c): c is SettingsCard => c.cardType === 'settings');
-      const selectedSegments = state.cards.filter(
-        (c): c is SegmentCard => c.cardType === 'segment' && !!c.data.isSelected,
-      );
-      if (settingsCard && selectedSegments.length > 0) {
+      // Extract all segment IDs mentioned in user text (supports single or multiple)
+      const segMatches = [...userText.matchAll(/seg-[\w-]+/g)].map((m) => m[0]);
+      const targetSegments = segMatches.length > 0
+        ? state.cards.filter(
+            (c): c is SegmentCard => segMatches.includes(c.id) && c.cardType === 'segment',
+          )
+        : state.cards.filter(
+            (c): c is SegmentCard => c.cardType === 'segment',
+          );
+      if (settingsCard && targetSegments.length > 0) {
         const assets = state.cards.filter(
-          (c): c is AssetCard => c.cardType === 'asset',
+          (c): c is AssetCard => c.cardType === 'asset' && c.data.useForBrief !== false,
         );
         try {
           const skillResult = await generateBriefs({
             settings: settingsCard.data,
             brandGuidelines: state.brandGuidelines,
             brandPositioning: state.brandPositioning,
-            segments: selectedSegments.map((s) => ({ id: s.id, data: s.data })),
+            segments: targetSegments.map((s: SegmentCard) => ({ id: s.id, data: s.data })),
             assets: assets.map((a) => ({ segmentId: a.data.segmentId, data: a.data })),
+            historicalAds: state.historicalAds,
           });
           validatedAction = { ...validatedAction, briefs: skillResult.briefs.map((b) => ({ segmentId: b.segmentId, brief: { direction: b.direction, format: b.format, keywords: b.keywords } as Record<string, unknown> })) } as NonNullable<typeof validatedAction>;
         } catch (err) {
@@ -765,9 +774,9 @@ export function processAction(action: ValidatedAction, state: AppState, result: 
           (c): c is SegmentCard => c.id === segId && c.cardType === 'segment',
         );
         if (!segmentCard) continue;
-        // Find an inspiration/asset card that is a child of this segment
+        // Find an inspiration/asset card that is a child of this segment (skip if user chose "Don't use")
         const assetCard = allCards.find(
-          (c) => c.cardType === 'asset' && c.parentId === segmentCard.id,
+          (c) => c.cardType === 'asset' && c.parentId === segmentCard.id && (c.data as AssetCardData).useForBrief !== false,
         );
         const parentCard = assetCard || segmentCard;
         const group = byParent.get(parentCard.id);
@@ -868,17 +877,17 @@ export function processAction(action: ValidatedAction, state: AppState, result: 
           prompt += `. Format: ${(briefData as BriefCardData).format}`;
 
           // Platform context — tell the image generator what platform this is for
-          const platformContext = data.type === 'meta'
-            ? 'Platform: Meta (Instagram/Facebook) — this image will be viewed on mobile phones in a social feed. Use bold, scroll-stopping visuals. Any text in the image must be very large and minimal (maximum 5-6 words). Prefer letting the visual do the work over text overlays.'
-            : 'Platform: LinkedIn — this image will appear in a professional feed. Use clean, data-forward imagery. Text overlays should be large, readable, and professional.';
+          const platformContext = 'Platform: Meta (Instagram/Facebook) — this image will be viewed on mobile phones in a social feed. Use bold, scroll-stopping visuals. Any text in the image must be very large and minimal (maximum 5-6 words). Prefer letting the visual do the work over text overlays.';
           prompt += `. ${platformContext}`;
 
           // Format-specific placement context
           const fmt = (briefData as BriefCardData).format;
-          const formatContext = fmt.includes('1080x1080')
+          const formatContext = fmt.includes('1080x1350')
+            ? 'This is a portrait 4:5 image (1080x1350) for Instagram/Facebook feed — taller than square, takes up more screen real estate.'
+            : fmt.includes('1080x1080')
             ? 'This is a square feed image (1080x1080) for Instagram/Facebook feed placement.'
             : fmt.includes('1200x628')
-            ? 'This is a landscape image (1200x628) for link ads or LinkedIn feed placement.'
+            ? 'This is a landscape image (1200x628) for Meta link ads or feed placement.'
             : fmt.includes('1080x1920')
             ? 'This is a portrait/story image (1080x1920) for Instagram/Facebook Stories — full vertical screen.'
             : '';
@@ -894,7 +903,7 @@ export function processAction(action: ValidatedAction, state: AppState, result: 
         if (briefData) {
           const segId = (briefData as BriefCardData).segmentId;
           const assetCards = allCards.filter(
-            (card): card is AssetCard => card.cardType === 'asset' && card.data.segmentId === segId,
+            (card): card is AssetCard => card.cardType === 'asset' && card.data.segmentId === segId && card.data.useForBrief !== false,
           );
           if (assetCards.length > 0) {
             const refs = assetCards.map((a) => {

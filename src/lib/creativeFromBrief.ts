@@ -26,9 +26,8 @@ export function buildCreativeFromBrief(
   const segmentCard = allCards.find((c) => c.id === briefData.segmentId);
   const segmentData = segmentCard?.cardType === 'segment' ? segmentCard.data as SegmentCardData : null;
 
-  // Determine ad type from segment
-  const isB2B = segmentData?.group === 'b2b';
-  const adType: CreativeCardData['type'] = isB2B ? 'linkedin' : 'meta';
+  // All segments use Meta
+  const adType: CreativeCardData['type'] = 'meta';
 
   // Build image generation prompt
   let prompt = basePrompt || 'Create a professional static image ad creative';
@@ -46,16 +45,14 @@ export function buildCreativeFromBrief(
   prompt += `. Format: ${briefData.format}`;
 
   // Platform context — tell the image generator what platform this is for
-  const platformContext = adType === 'meta'
-    ? 'Platform: Meta (Instagram/Facebook) — this image will be viewed on mobile phones in a social feed. Use bold, scroll-stopping visuals. Any text in the image must be very large and minimal (maximum 5-6 words). Prefer letting the visual do the work over text overlays.'
-    : 'Platform: LinkedIn — this image will appear in a professional feed. Use clean, data-forward imagery. Text overlays should be large, readable, and professional.';
+  const platformContext = 'Platform: Meta (Instagram/Facebook) — this image will be viewed on mobile phones in a social feed. Use bold, scroll-stopping visuals. Any text in the image must be very large and minimal (maximum 5-6 words). Prefer letting the visual do the work over text overlays.';
   prompt += `. ${platformContext}`;
 
   // Format-specific placement context
   const formatContext = briefData.format.includes('1080x1080')
     ? 'This is a square feed image (1080x1080) for Instagram/Facebook feed placement.'
     : briefData.format.includes('1200x628')
-    ? 'This is a landscape image (1200x628) for link ads or LinkedIn feed placement.'
+    ? 'This is a landscape image (1200x628) for Meta link ads or feed placement.'
     : briefData.format.includes('1080x1920')
     ? 'This is a portrait/story image (1080x1920) for Instagram/Facebook Stories — full vertical screen.'
     : '';
@@ -68,7 +65,7 @@ export function buildCreativeFromBrief(
 
   // Include asset/inspiration references from matching segment
   const assetCards = allCards.filter(
-    (c): c is AssetCard => c.cardType === 'asset' && c.data.segmentId === briefData.segmentId,
+    (c): c is AssetCard => c.cardType === 'asset' && c.data.segmentId === briefData.segmentId && c.data.useForBrief !== false,
   );
   if (assetCards.length > 0) {
     const refs = assetCards.map((a) => {

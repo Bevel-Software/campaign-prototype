@@ -6,6 +6,7 @@ import type {
   BriefCard,
   BriefCardData,
   CanvasCard,
+  HistoricalAd,
 } from '../canvasTypes';
 import { computeChildPositions, CARD_DIMENSIONS } from '../layoutUtils';
 
@@ -74,10 +75,11 @@ For each segment, you may receive one or more reference ads from past campaigns.
    "A square lifestyle photo showing three diverse professionals mid-workout in a bright urban gym, with a Wellpass-branded phone screen overlay in the lower-right corner displaying available classes. Natural light, candid energy, mixed ages 25-45.\n---\nComposition: Left two-thirds lifestyle action, right third phone UI mockup angled 15°. Color palette: Wellbeing White (#f7f5f2) base, Wellpass Aqua (#00a7b5) accents on phone frame and CTA. Typography: Bold sans headline in Premium Black, subtext in Grey 1. Mood: energetic, inclusive, locally proud. Pain point connection: variety and flexibility visualized through multiple activity types. Headline in French: short, benefit-led. CTA in Wellpass Orange (#fd763c)."
 
 3. FORMAT: Only static image dimensions. Use one of:
-   - "Static image 1080x1080" (feed/square)
-   - "Static image 1200x628" (landscape/link ad)
-   - "Static image 1080x1920" (portrait/story)
-   Choose the format that best fits the segment's channel (e.g. Meta feed → 1080x1080, LinkedIn → 1200x628).
+   - "Static image 1080x1080" (square 1:1)
+   - "Static image 1080x1350" (portrait 4:5)
+   - "Static image 1200x628" (landscape 1.91:1)
+   - "Static image 1080x1920" (full screen 9:16)
+   Choose the size that best fits the segment's channel (e.g. Meta feed → 1080x1080 or 1080x1350, Meta link ads → 1200x628, Stories/Reels → 1080x1920).
 
 4. KEYWORDS: 3-6 descriptive tags that capture the visual theme, audience, and mood (e.g. ["corporate wellness", "energetic", "blue tones", "office setting"]).
 
@@ -85,8 +87,6 @@ For each segment, you may receive one or more reference ads from past campaigns.
 
 6. CHANNEL AWARENESS: Tailor the visual approach to the platform:
    - Meta (Instagram/Facebook): Bold visuals, minimal text overlay, scroll-stopping imagery
-   - LinkedIn: Professional, clean, data-forward imagery
-   - Google: Clear product focus, high contrast for small formats
 
 ## Output format
 Respond with valid JSON only:
@@ -104,12 +104,13 @@ Respond with valid JSON only:
 
 // ===== Context builder =====
 
-function buildBriefContext(
+export function buildBriefContext(
   settings: SettingsCardData,
   brandGuidelines: string,
   brandPositioning: string,
   segments: { id: string; data: SegmentCardData }[],
   assets: { segmentId: string; data: AssetCardData }[],
+  historicalAds: HistoricalAd[] = [],
 ): string {
   const objectives = settings.objectives
     .map((o) => `- [${o.type.toUpperCase()}] ${o.label}`)
@@ -156,6 +157,13 @@ Positioning: ${settings.positioning || '(not specified)'}`;
     }
   }
 
+  if (historicalAds.length > 0) {
+    context += `\n\n## Historical Ad Library (${historicalAds.length} past ads)\nUse these as additional inspiration. Pick the most relevant ads for each segment based on audience match, reach, and messaging.\n\n`;
+    context += historicalAds.map((ad, i) =>
+      `[Ad ${i + 1}] Reach: ${ad.reach.toLocaleString()} | Duration: ${ad.adDuration} | Location: ${ad.location} | Age: ${ad.ageRange} | Gender: ${ad.gender}\nType: ${ad.imageDescription}\nText: ${ad.text.slice(0, 200)}${ad.text.length > 200 ? '...' : ''}`
+    ).join('\n\n');
+  }
+
   return context;
 }
 
@@ -167,6 +175,7 @@ export interface GenerateBriefsParams {
   brandPositioning: string;
   segments: { id: string; data: SegmentCardData }[];
   assets: { segmentId: string; data: AssetCardData }[];
+  historicalAds?: HistoricalAd[];
   /** @internal — for testing only; bypasses /api/chat */
   _fetchFn?: typeof fetch;
 }
@@ -187,6 +196,7 @@ export async function generateBriefs(
     params.brandPositioning,
     params.segments,
     params.assets,
+    params.historicalAds || [],
   );
 
   const messages = [
@@ -286,7 +296,7 @@ export function buildBriefCards(
     );
     if (!segmentCard) continue;
     const assetCard = allCards.find(
-      (c) => c.cardType === 'asset' && c.parentId === segmentCard.id,
+      (c) => c.cardType === 'asset' && c.parentId === segmentCard.id && (c.data as { useForBrief?: boolean }).useForBrief !== false,
     );
     const parentCard = assetCard || segmentCard;
     const group = byParent.get(parentCard.id);
