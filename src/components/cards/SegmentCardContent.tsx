@@ -35,7 +35,7 @@ export function SegmentCardContent({ data, onFieldChange }: Props) {
       <div className="segment-card-body">
         <div className="segment-card-detail">
           <span className="detail-label">Channel</span>
-          <span>{data.channel}</span>
+          <span>{data.channel}{data.funnelStage ? ` · ${data.funnelStage}` : ''}</span>
         </div>
         <div className="segment-card-detail">
           <span className="detail-label">Targeting</span>

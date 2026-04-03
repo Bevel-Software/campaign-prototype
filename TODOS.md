@@ -39,3 +39,32 @@
 - `src-canvas/CanvasApp.tsx` lines 239-251 (keyboard handlers)
 - `src-canvas/CanvasApp.tsx` lines 307-318 (toolbar `onZoomIn`/`onZoomOut`)
 - Reuse the same math as the wheel zoom in `src-canvas/components/canvas/CanvasArea.tsx` lines 120-133, substituting `mouseX`/`mouseY` with `containerWidth/2` and `containerHeight/2`.
+
+## Brief skill extraction
+
+**What:** Extract brief generation into a dedicated skill module (same pattern as `src/lib/skills/segmentSkill.ts`).
+
+**Why:** Brief generation currently relies on the generic chat agent prompt, which gives minimal guidance on format-specific direction, channel-aware copy, and keyword relevance. A dedicated skill would allow specialized prompting for higher-quality briefs, stricter Zod validation, and brand context injection — the same improvements segment generation got.
+
+**Where to start:**
+- Create `src/lib/skills/briefSkill.ts` following `segmentSkill.ts` pattern
+- Extract `buildBriefCards()` from `processAction` `spawn_briefs` case in `chatAgent.ts`
+- Add `generateBriefs(segmentData, settings, brandContext)` with specialized prompt
+- Wire into `processMessage()` (same intercept pattern) and context menu
+- Add unit tests matching `segmentSkill.test.ts` structure
+
+**Depends on:** Nothing — can be done independently.
+
+## Server-side LLM calls
+
+**What:** Move LLM calls (chatAgent + skills) to a server-side API route.
+
+**Why:** Currently using `dangerouslyAllowBrowser: true` — API keys are exposed in the browser. Acceptable for prototype but blocks any production deployment. Every LLM call (chat agent, segment skill, future skills) should go through a server-side endpoint.
+
+**Where to start:**
+- Add API routes in `vite.config.ts` middleware (or migrate to a proper backend)
+- Move `processMessage()` and `generateSegments()` OpenAI calls behind `/api/chat` and `/api/segments` endpoints
+- Client sends settings/brand context, server makes LLM call and returns result
+- Remove `dangerouslyAllowBrowser: true` from all OpenAI client instantiations
+
+**Depends on:** Nothing — can be done independently.

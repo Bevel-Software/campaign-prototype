@@ -4,7 +4,8 @@ import type { AppState, ChatMessage } from './lib/canvasTypes';
 import { generateCreative, GeminiError } from './lib/gemini';
 import { processMessage } from './lib/chatAgent';
 import { buildCreativeFromBrief } from './lib/creativeFromBrief';
-import type { BriefCard, SegmentCard } from './lib/canvasTypes';
+import type { BriefCard, SegmentCard, SettingsCard } from './lib/canvasTypes';
+import { generateSegments, buildSegmentCards } from './lib/skills/segmentSkill';
 import { computeFitAllViewport } from './lib/layoutUtils';
 import { Toolbar } from './components/Toolbar';
 import { CanvasArea } from './components/canvas/CanvasArea';
@@ -334,7 +335,60 @@ export default function CanvasApp() {
       const selectedSegment = segmentCards.find((c) => c.id === state.selectedCardId);
 
       if (hasSettings && !hasSegments) {
-        items.push({ icon: '&#9783;', label: 'Generate Segments', action: () => handleSendMessage('Generate audience segments for this campaign') });
+        items.push({ icon: '&#9783;', label: 'Generate Segments', action: async () => {
+          const settingsCard = state.cards.find((c): c is SettingsCard => c.cardType === 'settings');
+          if (!settingsCard) return;
+
+          dispatch({ type: 'SET_AGENT_THINKING', value: true });
+          dispatch({
+            type: 'ADD_MESSAGE',
+            message: {
+              id: `tool-${Date.now()}-seg`,
+              role: 'tool',
+              text: '',
+              toolLabel: 'Segment Generation',
+              toolResult: 'Analyzing campaign objectives and generating audience segments...',
+              timestamp: Date.now(),
+            },
+          });
+
+          try {
+            const segResult = await generateSegments({
+              settings: settingsCard.data,
+              brandGuidelines: state.brandGuidelines,
+              brandPositioning: state.brandPositioning,
+              apiKey: state.apiKeys.openai!,
+            });
+
+            const cards = buildSegmentCards(segResult.segments, settingsCard);
+            dispatch({ type: 'ADD_CARDS', cards });
+
+            dispatch({
+              type: 'ADD_MESSAGE',
+              message: {
+                id: `msg-${Date.now()}-seg`,
+                role: 'agent',
+                text: segResult.reasoning
+                  || `Generated <strong>${cards.length}</strong> audience segments. Review and select the ones you'd like to proceed with.`,
+                timestamp: Date.now(),
+              },
+            });
+
+            setTimeout(() => fitAllRef.current(), 600);
+          } catch (err) {
+            dispatch({
+              type: 'ADD_MESSAGE',
+              message: {
+                id: `msg-${Date.now()}-seg-err`,
+                role: 'agent',
+                text: `Segment generation failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`,
+                timestamp: Date.now(),
+              },
+            });
+          } finally {
+            dispatch({ type: 'SET_AGENT_THINKING', value: false });
+          }
+        }});
       }
       if (hasSegments && !hasBriefs) {
         let briefMsg: string;

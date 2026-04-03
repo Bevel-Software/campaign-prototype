@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { validateAction, processAction } from './chatAgent';
 import type { AgentResult } from './chatAgent';
-import type { AppState, SegmentCard, BriefCard } from './canvasTypes';
+import type { AppState, SettingsCard, SegmentCard, BriefCard } from './canvasTypes';
 import { canvasReducer, initialState } from './canvasReducer';
 
 // ===== spawn_settings coercion =====
@@ -361,5 +361,56 @@ describe('processAction generate_creatives without index fallback', () => {
     processAction(action, stateWithBrief, result);
     expect(result.actions.filter((a) => a.type === 'ADD_CARDS')).toHaveLength(0);
     expect(result.generationRequests).toHaveLength(0);
+  });
+});
+
+// ===== processAction spawn_segments uses buildSegmentCards =====
+
+describe('processAction spawn_segments with buildSegmentCards', () => {
+  function makeSettingsCard(): SettingsCard {
+    return {
+      id: 'settings-1',
+      cardType: 'settings',
+      label: 'Test Campaign',
+      x: 200,
+      y: 100,
+      width: 520,
+      height: 260,
+      parentId: null,
+      data: {
+        name: 'Test Campaign',
+        objectives: [],
+        market: 'France',
+        budget: '€50k',
+        split: '',
+        timeline: 'Q3',
+        channels: [],
+        positioning: '',
+      },
+    };
+  }
+
+  it('T14: spawn_segments with populated segments creates cards via buildSegmentCards', () => {
+    const stateWithSettings: AppState = {
+      ...initialState,
+      cards: [makeSettingsCard()],
+    };
+    const action = validateAction({
+      type: 'spawn_segments',
+      segments: [
+        { group: 'b2c', name: 'Young Pros', channel: 'Meta', targeting: 'Ages 25-34', tagline: 'Move more' },
+        { group: 'b2b', name: 'HR Leaders', channel: 'LinkedIn', targeting: 'HR directors', tagline: 'Better teams' },
+      ],
+    })!;
+    const result = emptyResult();
+    processAction(action, stateWithSettings, result);
+    const addCards = result.actions.filter((a) => a.type === 'ADD_CARDS');
+    expect(addCards).toHaveLength(1);
+    const cards = (addCards[0] as any).cards;
+    expect(cards).toHaveLength(2);
+    expect(cards[0].cardType).toBe('segment');
+    expect(cards[0].parentId).toBe('settings-1');
+    expect(cards[0].data.name).toBe('Young Pros');
+    expect(cards[1].data.name).toBe('HR Leaders');
   });
 });
