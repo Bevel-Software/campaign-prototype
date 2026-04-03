@@ -134,6 +134,31 @@ export function CanvasCard({ card, isSelected, dispatch, allCards, onGenerateCre
     [card.id, dispatch],
   );
 
+  const handleAssetFieldChange = useMemo(
+    () => (field: string, value: string | boolean) => {
+      dispatch({ type: 'UPDATE_CARD_DATA', cardId: card.id, data: { [field]: value } });
+
+      // First "Use for brief"/"Don't use" decision should immediately trigger brief generation
+      if (
+        card.cardType === 'asset'
+        && field === 'useForBrief'
+        && typeof value === 'boolean'
+        && card.data.useForBrief === undefined
+      ) {
+        const segmentId = card.data.segmentId || card.parentId;
+        if (!segmentId || !onGenerateBrief) return;
+
+        const hasBrief = allCards?.some(
+          (c) => c.cardType === 'brief' && (c.data as { segmentId?: string }).segmentId === segmentId,
+        );
+        if (!hasBrief) {
+          setTimeout(() => onGenerateBrief(segmentId), 0);
+        }
+      }
+    },
+    [allCards, card, dispatch, onGenerateBrief],
+  );
+
   const className = [
     'canvas-card',
     `card-${card.cardType}`,
@@ -169,7 +194,7 @@ export function CanvasCard({ card, isSelected, dispatch, allCards, onGenerateCre
           onGenerateBrief={onGenerateBrief ? () => onGenerateBrief(card.id) : undefined}
         />
       )}
-      {card.cardType === 'asset' && <AssetCardContent data={card.data} onFieldChange={handleFieldChange} />}
+      {card.cardType === 'asset' && <AssetCardContent data={card.data} onFieldChange={handleAssetFieldChange} />}
       {card.cardType === 'brief' && (
         <BriefCardContent
           data={card.data}
