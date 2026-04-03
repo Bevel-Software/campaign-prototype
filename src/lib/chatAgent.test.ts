@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { validateAction, processAction } from './chatAgent';
 import type { AgentResult } from './chatAgent';
-import type { AppState, SettingsCard, SegmentCard, BriefCard } from './canvasTypes';
+import type { AppState, SettingsCard, SegmentCard, BriefCard, CreativeCard } from './canvasTypes';
 import { canvasReducer, initialState } from './canvasReducer';
 
 // ===== spawn_settings: campaignObjective & audienceType normalization =====
@@ -309,6 +309,33 @@ function makeBriefCard(id: string, segmentId: string, overrides?: Partial<BriefC
   };
 }
 
+function makeCreativeCard(id: string, parentId: string, overrides?: Partial<CreativeCard>): CreativeCard {
+  return {
+    id,
+    cardType: 'creative',
+    label: 'Test Creative',
+    x: 100,
+    y: 620,
+    width: 300,
+    height: 360,
+    parentId,
+    data: {
+      type: 'meta',
+      group: 'b2c',
+      brand: 'Test Brand',
+      headline: 'Test Headline',
+      body: 'Test body copy',
+      cta: 'Learn More',
+      imageDataUrl: 'data:image/png;base64,abc123',
+      isGenerating: false,
+      error: null,
+      prompt: 'Original prompt',
+      tags: [],
+    },
+    ...overrides,
+  };
+}
+
 function emptyResult(): AgentResult {
   return { reply: '', toolMessages: [], actions: [], generationRequests: [] };
 }
@@ -396,6 +423,64 @@ describe('processAction generate_creatives without index fallback', () => {
     })!;
     const result = emptyResult();
     processAction(action, stateWithBrief, result);
+    expect(result.actions.filter((a) => a.type === 'ADD_CARDS')).toHaveLength(0);
+    expect(result.generationRequests).toHaveLength(0);
+  });
+});
+
+describe('processAction spawn_variations target resolution', () => {
+  it('creates a variation from explicit creative id in user text when no card is selected', () => {
+    const state: AppState = {
+      ...initialState,
+      cards: [
+        makeSegmentCard('seg-1'),
+        makeBriefCard('brief-1', 'seg-1'),
+        makeCreativeCard('creative-1775232533432-0', 'brief-1'),
+      ],
+      selectedCardId: null,
+    };
+    const action = validateAction({
+      type: 'spawn_variations',
+      editInstructions: ['Make this version brighter and add stronger CTA contrast'],
+    })!;
+    const result = emptyResult();
+    processAction(
+      action,
+      state,
+      result,
+      'Generate 3 variations of creative creative-1775232533432-0 in format "Static image 1080x1920"',
+    );
+    const addCards = result.actions.filter((a) => a.type === 'ADD_CARDS');
+    expect(addCards).toHaveLength(1);
+    const cards = (addCards[0] as any).cards;
+    expect(cards).toHaveLength(1);
+    expect(cards[0].cardType).toBe('variation');
+    expect(cards[0].parentId).toBe('creative-1775232533432-0');
+    expect(result.generationRequests).toHaveLength(1);
+  });
+
+  it('does not create variations from user text when multiple creative ids are mentioned and no target is provided in action', () => {
+    const state: AppState = {
+      ...initialState,
+      cards: [
+        makeSegmentCard('seg-1'),
+        makeBriefCard('brief-1', 'seg-1'),
+        makeCreativeCard('creative-1', 'brief-1'),
+        makeCreativeCard('creative-2', 'brief-1'),
+      ],
+      selectedCardId: null,
+    };
+    const action = validateAction({
+      type: 'spawn_variations',
+      editInstructions: ['Tighten copy hierarchy'],
+    })!;
+    const result = emptyResult();
+    processAction(
+      action,
+      state,
+      result,
+      'Create versions for creative-1 and creative-2 with stronger branding',
+    );
     expect(result.actions.filter((a) => a.type === 'ADD_CARDS')).toHaveLength(0);
     expect(result.generationRequests).toHaveLength(0);
   });

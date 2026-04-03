@@ -720,7 +720,7 @@ export default function CanvasApp() {
             className="tb-btn"
             onClick={() => {
               dispatch({ type: 'AUTO_LAYOUT' });
-              setTimeout(() => fitAll(), 50);
+              setTimeout(() => fitAllRef.current(), 50);
             }}
             title="Auto-arrange all cards"
           >

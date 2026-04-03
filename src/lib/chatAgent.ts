@@ -256,7 +256,7 @@ IMPORTANT: Never spawn assets (ad references) in the same response as spawn_segm
 IMPORTANT: Pick the best-matching ad per segment based on: audience match (B2B vs B2C), reach, messaging similarity, location relevance.
 
 ## Selected card scoping rule
-CRITICAL: When a card is selected (shown as "Selected card: <id>" in the canvas state), ALL edit, update, variation, and generation actions MUST target ONLY that selected card. Never modify, regenerate, or create variations for cards that are not the selected card. If the user gives an instruction and a card is selected, assume the instruction applies to that card only — do not broadcast the action to other cards. If no card is selected and the user's instruction is ambiguous about which card to target, ask the user to select a card first.
+CRITICAL: When a card is selected (shown as "Selected card: <id>" in the canvas state), ALL edit, update, variation, and generation actions MUST target ONLY that selected card. Never modify, regenerate, or create variations for cards that are not the selected card. If the user gives an instruction and a card is selected, assume the instruction applies to that card only — do not broadcast the action to other cards. If no card is selected and the user explicitly names exactly one creative/variation card ID (for example: creative-... or var-...), target that card directly without asking for selection. Only ask the user to select a card when target scope is still ambiguous.
 
 ## Guidelines
 - When the user describes a campaign, create ONLY a settings card — do NOT generate segments yet. Ask the user to review the settings first.
@@ -267,7 +267,7 @@ CRITICAL: When a card is selected (shown as "Selected card: <id>" in the canvas 
 - All segments use Meta (Instagram/Facebook). Ad type is always "meta"
 - Be specific with targeting, taglines, and creative direction — don't be generic
 - If the user has a card selected and gives an edit instruction, create a variation or update ONLY for that selected card — never for other cards
-- If the user asks for multiple variants, use "spawn_variations" with one entry per requested edit, all targeting the selected card
+- If the user asks for multiple variants, use "spawn_variations" with one entry per requested edit, all targeting the selected card. If no card is selected but the user explicitly names exactly one creative/variation card ID, target that card.
 - Always include tool_messages for any "work" you're doing (loading data, generating content, etc.)
 - Keep your reply concise and actionable
 `;
@@ -289,8 +289,24 @@ interface VariationSpec {
   editInstruction: string;
 }
 
-function parseVariationSpecs(action: any, state: AppState): VariationSpec[] {
-  const actionParentId = action.parentCreativeId || action.parent_creative_id || state.selectedCardId || undefined;
+function resolveSingleMentionedCreativeLikeId(userText: string, state: AppState): string | undefined {
+  const mentionedIds = extractCreativeLikeIds(userText);
+  const validIds = mentionedIds.filter((id) =>
+    state.cards.some(
+      (c) => c.id === id && (c.cardType === 'creative' || c.cardType === 'variation'),
+    ),
+  );
+  if (validIds.length === 1) return validIds[0];
+  return undefined;
+}
+
+function parseVariationSpecs(action: any, state: AppState, userText: string = ''): VariationSpec[] {
+  const fallbackMentionedParentId = resolveSingleMentionedCreativeLikeId(userText, state);
+  const actionParentId = action.parentCreativeId
+    || action.parent_creative_id
+    || state.selectedCardId
+    || fallbackMentionedParentId
+    || undefined;
   const specs: VariationSpec[] = [];
 
   if (Array.isArray(action.variations)) {
@@ -779,7 +795,7 @@ export async function processMessage(
       }
     }
 
-    processAction(validatedAction, state, result);
+    processAction(validatedAction, state, result, userText);
   }
 
   return result;
@@ -787,7 +803,7 @@ export async function processMessage(
 
 type ValidatedAction = z.infer<typeof actionSchema>;
 
-export function processAction(action: ValidatedAction, state: AppState, result: AgentResult) {
+export function processAction(action: ValidatedAction, state: AppState, result: AgentResult, userText: string = '') {
   const now = Date.now();
 
   switch (action.type) {
@@ -1080,7 +1096,7 @@ export function processAction(action: ValidatedAction, state: AppState, result: 
 
     case 'spawn_variation':
     case 'spawn_variations': {
-      const specs = parseVariationSpecs(action, state);
+      const specs = parseVariationSpecs(action, state, userText);
       spawnVariations(specs, state, result, now);
       break;
     }
