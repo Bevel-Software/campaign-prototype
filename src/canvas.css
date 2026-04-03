@@ -112,6 +112,8 @@ body {
 .tb-btn:hover { background: var(--gray-100); color: var(--gray-900); border-color: var(--gray-300); }
 .tb-btn.primary { background: var(--teal); color: var(--white); border-color: var(--teal); }
 .tb-btn.primary:hover { background: var(--teal-light); }
+.tb-btn.danger { color: #d32f2f; border-color: #f5c6cb; }
+.tb-btn.danger:hover { background: #fef0f0; color: #b71c1c; border-color: #d32f2f; }
 .zoom-display {
   font-size: 0.75rem;
   font-weight: 500;
@@ -374,6 +376,26 @@ body {
   font-weight: 500;
   flex-shrink: 0;
   min-width: 52px;
+}
+.targeting-structured {
+  flex-direction: column;
+  gap: 3px;
+}
+.targeting-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.targeting-line {
+  display: flex;
+  gap: 4px;
+  line-height: 1.35;
+}
+.targeting-line-label {
+  color: var(--gray-400);
+  font-weight: 500;
+  flex-shrink: 0;
+  min-width: 62px;
 }
 .segment-card-tagline {
   font-size: 0.75rem;

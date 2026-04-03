@@ -290,6 +290,21 @@ export default function CanvasApp() {
     dispatch({ type: 'SET_CANVAS_VIEWPORT', payload: viewport });
   }, [state.cards]);
 
+  // ===== CLEAR CANVAS =====
+  const handleClearCanvas = useCallback(() => {
+    if (state.cards.length === 0 && state.messages.length === 0) return;
+    const confirmed = window.confirm(
+      'Clear all cards and chat history? This cannot be undone.',
+    );
+    if (!confirmed) return;
+    dispatch({ type: 'RESET_CANVAS' });
+    fetch('/api/canvas-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cards: [], messages: [], canvas: { x: 0, y: 0, scale: 1 } }),
+    }).catch(() => {});
+  }, [state.cards.length, state.messages.length]);
+
   // Stable refs for callbacks used inside executeAgentTurn's setTimeout
   const triggerRef = useRef(triggerImageGeneration);
   triggerRef.current = triggerImageGeneration;
@@ -338,6 +353,19 @@ export default function CanvasApp() {
     (e: React.MouseEvent) => {
       e.preventDefault();
       const items: { icon: string; label: string; action: () => void }[] = [];
+
+      // Check if right-clicked on a card
+      const cardEl = (e.target as HTMLElement).closest('[data-card-id]');
+      const clickedCardId = cardEl?.getAttribute('data-card-id') ?? null;
+      const clickedCard = clickedCardId ? state.cards.find((c) => c.id === clickedCardId) : null;
+
+      if (clickedCard) {
+        items.push({
+          icon: '&#128465;',
+          label: `Delete ${clickedCard.cardType === 'settings' ? 'Settings' : clickedCard.label || clickedCard.cardType}`,
+          action: () => dispatch({ type: 'DELETE_CARD', cardId: clickedCard.id }),
+        });
+      }
 
       const hasSettings = state.cards.some((c) => c.cardType === 'settings');
       const segmentCards = state.cards.filter(
@@ -504,6 +532,7 @@ export default function CanvasApp() {
           });
         }}
         onFitAll={fitAll}
+        onClearCanvas={handleClearCanvas}
       />
       {missingKeys.length > 0 && (
         <div className="api-key-banner">

@@ -29,7 +29,7 @@ export type SkillSegment = z.infer<typeof skillSegmentSchema>;
 
 // ===== Prompt =====
 
-const SEGMENT_SYSTEM_PROMPT = `You are a senior media strategist who builds audience segments for paid advertising campaigns. You think like a media buyer — every segment must be specific enough to set up in an ad platform.
+const SEGMENT_SYSTEM_PROMPT = `You are a senior media strategist who builds audience segments for paid advertising campaigns. You think like a media buyer — every segment must be specific enough to set up in an ad platform. The platform produces static image ads only (no video, carousel, or story formats).
 
 Given campaign settings and brand context, produce an exhaustive, goal-aligned set of audience segments.
 
@@ -52,9 +52,14 @@ Follow the headline patterns and voice registers described in the brand guidelin
 2. GOAL ALIGNMENT: Each segment MUST map to at least one campaign objective. Reference which objective this segment serves in the targeting description.
 
 3. SPECIFICITY — each field must be actionable:
-   - "name": A vivid, memorable label (not "Segment 1"). Evoke the person.
+   - "name": A short, vivid label describing ONLY who the person is (e.g. "Burned-Out HR Directors", "Career-Switching Millennials"). Do NOT include the channel, funnel stage, or ad format — those are separate fields.
    - "channel": The specific platform from the campaign's channel list. Do not use channels that aren't listed in the settings unless the list is empty.
-   - "targeting": Structure as: (1) Demographics — age, location, job role. (2) Interests & behaviors — platform interests, behavioral signals. (3) Platform criteria — lookalikes, custom audiences, retargeting pools. (4) Objective served — which campaign objective this segment addresses. Minimum 3 sentences.
+   - "targeting": Use this exact 4-line format with labels and newlines:
+     Demographics: age, location, job role
+     Interests: platform interests, behavioral signals
+     Platform: lookalikes, custom audiences, retargeting pools
+     Objective: which campaign objective this segment addresses
+     Each line should be concise (under 15 words). No prose paragraphs.
    - "tagline": A message that resonates with THIS audience's specific pain points, using the brand's voice register and headline patterns. If competitor analysis is available, address competitor weaknesses. Always include a concrete number or proof point.
 
 4. COUNT: Generate as many segments as needed to exhaustively cover all objectives and channels. Let the campaign settings drive the count — do not artificially limit. Do not pad with low-value segments, but do not hold back if more segments are warranted.
@@ -75,12 +80,12 @@ Respond with valid JSON only:
   "reasoning": "Explain: (1) your segmentation strategy, (2) which segments serve which objectives, (3) any coverage gaps you see, (4) suggested budget allocation across segments (as rough percentages)",
   "segments": [
     {
-      "group": "b2c" or "b2b",
-      "name": "string",
-      "channel": "string",
-      "targeting": "string (structured prose, 3+ sentences)",
+      "group": "b2b",
+      "name": "Burned-Out HR Directors",
+      "channel": "Meta",
+      "targeting": "Demographics: 35-55, urban, HR director/VP\\nInterests: employee wellness, retention strategies\\nPlatform: lookalike 1-2% of existing clients\\nObjective: drive demo requests from HR decision-makers",
       "tagline": "string",
-      "funnel_stage": "awareness" | "consideration" | "conversion"
+      "funnel_stage": "consideration"
     }
   ]
 }`;

@@ -31,7 +31,7 @@ export function buildCreativeFromBrief(
   const adType: CreativeCardData['type'] = isB2B ? 'linkedin' : 'meta';
 
   // Build image generation prompt
-  let prompt = basePrompt || 'Create a professional advertising creative image';
+  let prompt = basePrompt || 'Create a professional static image ad creative';
   prompt += `. Creative direction: ${briefData.direction}`;
   prompt += `. Format: ${briefData.format}`;
   if (segmentData) {

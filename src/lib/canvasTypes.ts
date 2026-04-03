@@ -141,6 +141,7 @@ export type Action =
   | { type: 'UPDATE_CARD_POSITION'; cardId: string; x: number; y: number; width?: number; height?: number }
   | { type: 'UPDATE_CARD_DATA'; cardId: string; data: Partial<CanvasCard['data']> }
   | { type: 'SELECT_CARD'; cardId: string | null }
+  | { type: 'DELETE_CARD'; cardId: string }
   // Chat
   | { type: 'ADD_MESSAGE'; message: ChatMessage }
   | { type: 'SET_AGENT_THINKING'; value: boolean }
@@ -155,5 +156,7 @@ export type Action =
   | { type: 'SET_BASE_PROMPT'; payload: string }
   // API keys
   | { type: 'SET_API_KEYS'; payload: { openai: boolean; gemini: boolean } }
+  // Reset
+  | { type: 'RESET_CANVAS' }
   // Error
   | { type: 'SET_ERROR'; error: string | null };

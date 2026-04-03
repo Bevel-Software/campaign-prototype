@@ -99,6 +99,27 @@ export function canvasReducer(state: AppState, action: Action): AppState {
     case 'SELECT_CARD':
       return { ...state, selectedCardId: action.cardId };
 
+    case 'DELETE_CARD': {
+      // Remove the card and all its descendants
+      const toRemove = new Set<string>();
+      toRemove.add(action.cardId);
+      let added = true;
+      while (added) {
+        added = false;
+        for (const c of state.cards) {
+          if (c.parentId && toRemove.has(c.parentId) && !toRemove.has(c.id)) {
+            toRemove.add(c.id);
+            added = true;
+          }
+        }
+      }
+      return {
+        ...state,
+        cards: state.cards.filter((c) => !toRemove.has(c.id)),
+        selectedCardId: toRemove.has(state.selectedCardId ?? '') ? null : state.selectedCardId,
+      };
+    }
+
     // ===== CHAT =====
     case 'ADD_MESSAGE':
       return { ...state, messages: [...state.messages, action.message] };
@@ -138,6 +159,16 @@ export function canvasReducer(state: AppState, action: Action): AppState {
     // ===== API KEYS =====
     case 'SET_API_KEYS':
       return { ...state, apiKeys: action.payload };
+
+    // ===== RESET =====
+    case 'RESET_CANVAS':
+      return {
+        ...initialState,
+        apiKeys: state.apiKeys,
+        brandGuidelines: state.brandGuidelines,
+        brandPositioning: state.brandPositioning,
+        basePrompt: state.basePrompt,
+      };
 
     // ===== ERROR =====
     case 'SET_ERROR':
