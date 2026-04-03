@@ -122,9 +122,9 @@ function buildBriefContext(
 Name: ${settings.name}
 Objectives:
 ${objectives || '(none specified)'}
+Campaign Objective: ${settings.campaignObjective || '(not specified)'}
+Audience Type: ${settings.audienceType || '(not specified)'}
 Market: ${settings.market || '(not specified)'}
-Budget: ${settings.budget || '(not specified)'}
-Timeline: ${settings.timeline || '(not specified)'}
 Channels: ${channels || '(not specified)'}
 Positioning: ${settings.positioning || '(not specified)'}`;
 

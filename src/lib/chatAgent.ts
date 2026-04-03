@@ -17,7 +17,7 @@ import type {
   CreativeCardData,
 } from './canvasTypes';
 import { computeChildPositions, computeInitialSettingsPosition, CARD_DIMENSIONS } from './layoutUtils';
-import { normalizeChannelList, normalizeObjectiveList } from './settingsData';
+import { normalizeChannelList, normalizeObjectiveList, normalizeCampaignObjective, normalizeAudienceType } from './settingsData';
 import { buildSegmentCards, generateSegments } from './skills/segmentSkill';
 import { generateBriefs } from './skills/briefSkill';
 
@@ -37,15 +37,26 @@ const stringOrJsonField = z.union([
   z.array(z.unknown()).transform((arr) => arr.join(', ')),
 ]).optional();
 
+const campaignObjectiveField = z.string()
+  .transform((v) => normalizeCampaignObjective(v))
+  .pipe(z.enum(['tofu', 'mofu', 'bofu']))
+  .optional();
+
+const audienceTypeField = z.string()
+  .transform((v) => normalizeAudienceType(v))
+  .pipe(z.enum(['broad', 'affinity', 'employee_icp', 'corporate_icp']))
+  .optional();
+
 const spawnSettingsSchema = z.object({
   type: z.literal('spawn_settings'),
   data: z.object({
     name: z.string().optional(),
     objectives: z.unknown().optional(),
+    campaignObjective: campaignObjectiveField,
+    campaign_objective: campaignObjectiveField,
+    audienceType: audienceTypeField,
+    audience_type: audienceTypeField,
     market: stringOrJsonField,
-    budget: stringOrJsonField,
-    split: stringOrJsonField,
-    timeline: stringOrJsonField,
     channels: z.unknown().optional(),
     positioning: stringOrJsonField,
   }).passthrough(),
@@ -199,7 +210,7 @@ IMPORTANT: Always converse with the user in English. Your replies, explanations,
 The user is working on an infinite canvas where campaign elements appear as cards. You converse naturally and output structured JSON actions to create/modify cards on the canvas.
 
 ## Available card types
-- **settings**: Campaign overview (name, objectives, market, budget, timeline, channels, positioning). IMPORTANT: "objectives" and "channels" must be arrays of strings, with each objective/channel as its own separate string. Do NOT combine multiple objectives into a single string. Example: ["Drive 10,000 sign-ups in 6 months", "Increase brand awareness by 30%"] not ["1) Drive 10,000 sign-ups... 2) Increase brand awareness..."]. Channels MUST only be "Google", "Meta", or "LinkedIn" — no other platforms.
+- **settings**: Campaign overview (name, objectives, campaignObjective, audienceType, market, channels, positioning). IMPORTANT: "objectives" and "channels" must be arrays of strings, with each objective/channel as its own separate string. Do NOT combine multiple objectives into a single string. Example: ["Drive 10,000 sign-ups in 6 months", "Increase brand awareness by 30%"] not ["1) Drive 10,000 sign-ups... 2) Increase brand awareness..."]. Channels MUST only be "Google", "Meta", or "LinkedIn" — no other platforms. "campaignObjective" must be one of: "tofu" (top of funnel — reach/video views), "mofu" (middle of funnel — clicks/engagement), or "bofu" (bottom of funnel — leads/conversions). "audienceType" must be one of: "broad", "affinity", "employee_icp", or "corporate_icp".
 - **segment**: Audience segment (group b2c/b2b, name, channel, targeting, tagline)
 - **asset**: Reference image/asset from past campaigns (segmentId, image URL, source, caption)
 - **brief**: Creative brief for a segment (direction, format, keywords)
@@ -404,7 +415,7 @@ function serializeCanvasState(state: AppState): string {
   const cardSummaries = state.cards.map((c) => {
     switch (c.cardType) {
       case 'settings':
-        return `[Settings] "${c.data.name}" — Market: ${c.data.market}, Budget: ${c.data.budget}`;
+        return `[Settings] "${c.data.name}" — Market: ${c.data.market}, Objective: ${c.data.campaignObjective || 'not set'}`;
       case 'segment':
         return `[Segment: ${c.id}]${c.data.isSelected ? ' ✓' : ''} "${c.data.name}" (${c.data.group}${c.data.funnelStage ? `, ${c.data.funnelStage}` : ''}) — ${c.data.channel}, ${c.data.targeting}`;
       case 'asset':
@@ -637,10 +648,9 @@ export function processAction(action: ValidatedAction, state: AppState, result: 
       const data: SettingsCardData = {
         name: action.data?.name || 'New Campaign',
         objectives: normalizeObjectiveList(action.data?.objectives),
+        campaignObjective: action.data?.campaignObjective || action.data?.campaign_objective || '',
+        audienceType: action.data?.audienceType || action.data?.audience_type || '',
         market: action.data?.market || '',
-        budget: action.data?.budget || '',
-        split: action.data?.split || '',
-        timeline: action.data?.timeline || '',
         channels: normalizeChannelList(action.data?.channels),
         positioning: action.data?.positioning || '',
       };

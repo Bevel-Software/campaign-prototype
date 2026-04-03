@@ -1,5 +1,4 @@
-import type { SettingsCardData } from '../../lib/canvasTypes';
-import { normalizeChannelList, normalizeObjectiveList } from '../../lib/settingsData';
+import type { SettingsCardData, CampaignObjective, AudienceType } from '../../lib/canvasTypes';
 import { InlineEditable } from './InlineEditable';
 
 interface Props {
@@ -7,11 +6,21 @@ interface Props {
   onFieldChange?: (field: string, value: string) => void;
 }
 
+const OBJECTIVE_OPTIONS: { value: CampaignObjective; label: string }[] = [
+  { value: 'tofu', label: 'TOFU' },
+  { value: 'mofu', label: 'MOFU' },
+  { value: 'bofu', label: 'BOFU' },
+];
+
+const AUDIENCE_OPTIONS: { value: AudienceType; label: string }[] = [
+  { value: 'broad', label: 'Broad' },
+  { value: 'affinity', label: 'Affinity' },
+  { value: 'employee_icp', label: 'Employee ICP' },
+  { value: 'corporate_icp', label: 'Corporate ICP' },
+];
+
 export function SettingsCardContent({ data, onFieldChange }: Props) {
   const empty = <span style={{ color: 'var(--gray-300)', fontStyle: 'italic' }}>—</span>;
-  const objectives = normalizeObjectiveList(data.objectives);
-  const channels = normalizeChannelList(data.channels);
-  const hasBadges = objectives.length > 0 || channels.length > 0;
 
   return (
     <>
@@ -23,20 +32,40 @@ export function SettingsCardContent({ data, onFieldChange }: Props) {
         </div>
       </div>
       <div className="settings-card-body">
-        {hasBadges && (
-          <div className="settings-card-badges">
-            {objectives.map((o, i) => (
-              <span key={i} className={`settings-card-badge ${o.type}`}>
-                {o.label}
-              </span>
-            ))}
-            {channels.map((c, i) => (
-              <span key={`ch-${i}`} className="settings-card-badge channel">
-                {c.label}
-              </span>
-            ))}
+        <div className="settings-card-row">
+          <div className="settings-card-field">
+            <div className="field-label">Objective</div>
+            <div className="settings-card-badges selectable" onPointerDown={(e) => e.stopPropagation()}>
+              {OBJECTIVE_OPTIONS.map((opt) => (
+                <span
+                  key={opt.value}
+                  className={`settings-card-badge objective ${data.campaignObjective === opt.value ? 'active' : ''}`}
+                  onClick={onFieldChange ? () => onFieldChange('campaignObjective', opt.value) : undefined}
+                  style={onFieldChange ? { cursor: 'pointer' } : undefined}
+                >
+                  {opt.label}
+                </span>
+              ))}
+            </div>
           </div>
-        )}
+        </div>
+        <div className="settings-card-row">
+          <div className="settings-card-field">
+            <div className="field-label">Audience</div>
+            <div className="settings-card-badges selectable" onPointerDown={(e) => e.stopPropagation()}>
+              {AUDIENCE_OPTIONS.map((opt) => (
+                <span
+                  key={opt.value}
+                  className={`settings-card-badge audience ${data.audienceType === opt.value ? 'active' : ''}`}
+                  onClick={onFieldChange ? () => onFieldChange('audienceType', opt.value) : undefined}
+                  style={onFieldChange ? { cursor: 'pointer' } : undefined}
+                >
+                  {opt.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
         <div className="settings-card-row">
           <div className="settings-card-field">
             <div className="field-label">Market</div>
@@ -48,28 +77,6 @@ export function SettingsCardContent({ data, onFieldChange }: Props) {
           </div>
         </div>
         <div className="settings-card-row">
-          <div className="settings-card-field">
-            <div className="field-label">Budget</div>
-            {data.budget && onFieldChange ? (
-              <InlineEditable className="field-value" value={data.budget} onChange={(v) => onFieldChange('budget', v)} />
-            ) : (
-              <div className="field-value">{data.budget || empty}</div>
-            )}
-          </div>
-          <div className="settings-card-field">
-            <div className="field-label">Split</div>
-            <div className="field-value">{data.split || empty}</div>
-          </div>
-        </div>
-        <div className="settings-card-row">
-          <div className="settings-card-field">
-            <div className="field-label">Timeline</div>
-            {data.timeline && onFieldChange ? (
-              <InlineEditable className="field-value" value={data.timeline} onChange={(v) => onFieldChange('timeline', v)} />
-            ) : (
-              <div className="field-value">{data.timeline || empty}</div>
-            )}
-          </div>
           <div className="settings-card-field">
             <div className="field-label">Positioning</div>
             {data.positioning && onFieldChange ? (

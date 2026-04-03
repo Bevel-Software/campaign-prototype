@@ -1,4 +1,4 @@
-import type { SettingsCardData } from './canvasTypes';
+import type { SettingsCardData, CampaignObjective, AudienceType } from './canvasTypes';
 
 type Objective = SettingsCardData['objectives'][number];
 type Channel = SettingsCardData['channels'][number];
@@ -91,6 +91,50 @@ export function normalizeObjectiveList(value: unknown): SettingsCardData['object
   }
 
   return [];
+}
+
+// ===== Campaign Objective normalization =====
+
+const CAMPAIGN_OBJECTIVE_MAP: Record<string, CampaignObjective> = {
+  'tofu': 'tofu',
+  'top of funnel': 'tofu',
+  'top': 'tofu',
+  'reach': 'tofu',
+  'mofu': 'mofu',
+  'middle of funnel': 'mofu',
+  'middle': 'mofu',
+  'consideration': 'mofu',
+  'bofu': 'bofu',
+  'bottom of funnel': 'bofu',
+  'bottom': 'bofu',
+  'conversion': 'bofu',
+};
+
+export function normalizeCampaignObjective(raw: string): CampaignObjective | null {
+  const key = raw.toLowerCase().replace(/[-_]/g, ' ').trim();
+  return CAMPAIGN_OBJECTIVE_MAP[key] ?? null;
+}
+
+// ===== Audience Type normalization =====
+
+const AUDIENCE_TYPE_MAP: Record<string, AudienceType> = {
+  'broad': 'broad',
+  'affinity': 'affinity',
+  'sports': 'affinity',
+  'interest': 'affinity',
+  'employee': 'employee_icp',
+  'employee icp': 'employee_icp',
+  'employee_icp': 'employee_icp',
+  'corporate': 'corporate_icp',
+  'corporate icp': 'corporate_icp',
+  'corporate_icp': 'corporate_icp',
+  'hr': 'corporate_icp',
+  'hr icp': 'corporate_icp',
+};
+
+export function normalizeAudienceType(raw: string): AudienceType | null {
+  const key = raw.toLowerCase().replace(/[-]/g, ' ').trim();
+  return AUDIENCE_TYPE_MAP[key] ?? null;
 }
 
 export function normalizeChannelList(value: unknown): SettingsCardData['channels'] {

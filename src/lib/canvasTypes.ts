@@ -13,13 +13,15 @@ export interface CardBase {
   parentId: string | null;
 }
 
+export type CampaignObjective = 'tofu' | 'mofu' | 'bofu';
+export type AudienceType = 'broad' | 'affinity' | 'employee_icp' | 'corporate_icp';
+
 export interface SettingsCardData {
   name: string;
   objectives: { label: string; type: 'b2c' | 'b2b' }[];
+  campaignObjective: CampaignObjective | '';
+  audienceType: AudienceType | '';
   market: string;
-  budget: string;
-  split: string;
-  timeline: string;
   channels: { label: string; type: string }[];
   positioning: string;
 }

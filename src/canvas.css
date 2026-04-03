@@ -283,9 +283,11 @@ body {
   border-radius: 980px;
   font-weight: 500;
 }
-.settings-card-badge.b2c { background: var(--teal-10); color: var(--teal); }
-.settings-card-badge.b2b { background: rgba(0,119,181,0.08); color: #0077b5; }
-.settings-card-badge.channel { background: var(--gray-100); color: var(--gray-600); }
+.settings-card-badge.objective { background: var(--gray-100); color: var(--gray-500); }
+.settings-card-badge.objective.active { background: var(--teal-10); color: var(--teal); }
+.settings-card-badge.audience { background: var(--gray-100); color: var(--gray-500); }
+.settings-card-badge.audience.active { background: rgba(0,119,181,0.08); color: #0077b5; }
+.settings-card-badges.selectable .settings-card-badge:hover { opacity: 0.8; }
 
 /* ===== SEGMENT CARD ===== */
 .canvas-card.card-segment { width: 260px; }

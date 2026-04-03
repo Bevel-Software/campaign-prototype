@@ -76,7 +76,7 @@ Follow the headline patterns and voice registers described in the brand guidelin
 ## Output format
 Respond with valid JSON only:
 {
-  "reasoning": "Explain: (1) your segmentation strategy, (2) which segments serve which objectives, (3) any coverage gaps you see, (4) suggested budget allocation across segments (as rough percentages)",
+  "reasoning": "Explain: (1) your segmentation strategy, (2) which segments serve which objectives, (3) any coverage gaps you see",
   "segments": [
     {
       "group": "b2b",
@@ -105,9 +105,9 @@ function buildCampaignContext(
 Name: ${settings.name}
 Objectives:
 ${objectives || '(none specified)'}
+Campaign Objective: ${settings.campaignObjective || '(not specified)'}
+Audience Type: ${settings.audienceType || '(not specified)'}
 Market: ${settings.market || '(not specified)'}
-Budget: ${settings.budget || '(not specified)'}
-Timeline: ${settings.timeline || '(not specified)'}
 Channels: ${channels || '(not specified)'}
 Positioning: ${settings.positioning || '(not specified)'}`;
 

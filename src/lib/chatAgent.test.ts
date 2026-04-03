@@ -4,68 +4,105 @@ import type { AgentResult } from './chatAgent';
 import type { AppState, SettingsCard, SegmentCard, BriefCard } from './canvasTypes';
 import { canvasReducer, initialState } from './canvasReducer';
 
-// ===== spawn_settings coercion =====
+// ===== spawn_settings: campaignObjective & audienceType normalization =====
 
-describe('spawn_settings', () => {
-  it('accepts budget and timeline as strings', () => {
+describe('spawn_settings campaignObjective', () => {
+  it('normalizes "TOFU" to "tofu"', () => {
     const result = validateAction({
       type: 'spawn_settings',
-      data: {
-        name: 'Summer Campaign',
-        market: 'France',
-        budget: '€50,000',
-        timeline: 'Q3 2026',
-      },
+      data: { name: 'Test', campaignObjective: 'TOFU' },
     });
     expect(result).not.toBeNull();
-    expect(result!.type).toBe('spawn_settings');
     const data = (result as Extract<typeof result, { type: 'spawn_settings' }>)!.data;
-    expect(data.budget).toBe('€50,000');
-    expect(data.timeline).toBe('Q3 2026');
+    expect(data.campaignObjective).toBe('tofu');
   });
 
-  it('coerces budget object to string', () => {
+  it('normalizes "Top of Funnel" to "tofu"', () => {
     const result = validateAction({
       type: 'spawn_settings',
-      data: {
-        name: 'Marseille Launch',
-        budget: { total: '€50,000', monthly: '€10,000' },
-      },
+      data: { name: 'Test', campaignObjective: 'Top of Funnel' },
     });
     expect(result).not.toBeNull();
     const data = (result as Extract<typeof result, { type: 'spawn_settings' }>)!.data;
-    expect(typeof data.budget).toBe('string');
-    expect(data.budget).toContain('total');
-    expect(data.budget).toContain('€50,000');
+    expect(data.campaignObjective).toBe('tofu');
   });
 
-  it('coerces timeline object to string', () => {
+  it('normalizes "reach" to "tofu"', () => {
     const result = validateAction({
       type: 'spawn_settings',
-      data: {
-        name: 'Marseille Launch',
-        timeline: { start: '2026-06-01', end: '2026-09-30', phases: 3 },
-      },
+      data: { name: 'Test', campaignObjective: 'reach' },
     });
     expect(result).not.toBeNull();
     const data = (result as Extract<typeof result, { type: 'spawn_settings' }>)!.data;
-    expect(typeof data.timeline).toBe('string');
-    expect(data.timeline).toContain('start');
-    expect(data.timeline).toContain('2026-06-01');
+    expect(data.campaignObjective).toBe('tofu');
   });
 
-  it('coerces budget array to string', () => {
+  it('normalizes "conversion" to "bofu"', () => {
     const result = validateAction({
       type: 'spawn_settings',
-      data: {
-        name: 'Test',
-        budget: ['€20k digital', '€10k print'],
-      },
+      data: { name: 'Test', campaignObjective: 'conversion' },
     });
     expect(result).not.toBeNull();
     const data = (result as Extract<typeof result, { type: 'spawn_settings' }>)!.data;
-    expect(typeof data.budget).toBe('string');
-    expect(data.budget).toContain('€20k digital');
+    expect(data.campaignObjective).toBe('bofu');
+  });
+
+  it('rejects invalid campaignObjective', () => {
+    const result = validateAction({
+      type: 'spawn_settings',
+      data: { name: 'Test', campaignObjective: 'garbage' },
+    });
+    expect(result).toBeNull();
+  });
+
+  it('accepts absent campaignObjective', () => {
+    const result = validateAction({
+      type: 'spawn_settings',
+      data: { name: 'Test', market: 'France' },
+    });
+    expect(result).not.toBeNull();
+    const data = (result as Extract<typeof result, { type: 'spawn_settings' }>)!.data;
+    expect(data.campaignObjective).toBeUndefined();
+  });
+});
+
+describe('spawn_settings audienceType', () => {
+  it('normalizes "Broad" to "broad"', () => {
+    const result = validateAction({
+      type: 'spawn_settings',
+      data: { name: 'Test', audienceType: 'Broad' },
+    });
+    expect(result).not.toBeNull();
+    const data = (result as Extract<typeof result, { type: 'spawn_settings' }>)!.data;
+    expect(data.audienceType).toBe('broad');
+  });
+
+  it('normalizes "Employee ICP" to "employee_icp"', () => {
+    const result = validateAction({
+      type: 'spawn_settings',
+      data: { name: 'Test', audienceType: 'Employee ICP' },
+    });
+    expect(result).not.toBeNull();
+    const data = (result as Extract<typeof result, { type: 'spawn_settings' }>)!.data;
+    expect(data.audienceType).toBe('employee_icp');
+  });
+
+  it('normalizes "HR" to "corporate_icp"', () => {
+    const result = validateAction({
+      type: 'spawn_settings',
+      data: { name: 'Test', audienceType: 'HR' },
+    });
+    expect(result).not.toBeNull();
+    const data = (result as Extract<typeof result, { type: 'spawn_settings' }>)!.data;
+    expect(data.audienceType).toBe('corporate_icp');
+  });
+
+  it('rejects invalid audienceType', () => {
+    const result = validateAction({
+      type: 'spawn_settings',
+      data: { name: 'Test', audienceType: 'invalid' },
+    });
+    expect(result).toBeNull();
   });
 });
 
@@ -380,10 +417,9 @@ describe('processAction spawn_segments with buildSegmentCards', () => {
       data: {
         name: 'Test Campaign',
         objectives: [],
+        campaignObjective: 'tofu',
+        audienceType: 'broad',
         market: 'France',
-        budget: '€50k',
-        split: '',
-        timeline: 'Q3',
         channels: [],
         positioning: '',
       },

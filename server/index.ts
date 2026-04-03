@@ -179,6 +179,10 @@ function makeSessionHandler(filePath: string) {
     }
 
     if (req.method === 'POST') {
+      if (!req.body) {
+        res.status(400).json({ error: 'Empty body' });
+        return;
+      }
       if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
       }
