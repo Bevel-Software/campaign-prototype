@@ -36,7 +36,7 @@ export function BriefCardContent({ data, onFieldChange, onGenerateCreative }: Pr
         </div>
       </div>
       {onGenerateCreative && (
-        <button className="brief-generate-btn" onClick={onGenerateCreative}>
+        <button className="brief-generate-btn" onClick={onGenerateCreative} onPointerDown={(e) => e.stopPropagation()}>
           Generate Creative &#9654;
         </button>
       )}
