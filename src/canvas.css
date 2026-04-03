@@ -437,6 +437,48 @@ body {
   border-top: 0.5px solid var(--gray-200);
 }
 
+/* ===== ASSET CARD — AD INSPIRATION ===== */
+.asset-inspiration-body {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.asset-inspiration-intro {
+  margin: 0;
+  font-size: 0.66rem;
+  color: var(--gray-500);
+  line-height: 1.45;
+  font-style: italic;
+}
+.asset-inspiration-reason,
+.asset-inspiration-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.asset-inspiration-reason-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.asset-inspiration-reason-text {
+  margin: 0;
+  font-size: 0.66rem;
+  color: var(--gray-700);
+  line-height: 1.45;
+}
+.asset-inspiration-caption-text {
+  margin: 0;
+  font-size: 0.62rem;
+  color: var(--gray-500);
+  line-height: 1.4;
+  max-height: 4.2em;
+  overflow: hidden;
+}
+
 /* ===== BRIEF CARD ===== */
 .canvas-card.card-brief { width: 260px; border: 1.5px dashed var(--gray-300); box-shadow: none; }
 .canvas-card.card-brief:hover { box-shadow: var(--shadow-sm); }

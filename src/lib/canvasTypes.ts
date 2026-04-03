@@ -38,6 +38,7 @@ export interface AssetCardData {
   image: string;
   source: string;
   caption: string;
+  reason?: string;
 }
 
 export interface BriefCardData {
@@ -112,12 +113,27 @@ export interface CanvasViewport {
   scale: number;
 }
 
+// ===== HISTORICAL ADS =====
+
+export interface HistoricalAd {
+  adLink: string;
+  text: string;
+  imageDescription: string;
+  imageLink: string;
+  adDuration: string;
+  location: string;
+  ageRange: string;
+  gender: string;
+  reach: number;
+}
+
 // ===== APP STATE =====
 
 export interface AppState {
   apiKeys: { openai: boolean; gemini: boolean };
   brandGuidelines: string;
   brandPositioning: string;
+  historicalAds: HistoricalAd[];
   basePrompt: string;
   canvas: CanvasViewport;
   cards: CanvasCard[];
@@ -151,6 +167,7 @@ export type Action =
   // Brand context
   | { type: 'SET_BRAND_GUIDELINES'; payload: string }
   | { type: 'SET_BRAND_POSITIONING'; payload: string }
+  | { type: 'SET_HISTORICAL_ADS'; payload: HistoricalAd[] }
   | { type: 'SET_BASE_PROMPT'; payload: string }
   // API keys
   | { type: 'SET_API_KEYS'; payload: { openai: boolean; gemini: boolean } }

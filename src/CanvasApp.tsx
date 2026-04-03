@@ -45,6 +45,38 @@ export default function CanvasApp() {
       .then((r) => r.ok ? r.text() : Promise.reject())
       .then((text) => dispatch({ type: 'SET_BRAND_POSITIONING', payload: text }))
       .catch(() => console.warn('positioning.md not found'));
+
+    fetch('/historical_data.csv')
+      .then((r) => r.ok ? r.text() : Promise.reject())
+      .then((csv) => {
+        const lines = csv.trim().split('\n');
+        const ads = lines.slice(1).map((line) => {
+          // Parse CSV respecting quoted fields
+          const fields: string[] = [];
+          let current = '';
+          let inQuotes = false;
+          for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') { inQuotes = !inQuotes; }
+            else if (ch === ',' && !inQuotes) { fields.push(current.trim()); current = ''; }
+            else { current += ch; }
+          }
+          fields.push(current.trim());
+          return {
+            adLink: fields[0] || '',
+            text: fields[1] || '',
+            imageDescription: fields[2] || '',
+            imageLink: fields[3] || '',
+            adDuration: fields[4] || '',
+            location: fields[5] || '',
+            ageRange: fields[6] || '',
+            gender: fields[7] || '',
+            reach: parseInt(fields[8] || '0', 10) || 0,
+          };
+        });
+        dispatch({ type: 'SET_HISTORICAL_ADS', payload: ads });
+      })
+      .catch(() => console.warn('historical_data.csv not found'));
   }, []);
 
   // ===== SESSION PERSISTENCE =====

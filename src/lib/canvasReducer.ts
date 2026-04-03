@@ -8,6 +8,7 @@ export const initialState: AppState = {
   },
   brandGuidelines: '',
   brandPositioning: '',
+  historicalAds: [],
   basePrompt: '',
   canvas: { x: 0, y: 0, scale: 1 },
   cards: [],
@@ -131,6 +132,9 @@ export function canvasReducer(state: AppState, action: Action): AppState {
 
     case 'SET_BRAND_POSITIONING':
       return { ...state, brandPositioning: action.payload };
+
+    case 'SET_HISTORICAL_ADS':
+      return { ...state, historicalAds: action.payload };
 
     case 'SET_BASE_PROMPT':
       return { ...state, basePrompt: action.payload };

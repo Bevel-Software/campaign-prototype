@@ -1,6 +1,6 @@
 {
   "brand": "EGYM Wellpass",
-  "basePrompt": "Create a professional advertising creative image for EGYM Wellpass, a corporate wellness benefit that gives employees access to 9,000+ gyms and studios. The ad should be visually striking, modern, and ready for social media",
+  "basePrompt": "Generate the FINAL ad image itself — not a mockup, not a preview, not a phone screen, not a browser frame. Output ONLY the flat image that would be uploaded directly to an ad platform. The image should be a complete, ready-to-publish social media ad creative",
   "questions": [
     {
       "id": "audience",

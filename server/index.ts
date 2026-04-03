@@ -82,15 +82,34 @@ app.post('/api/generate-image', async (req, res) => {
   const { prompt, brandContext, previousImageDataUrl } = req.body;
   const ai = new GoogleGenAI({ apiKey });
 
-  // Build content parts
+  // Build content parts — reframe as a graphic design task to avoid mockup generation
   const parts: Part[] = [];
-  const contextParts = [prompt];
+
+  // Rewrite the prompt: strip "ad creative" framing, focus on the image itself
+  const reframedPrompt = prompt
+    .replace(/\bad(vertising)?\s*creative\b/gi, 'marketing graphic')
+    .replace(/\bad\s*image\b/gi, 'marketing image')
+    .replace(/\bsocial media ad\b/gi, 'social media graphic')
+    .replace(/\bad platform\b/gi, 'platform');
+
+  const contextParts = [
+    'You are a graphic designer. Generate a single flat graphic image.',
+    'RULES:',
+    '- Output ONLY the raw image — the actual graphic itself.',
+    '- NEVER render a phone, laptop, browser, app window, social media feed, device frame, or any UI around the image.',
+    '- NEVER render the image as if it is being viewed inside an app or platform.',
+    '- NEVER include "Sponsored" labels, Like/Comment/Share buttons, profile pictures, or any social media UI elements.',
+    '- The output should be a clean, flat, standalone graphic that could be directly uploaded as-is.',
+    '',
+    reframedPrompt,
+  ];
+
+  // Only send visual brand guidelines (colors, fonts, logo rules) — NOT positioning/messaging docs
+  // The positioning doc talks about ads/competition which causes the model to render mockups
   if (brandContext?.guidelines) {
-    contextParts.push('', 'Brand guidelines to follow:', brandContext.guidelines);
+    contextParts.push('', 'Visual brand guidelines (colors, typography, logo):', brandContext.guidelines);
   }
-  if (brandContext?.positioning) {
-    contextParts.push('', 'Product positioning & messaging:', brandContext.positioning);
-  }
+
   const fullPrompt = contextParts.join('\n');
   parts.push({ text: fullPrompt });
 

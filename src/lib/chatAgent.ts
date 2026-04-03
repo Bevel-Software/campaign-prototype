@@ -70,6 +70,7 @@ const spawnAssetsSchema = z.object({
     image: z.string().optional(),
     source: z.string().optional(),
     caption: z.string().optional(),
+    reason: z.string().optional(),
   }).passthrough()),
 });
 
@@ -210,7 +211,7 @@ Always respond with valid JSON:
     // One or more of these action types:
     {"type": "spawn_settings", "data": {settings card data}},
     {"type": "spawn_segments", "segments": [{segment data}, ...]},
-    {"type": "spawn_assets", "assets": [{"segmentId": "...", "image": "url", "source": "Library name", "caption": "description"}, ...]},
+    {"type": "spawn_assets", "assets": [{"segmentId": "...", "image": "visual description", "source": "Historical Ad Library", "caption": "ad text snippet", "reason": "why this ad was picked"}, ...]},
     {"type": "spawn_briefs", "briefs": [{"segmentId": "...", "brief": {brief data}}, ...]},
     {"type": "generate_creatives", "creatives": [{"briefId": "...", "creative": {creative text data}}, ...]},
     {"type": "spawn_variation", "parentCreativeId": "...", "editInstruction": "..."},
@@ -226,16 +227,21 @@ Image creation follows a TWO-STEP approval flow:
 
 IMPORTANT: "spawn_briefs" creates text-only planning cards — NO images are generated. "generate_creatives" creates ad cards WITH automatic image generation. Never skip the brief review step unless the user explicitly asks to go straight to creatives.
 
-## Two-step settings → segments workflow
-Campaign setup follows a TWO-STEP approval flow:
+## Four-step settings → segments → ad inspiration → briefs workflow
+Campaign setup follows a FOUR-STEP approval flow:
 1. **Settings first**: When the user describes a campaign, create ONLY a settings card. Tell the user to review/edit the campaign details and confirm when ready.
-2. **Segments after approval**: Only when the user explicitly approves the settings (e.g. "looks good", "generate segments", "go ahead"), use "spawn_segments" to create audience segments.
+2. **Segments after approval**: Only when the user explicitly approves the settings, use "spawn_segments" to create audience segments. Then ask the user to review the segments and confirm.
+3. **Ad inspiration after segments are confirmed**: Only when the user explicitly approves the segments, shortlist 1 historical reference ad for each segment. Use "spawn_assets" to create asset cards linked to each segment. In your reply, explain WHY you picked each ad (e.g. same persona, highest reach, matching messaging). Then ask the user to review the references and confirm before moving to briefs.
+4. **Briefs after ad inspiration is confirmed**: Only when the user approves the ad references, proceed to create briefs.
 
 IMPORTANT: Never spawn segments in the same response as spawn_settings. Wait for the user to confirm the settings card first.
+IMPORTANT: Never spawn assets (ad references) in the same response as spawn_segments. Wait for the user to confirm the segments first.
+IMPORTANT: Pick the best-matching ad per segment based on: audience match (B2B vs B2C), reach, messaging similarity, location relevance.
 
 ## Guidelines
 - When the user describes a campaign, create ONLY a settings card — do NOT generate segments yet. Ask the user to review the settings first.
-- When asked to generate segments, create 3-4 audience segments (mix of b2c and b2b if applicable)
+- When asked to generate segments, create 3-4 audience segments (mix of b2c and b2b if applicable). Do NOT spawn assets yet — wait for user to confirm segments first.
+- When the user confirms segments, shortlist 1 historical reference ad for each segment using "spawn_assets". For each asset set: caption = ad text snippet, source = "Historical Ad Library", image = ad's image description, and reason = a short explanation of why this ad was picked (e.g. "Highest reach B2B ad at 202k, employer-benefit messaging matches this segment"). Then in your reply, ask the user whether they'd like to use these inspirations or swap any out before moving to briefs.
 - When asked for briefs or image briefs, use "spawn_briefs" ONLY for segments marked with ✓ (isSelected). If no segments are selected, ask the user to select segments first. Each brief = ONE image. Do not combine multiple formats or sizes into a single brief — instead create separate briefs (e.g. one brief for "Meta feed 1080x1080", another for "Instagram story 1080x1920"). Then tell the user: "Here are your image briefs. Double-click any text to edit, then tell me when you're ready to generate creatives."
 - When the user approves briefs, use "generate_creatives" ONLY for briefs whose parent segment is marked with ✓ (isSelected). Set each creative's briefId to the ID of the corresponding existing brief card from the canvas state
 - For Meta ads, use type "meta". For LinkedIn ads, use type "linkedin"
@@ -445,6 +451,16 @@ export async function processMessage(
     });
   }
 
+  if (state.historicalAds.length > 0) {
+    const adSummaries = state.historicalAds.map((ad, i) =>
+      `[Ad ${i + 1}] Reach: ${ad.reach.toLocaleString()} | Duration: ${ad.adDuration} | Location: ${ad.location} | Type: ${ad.imageDescription}\nText: ${ad.text.slice(0, 200)}${ad.text.length > 200 ? '...' : ''}\nLink: ${ad.adLink}`
+    ).join('\n\n');
+    messages.push({
+      role: 'system',
+      content: `## Historical Ad Library (${state.historicalAds.length} past ads)\nUse these to shortlist reference ads for each segment after spawning segments. Pick the best match based on audience, reach, and messaging.\n\n${adSummaries}`,
+    });
+  }
+
   // Include recent chat history for context (last 10 messages)
   const recentMessages = state.messages.slice(-10);
   for (const msg of recentMessages) {
@@ -646,11 +662,13 @@ export function processAction(action: ValidatedAction, state: AppState, result: 
             image: a.image || '',
             source: a.source || 'Library',
             caption: a.caption || '',
+            reason: a.reason || undefined,
           };
+          const isInspiration = !!data.reason;
           cards.push({
             id: `asset-${now}-${seq++}`,
             cardType: 'asset',
-            label: `Reference — ${parent.label?.split(' ')[0] || 'Asset'}`,
+            label: isInspiration ? `Inspiration — ${parent.label?.split(' ')[0] || 'Segment'}` : `Reference — ${parent.label?.split(' ')[0] || 'Asset'}`,
             x: positions[i]?.x || parent.x,
             y: positions[i]?.y || parent.y + parent.height + 100,
             width: CARD_DIMENSIONS.asset.width,
@@ -671,28 +689,33 @@ export function processAction(action: ValidatedAction, state: AppState, result: 
       const briefs = action.briefs || [];
       const allCards = getAllKnownCards(state, result);
 
-      // Group briefs by parent segment so siblings fan out correctly
-      const byParent = new Map<string, { parent: SegmentCard; items: typeof briefs }>();
+      // Group briefs by parent — prefer the asset/inspiration card for the segment, fall back to segment
+      const byParent = new Map<string, { parent: CanvasCard; segmentId: string; items: typeof briefs }>();
       for (let i = 0; i < briefs.length; i++) {
         const b = briefs[i];
         const segId = b.segmentId || b.segment_id;
-        const parentCard = allCards.find(
+        const segmentCard = allCards.find(
           (c): c is SegmentCard => c.id === segId && c.cardType === 'segment',
         );
-        if (!parentCard) continue;
+        if (!segmentCard) continue;
+        // Find an inspiration/asset card that is a child of this segment
+        const assetCard = allCards.find(
+          (c) => c.cardType === 'asset' && c.parentId === segmentCard.id,
+        );
+        const parentCard = assetCard || segmentCard;
         const group = byParent.get(parentCard.id);
         if (group) { group.items.push(b); }
-        else { byParent.set(parentCard.id, { parent: parentCard, items: [b] }); }
+        else { byParent.set(parentCard.id, { parent: parentCard, segmentId: segmentCard.id, items: [b] }); }
       }
 
       const cards: BriefCard[] = [];
       let seq = 0;
-      for (const [, { parent, items }] of byParent) {
+      for (const [, { parent, segmentId, items }] of byParent) {
         const positions = computeChildPositions(parent, items.length, CARD_DIMENSIONS.brief.width);
         for (let i = 0; i < items.length; i++) {
           const b = items[i];
           const data: BriefCardData = {
-            segmentId: parent.id,
+            segmentId,
             direction: b.brief?.direction || b.direction || '',
             format: b.brief?.format || b.format || 'Static image (1080x1080)',
             keywords: b.brief?.keywords || b.keywords || [],
@@ -763,6 +786,16 @@ export function processAction(action: ValidatedAction, state: AppState, result: 
         const segmentData = segmentCard?.cardType === 'segment' ? segmentCard.data : null;
 
         let prompt = state.basePrompt || 'Create a professional advertising creative image';
+
+        // Include settings context (campaign objectives, market, positioning)
+        const settingsCard = allCards.find((card) => card.cardType === 'settings');
+        if (settingsCard?.cardType === 'settings') {
+          const sd = settingsCard.data;
+          if (sd.market) prompt += `. Market: ${sd.market}`;
+          if (sd.positioning) prompt += `. Campaign positioning: ${sd.positioning}`;
+          if (sd.objectives?.length) prompt += `. Objectives: ${sd.objectives.map((o) => o.label).join(', ')}`;
+        }
+
         if (briefData) {
           prompt += `. Creative direction: ${(briefData as BriefCardData).direction}`;
           prompt += `. Format: ${(briefData as BriefCardData).format}`;
@@ -773,15 +806,20 @@ export function processAction(action: ValidatedAction, state: AppState, result: 
         }
         if (data.headline) prompt += `. Headline: ${data.headline}`;
 
-        // Include asset references from matching segment
+        // Include asset/inspiration references from matching segment
         if (briefData) {
           const segId = (briefData as BriefCardData).segmentId;
           const assetCards = allCards.filter(
             (card): card is AssetCard => card.cardType === 'asset' && card.data.segmentId === segId,
           );
           if (assetCards.length > 0) {
-            const refs = assetCards.map((a) => `${a.data.caption} (${a.data.source})`).join(', ');
-            prompt += `. Reference assets: ${refs}`;
+            const refs = assetCards.map((a) => {
+              let ref = a.data.caption;
+              if (a.data.image) ref += `. Visual style: ${a.data.image}`;
+              if (a.data.reason) ref += `. Chosen because: ${a.data.reason}`;
+              return ref;
+            }).join(' | ');
+            prompt += `. Inspiration from past ads: ${refs}`;
           }
         }
 

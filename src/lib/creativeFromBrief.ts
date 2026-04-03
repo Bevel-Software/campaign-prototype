@@ -32,6 +32,16 @@ export function buildCreativeFromBrief(
 
   // Build image generation prompt
   let prompt = basePrompt || 'Create a professional advertising creative image';
+
+  // Include settings context (campaign objectives, market, positioning)
+  const settingsCard = allCards.find((c) => c.cardType === 'settings');
+  if (settingsCard?.cardType === 'settings') {
+    const sd = settingsCard.data;
+    if (sd.market) prompt += `. Market: ${sd.market}`;
+    if (sd.positioning) prompt += `. Campaign positioning: ${sd.positioning}`;
+    if (sd.objectives?.length) prompt += `. Objectives: ${sd.objectives.map((o: { label: string }) => o.label).join(', ')}`;
+  }
+
   prompt += `. Creative direction: ${briefData.direction}`;
   prompt += `. Format: ${briefData.format}`;
   if (segmentData) {
@@ -39,13 +49,18 @@ export function buildCreativeFromBrief(
     prompt += `. Key message: ${segmentData.tagline}`;
   }
 
-  // Include asset references from matching segment
+  // Include asset/inspiration references from matching segment
   const assetCards = allCards.filter(
     (c): c is AssetCard => c.cardType === 'asset' && c.data.segmentId === briefData.segmentId,
   );
   if (assetCards.length > 0) {
-    const refs = assetCards.map((a) => `${a.data.caption} (${a.data.source})`).join(', ');
-    prompt += `. Reference assets: ${refs}`;
+    const refs = assetCards.map((a) => {
+      let ref = a.data.caption;
+      if (a.data.image) ref += `. Visual style: ${a.data.image}`;
+      if (a.data.reason) ref += `. Chosen because: ${a.data.reason}`;
+      return ref;
+    }).join(' | ');
+    prompt += `. Inspiration from past ads: ${refs}`;
   }
 
   const positions = computeChildPositions(briefCard, 1, CARD_DIMENSIONS.creative.width);
