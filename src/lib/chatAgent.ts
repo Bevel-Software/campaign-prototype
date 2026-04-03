@@ -182,6 +182,13 @@ export interface AgentResult {
 
 const SYSTEM_PROMPT = `You are a campaign strategist AI. You help marketing teams plan and execute advertising campaigns.
 
+You have access to the company's brand guidelines and product positioning documents (provided as separate system messages). Use them to:
+- Identify which company and product you are working with.
+- Ground all campaign settings, segments, and creatives in the company's actual positioning, key differentiators, and competitive advantages.
+- Match the correct tone and messaging pillars for each target audience as defined in the positioning document.
+- Reference real stats and competitive differentiation from the positioning document when generating copy.
+- Respect the brand voice, visual identity, and writing guidelines described in the brand guidelines document.
+
 The user is working on an infinite canvas where campaign elements appear as cards. You converse naturally and output structured JSON actions to create/modify cards on the canvas.
 
 ## Available card types
@@ -420,9 +427,23 @@ export async function processMessage(
     { role: 'system', content: SYSTEM_PROMPT },
     {
       role: 'system',
-      content: `Current canvas state:\n${canvasState}\n\nBrand guidelines available: ${state.brandGuidelines ? 'Yes' : 'No'}\nBrand positioning available: ${state.brandPositioning ? 'Yes' : 'No'}`,
+      content: `Current canvas state:\n${canvasState}`,
     },
   ];
+
+  if (state.brandGuidelines) {
+    messages.push({
+      role: 'system',
+      content: `## Brand Guidelines\n\n${state.brandGuidelines}`,
+    });
+  }
+
+  if (state.brandPositioning) {
+    messages.push({
+      role: 'system',
+      content: `## Product Positioning & Messaging\n\n${state.brandPositioning}`,
+    });
+  }
 
   // Include recent chat history for context (last 10 messages)
   const recentMessages = state.messages.slice(-10);
