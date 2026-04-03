@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { validateAction } from './chatAgent';
+import { validateAction, processAction } from './chatAgent';
+import type { AgentResult } from './chatAgent';
+import type { AppState, SegmentCard, BriefCard } from './canvasTypes';
+import { canvasReducer, initialState } from './canvasReducer';
 
 // ===== spawn_settings coercion =====
 
@@ -16,8 +19,9 @@ describe('spawn_settings', () => {
     });
     expect(result).not.toBeNull();
     expect(result!.type).toBe('spawn_settings');
-    expect(result!.data.budget).toBe('€50,000');
-    expect(result!.data.timeline).toBe('Q3 2026');
+    const data = (result as Extract<typeof result, { type: 'spawn_settings' }>)!.data;
+    expect(data.budget).toBe('€50,000');
+    expect(data.timeline).toBe('Q3 2026');
   });
 
   it('coerces budget object to string', () => {
@@ -29,9 +33,10 @@ describe('spawn_settings', () => {
       },
     });
     expect(result).not.toBeNull();
-    expect(typeof result!.data.budget).toBe('string');
-    expect(result!.data.budget).toContain('total');
-    expect(result!.data.budget).toContain('€50,000');
+    const data = (result as Extract<typeof result, { type: 'spawn_settings' }>)!.data;
+    expect(typeof data.budget).toBe('string');
+    expect(data.budget).toContain('total');
+    expect(data.budget).toContain('€50,000');
   });
 
   it('coerces timeline object to string', () => {
@@ -43,9 +48,10 @@ describe('spawn_settings', () => {
       },
     });
     expect(result).not.toBeNull();
-    expect(typeof result!.data.timeline).toBe('string');
-    expect(result!.data.timeline).toContain('start');
-    expect(result!.data.timeline).toContain('2026-06-01');
+    const data = (result as Extract<typeof result, { type: 'spawn_settings' }>)!.data;
+    expect(typeof data.timeline).toBe('string');
+    expect(data.timeline).toContain('start');
+    expect(data.timeline).toContain('2026-06-01');
   });
 
   it('coerces budget array to string', () => {
@@ -57,8 +63,9 @@ describe('spawn_settings', () => {
       },
     });
     expect(result).not.toBeNull();
-    expect(typeof result!.data.budget).toBe('string');
-    expect(result!.data.budget).toContain('€20k digital');
+    const data = (result as Extract<typeof result, { type: 'spawn_settings' }>)!.data;
+    expect(typeof data.budget).toBe('string');
+    expect(data.budget).toContain('€20k digital');
   });
 });
 
@@ -230,5 +237,129 @@ describe('other action types', () => {
       data: {},
     });
     expect(result).toBeNull();
+  });
+});
+
+// ===== Reducer: UPDATE_CARD_POSITION with height =====
+
+function makeSegmentCard(id: string, overrides?: Partial<SegmentCard>): SegmentCard {
+  return {
+    id,
+    cardType: 'segment',
+    label: 'Test Segment',
+    x: 100,
+    y: 100,
+    width: 260,
+    height: 170,
+    parentId: 'settings-1',
+    data: { group: 'b2c', name: 'Test', channel: 'Meta', targeting: 'adults', tagline: 'tagline' },
+    ...overrides,
+  };
+}
+
+function makeBriefCard(id: string, segmentId: string, overrides?: Partial<BriefCard>): BriefCard {
+  return {
+    id,
+    cardType: 'brief',
+    label: 'Test Brief',
+    x: 100,
+    y: 370,
+    width: 260,
+    height: 200,
+    parentId: segmentId,
+    data: { segmentId, direction: 'test direction', format: 'Static', keywords: [] },
+    ...overrides,
+  };
+}
+
+function emptyResult(): AgentResult {
+  return { reply: '', toolMessages: [], actions: [], generationRequests: [] };
+}
+
+describe('reducer UPDATE_CARD_POSITION with height', () => {
+  it('T1: updates card height when provided', () => {
+    const state: AppState = {
+      ...initialState,
+      cards: [makeSegmentCard('seg-1')],
+    };
+    const next = canvasReducer(state, {
+      type: 'UPDATE_CARD_POSITION',
+      cardId: 'seg-1',
+      x: 100,
+      y: 100,
+      height: 220,
+    });
+    expect(next.cards[0].height).toBe(220);
+  });
+
+  it('T2: leaves height unchanged when not provided', () => {
+    const state: AppState = {
+      ...initialState,
+      cards: [makeSegmentCard('seg-1')],
+    };
+    const next = canvasReducer(state, {
+      type: 'UPDATE_CARD_POSITION',
+      cardId: 'seg-1',
+      x: 200,
+      y: 200,
+    });
+    expect(next.cards[0].height).toBe(170);
+    expect(next.cards[0].x).toBe(200);
+  });
+});
+
+// ===== processAction: fallback removal =====
+
+describe('processAction spawn_briefs without index fallback', () => {
+  const stateWithSegment: AppState = {
+    ...initialState,
+    cards: [makeSegmentCard('seg-1')],
+  };
+
+  it('T3: skips brief without segmentId', () => {
+    const action = validateAction({
+      type: 'spawn_briefs',
+      briefs: [{ direction: 'test direction', format: 'Static image' }],
+    })!;
+    const result = emptyResult();
+    processAction(action, stateWithSegment, result);
+    // No ADD_CARDS action should be produced
+    expect(result.actions.filter((a) => a.type === 'ADD_CARDS')).toHaveLength(0);
+  });
+
+  it('T4: creates brief with valid segmentId', () => {
+    const action = validateAction({
+      type: 'spawn_briefs',
+      briefs: [{ segmentId: 'seg-1', direction: 'test direction', format: 'Static' }],
+    })!;
+    const result = emptyResult();
+    processAction(action, stateWithSegment, result);
+    const addCards = result.actions.filter((a) => a.type === 'ADD_CARDS');
+    expect(addCards).toHaveLength(1);
+    expect((addCards[0] as any).cards).toHaveLength(1);
+    expect((addCards[0] as any).cards[0].cardType).toBe('brief');
+  });
+});
+
+describe('processAction generate_creatives without index fallback', () => {
+  const stateWithBrief: AppState = {
+    ...initialState,
+    cards: [
+      makeSegmentCard('seg-1'),
+      makeBriefCard('brief-1', 'seg-1'),
+    ],
+  };
+
+  it('T5: skips creative without briefId', () => {
+    const action = validateAction({
+      type: 'generate_creatives',
+      creatives: [{
+        creative: { type: 'meta', headline: 'Test', body: 'Body', cta: 'CTA' },
+      }],
+    })!;
+    const result = emptyResult();
+    processAction(action, stateWithBrief, result);
+    expect(result.actions.filter((a) => a.type === 'ADD_CARDS')).toHaveLength(0);
+    expect(result.generationRequests).toHaveLength(0);
   });
 });

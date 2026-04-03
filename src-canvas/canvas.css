@@ -323,6 +323,40 @@ body {
   letter-spacing: -0.01em;
   line-height: 1.3;
 }
+.segment-checkbox {
+  margin-left: auto;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--gray-300);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.segment-checkbox input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  margin: 0;
+}
+.segment-checkbox:hover { border-color: var(--teal); }
+.segment-checkbox.checked {
+  background: var(--teal);
+  border-color: var(--teal);
+}
+.segment-checkbox.checked::after {
+  content: '\2713';
+  color: var(--white);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+}
 .segment-card-body {
   padding: 0 16px 12px;
   display: flex;

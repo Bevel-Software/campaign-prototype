@@ -1,4 +1,5 @@
-import type { AppState, Action } from './canvasTypes';
+import type { AppState, Action, CanvasCard } from './canvasTypes';
+import { computeChildPositions, CARD_DIMENSIONS } from './layoutUtils';
 
 export const initialState: AppState = {
   apiKeys: {
@@ -18,6 +19,36 @@ export const initialState: AppState = {
   error: null,
 };
 
+/**
+ * When a card's height changes, reposition its children (and recursively their
+ * descendants) so nothing overlaps.
+ */
+function cascadeRelayout(cards: CanvasCard[], parentId: string): CanvasCard[] {
+  const parent = cards.find((c) => c.id === parentId);
+  if (!parent) return cards;
+
+  const children = cards.filter((c) => c.parentId === parentId);
+  if (children.length === 0) return cards;
+
+  const childType = children[0].cardType;
+  const childWidth = CARD_DIMENSIONS[childType]?.width || 260;
+  const positions = computeChildPositions(parent, children.length, childWidth);
+
+  let updated = cards.map((c) => {
+    if (c.parentId !== parentId) return c;
+    const idx = children.findIndex((ch) => ch.id === c.id);
+    const pos = positions[idx];
+    if (!pos || (c.x === pos.x && c.y === pos.y)) return c;
+    return { ...c, x: pos.x, y: pos.y };
+  });
+
+  for (const child of children) {
+    updated = cascadeRelayout(updated, child.id);
+  }
+
+  return updated;
+}
+
 export function canvasReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     // ===== CANVAS VIEWPORT =====
@@ -31,13 +62,29 @@ export function canvasReducer(state: AppState, action: Action): AppState {
     case 'ADD_CARDS':
       return { ...state, cards: [...state.cards, ...action.cards] };
 
-    case 'UPDATE_CARD_POSITION':
-      return {
-        ...state,
-        cards: state.cards.map((c) =>
-          c.id === action.cardId ? { ...c, x: action.x, y: action.y } : c,
-        ),
-      };
+    case 'UPDATE_CARD_POSITION': {
+      const oldCard = state.cards.find((c) => c.id === action.cardId);
+      const heightChanged =
+        action.height != null && oldCard != null && Math.abs(oldCard.height - action.height) > 1;
+
+      let newCards = state.cards.map((c) =>
+        c.id === action.cardId
+          ? {
+              ...c,
+              x: action.x,
+              y: action.y,
+              ...(action.width != null && { width: action.width }),
+              ...(action.height != null && { height: action.height }),
+            }
+          : c,
+      );
+
+      if (heightChanged) {
+        newCards = cascadeRelayout(newCards, action.cardId);
+      }
+
+      return { ...state, cards: newCards };
+    }
 
     case 'UPDATE_CARD_DATA':
       return {

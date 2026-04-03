@@ -30,6 +30,7 @@ export interface SegmentCardData {
   channel: string;
   targeting: string;
   tagline: string;
+  isSelected?: boolean;
 }
 
 export interface AssetCardData {
@@ -136,7 +137,7 @@ export type Action =
   // Cards
   | { type: 'ADD_CARD'; card: CanvasCard }
   | { type: 'ADD_CARDS'; cards: CanvasCard[] }
-  | { type: 'UPDATE_CARD_POSITION'; cardId: string; x: number; y: number }
+  | { type: 'UPDATE_CARD_POSITION'; cardId: string; x: number; y: number; width?: number; height?: number }
   | { type: 'UPDATE_CARD_DATA'; cardId: string; data: Partial<CanvasCard['data']> }
   | { type: 'SELECT_CARD'; cardId: string | null }
   // Chat

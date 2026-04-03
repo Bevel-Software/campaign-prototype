@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { CanvasCard as CanvasCardType, Action } from '../../lib/canvasTypes';
 import { SettingsCardContent } from '../cards/SettingsCardContent';
 import { SegmentCardContent } from '../cards/SegmentCardContent';
@@ -23,6 +23,28 @@ export function CanvasCard({ card, isSelected, dispatch, onGenerateCreative }: C
     moved: false,
   });
   const elRef = useRef<HTMLDivElement>(null);
+
+  // Track actual rendered height via ResizeObserver
+  useEffect(() => {
+    const el = elRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const h = Math.round(entry.contentRect.height);
+      const w = Math.round(entry.contentRect.width);
+      if (Math.abs(h - card.height) > 5 || Math.abs(w - card.width) > 5) {
+        dispatch({
+          type: 'UPDATE_CARD_POSITION',
+          cardId: card.id,
+          x: card.x,
+          y: card.y,
+          width: w,
+          height: h,
+        });
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [card.id, card.x, card.y, card.width, card.height, dispatch]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
@@ -102,7 +124,7 @@ export function CanvasCard({ card, isSelected, dispatch, onGenerateCreative }: C
   );
 
   const handleFieldChange = useMemo(
-    () => (field: string, value: string) => {
+    () => (field: string, value: string | boolean) => {
       dispatch({ type: 'UPDATE_CARD_DATA', cardId: card.id, data: { [field]: value } });
     },
     [card.id, dispatch],
