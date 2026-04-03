@@ -118,7 +118,12 @@ app.post('/api/generate-image', async (req, res) => {
     if (match) {
       parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
       parts[0] = {
-        text: `Edit the provided image based on the following instructions. ${fullPrompt}`,
+        text: [
+          'Edit the provided image. Keep the original composition, layout, and style as close as possible.',
+          'Only change what the edit instruction specifically asks for.',
+          '',
+          reframedPrompt,
+        ].join('\n'),
       };
     }
   }

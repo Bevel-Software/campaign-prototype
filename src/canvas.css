@@ -127,6 +127,7 @@ body {
 .app-layout {
   display: flex;
   height: calc(100vh - var(--toolbar-h));
+  position: relative;
 }
 
 /* ===== CANVAS ===== */
@@ -1194,6 +1195,40 @@ body {
   -webkit-line-clamp: unset !important;
   display: block !important;
   overflow: visible !important;
+}
+
+/* ===== UPLOAD TOOLBAR ===== */
+.upload-toolbar {
+  position: absolute;
+  bottom: 20px;
+  right: calc(var(--chat-width) + 20px);
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border: 0.5px solid rgba(0,0,0,0.09);
+  border-radius: 8px;
+  padding: 6px 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ===== DRAG & DROP OVERLAY ===== */
+.canvas-drop-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(19, 94, 105, 0.06);
+  border: 2px dashed var(--teal);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--teal);
+  z-index: 100;
+  pointer-events: none;
 }
 
 /* ===== ANIMATIONS ===== */

@@ -369,7 +369,10 @@ function spawnVariations(
 
     for (let i = 0; i < edits.length; i++) {
       const editInstruction = edits[i];
-      const basePrompt = parentData.prompt || state.basePrompt || 'Edit the image';
+      const isUploadedImage = !parentData.prompt;
+      const basePrompt = parentData.prompt
+        || (isUploadedImage ? 'Edit this image while preserving its overall composition, style, and colors' : state.basePrompt)
+        || 'Edit the image';
       const prompt = `${basePrompt}. Edit: ${editInstruction}`;
       const cardId = `var-${now}-${seq++}`;
 

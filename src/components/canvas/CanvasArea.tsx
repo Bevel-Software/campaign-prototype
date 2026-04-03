@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useRef, useEffect, useState } from 'react';
+import { forwardRef, useCallback, useRef, useEffect, useState, type DragEvent } from 'react';
 import type { CanvasViewport, CanvasCard, Action } from '../../lib/canvasTypes';
 import { CanvasCard as CanvasCardComponent } from './CanvasCard';
 import { SvgOverlay } from './SvgOverlay';
@@ -13,12 +13,14 @@ interface CanvasAreaProps {
   onGenerateCreative?: (briefCardId: string) => void;
   onGenerateVariations?: (creativeCardId: string) => void;
   onGenerateBrief?: (segmentCardId: string) => void;
+  onImageDrop?: (file: File) => void;
 }
 
 export const CanvasArea = forwardRef<HTMLDivElement, CanvasAreaProps>(
-  ({ canvas, cards, selectedCardId, dispatch, onGenerateCreative, onGenerateVariations, onGenerateBrief }, ref) => {
+  ({ canvas, cards, selectedCardId, dispatch, onGenerateCreative, onGenerateVariations, onGenerateBrief, onImageDrop }, ref) => {
     const transformRef = useRef<HTMLDivElement>(null);
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+    const [isDragOver, setIsDragOver] = useState(false);
 
     // Track container size for minimap
     useEffect(() => {
@@ -136,6 +138,30 @@ export const CanvasArea = forwardRef<HTMLDivElement, CanvasAreaProps>(
       return () => el.removeEventListener('wheel', handleWheel);
     }, [ref, canvas, dispatch]);
 
+    // ===== DRAG & DROP =====
+    const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.dataTransfer.types.includes('Files')) {
+        setIsDragOver(true);
+        e.dataTransfer.dropEffect = 'copy';
+      }
+    }, []);
+
+    const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragOver(false);
+    }, []);
+
+    const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      const file = e.dataTransfer.files[0];
+      if (file && onImageDrop) {
+        onImageDrop(file);
+      }
+    }, [onImageDrop]);
+
     // ===== SPACE KEY for pan mode =====
     useEffect(() => {
       function onKeyDown(e: KeyboardEvent) {
@@ -162,11 +188,14 @@ export const CanvasArea = forwardRef<HTMLDivElement, CanvasAreaProps>(
     return (
       <div
         ref={ref}
-        className="canvas-area"
+        className={`canvas-area${isDragOver ? ' drag-over' : ''}`}
         style={bgStyle}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
         <div ref={transformRef} className="canvas-transform">
           {cards.map((card) => (
@@ -190,6 +219,7 @@ export const CanvasArea = forwardRef<HTMLDivElement, CanvasAreaProps>(
           onNavigate={handleMinimapNavigate}
         />
         {cards.length === 0 && <CanvasEmptyState />}
+        {isDragOver && <div className="canvas-drop-overlay">Drop image here</div>}
       </div>
     );
   },

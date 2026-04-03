@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useCallback, useRef, useState } from 'react';
+import { useReducer, useEffect, useCallback, useRef, useState, type ChangeEvent } from 'react';
 import { canvasReducer, initialState } from './lib/canvasReducer';
 import type { AppState, ChatMessage } from './lib/canvasTypes';
 import { generateCreative, GeminiError } from './lib/gemini';
@@ -15,6 +15,7 @@ import { ContextMenu } from './components/ContextMenu';
 export default function CanvasApp() {
   const [state, dispatch] = useReducer(canvasReducer, initialState);
   const canvasAreaRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Stable refs to avoid stale closures in executeAgentTurn and handleSendMessage
   const stateRef = useRef(state);
@@ -347,6 +348,66 @@ export default function CanvasApp() {
     }).catch(() => {});
   }, [state.cards.length, state.messages.length]);
 
+  // ===== IMAGE UPLOAD =====
+  const handleImageUpload = useCallback(
+    (file: File) => {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (PNG, JPG, GIF, WebP, etc.).');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image must be under 5 MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const container = canvasAreaRef.current;
+        if (!container || typeof reader.result !== 'string') return;
+        const rect = container.getBoundingClientRect();
+        const viewportCenterX = (rect.width / 2 - state.canvas.x) / state.canvas.scale - 140;
+        const viewportCenterY = (rect.height / 2 - state.canvas.y) / state.canvas.scale - 190;
+        dispatch({
+          type: 'ADD_CARD',
+          card: {
+            id: `creative-${Date.now()}`,
+            cardType: 'creative',
+            label: file.name.replace(/\.[^.]+$/, '').slice(0, 30) || 'Uploaded Image',
+            x: viewportCenterX,
+            y: viewportCenterY,
+            width: 280,
+            height: 380,
+            parentId: null,
+            data: {
+              type: 'meta',
+              group: 'b2c',
+              brand: '',
+              imageDataUrl: reader.result,
+              headline: '',
+              body: '',
+              cta: '',
+              prompt: '',
+              tags: [],
+              isGenerating: false,
+              error: null,
+            },
+          },
+        });
+      };
+      reader.onerror = () => alert('Failed to read image file.');
+      reader.readAsDataURL(file);
+    },
+    [state.canvas],
+  );
+
+  const handleFileInputChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) handleImageUpload(file);
+      e.target.value = '';
+    },
+    [handleImageUpload],
+  );
+
   // Stable refs for callbacks used inside executeAgentTurn's setTimeout
   const triggerRef = useRef(triggerImageGeneration);
   triggerRef.current = triggerImageGeneration;
@@ -585,6 +646,13 @@ export default function CanvasApp() {
           Missing server env vars: {missingKeys.map((k) => <code key={k}>{k}</code>).reduce<React.ReactNode[]>((acc, el, i) => i === 0 ? [el] : [...acc, ', ', el], [])}
         </div>
       )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleFileInputChange}
+      />
       <div className="app-layout" onContextMenu={handleContextMenu}>
         <CanvasArea
           ref={canvasAreaRef}
@@ -595,7 +663,17 @@ export default function CanvasApp() {
           onGenerateCreative={handleGenerateCreative}
           onGenerateVariations={handleGenerateVariations}
           onGenerateBrief={handleGenerateBrief}
+          onImageDrop={handleImageUpload}
         />
+        <div className="upload-toolbar">
+          <button
+            className="tb-btn"
+            onClick={() => fileInputRef.current?.click()}
+            title="Upload an image to the canvas"
+          >
+            &#128247; Upload Image
+          </button>
+        </div>
         <ChatPanel
           messages={state.messages}
           isAgentThinking={state.isAgentThinking}
