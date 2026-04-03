@@ -194,6 +194,8 @@ You have access to the company's brand guidelines and product positioning docume
 - Reference real stats and competitive differentiation from the positioning document when generating copy.
 - Respect the brand voice, visual identity, and writing guidelines described in the brand guidelines document.
 
+IMPORTANT: Always converse with the user in English. Your replies, explanations, and tool_messages must be in English. However, the ad content you generate (headlines, taglines, body copy, CTAs) should be in the language appropriate for the campaign's target market.
+
 The user is working on an infinite canvas where campaign elements appear as cards. You converse naturally and output structured JSON actions to create/modify cards on the canvas.
 
 ## Available card types
@@ -424,7 +426,29 @@ function serializeCanvasState(state: AppState): string {
     ? `\nSelected card: ${state.selectedCardId}`
     : '\nNo card selected.';
 
-  return cardSummaries.join('\n') + selectedInfo;
+  // Determine current workflow step so the LLM knows what to do next
+  const hasSettings = state.cards.some((c) => c.cardType === 'settings');
+  const hasSegments = state.cards.some((c) => c.cardType === 'segment');
+  const hasAssets = state.cards.some((c) => c.cardType === 'asset');
+  const hasBriefs = state.cards.some((c) => c.cardType === 'brief');
+  const hasCreatives = state.cards.some((c) => c.cardType === 'creative');
+
+  let workflowStep: string;
+  if (!hasSettings) {
+    workflowStep = 'STEP 1: No settings yet. When user describes a campaign, create a settings card.';
+  } else if (!hasSegments) {
+    workflowStep = 'STEP 2: Settings exist but no segments. When user confirms settings, use spawn_segments to generate audience segments.';
+  } else if (!hasAssets) {
+    workflowStep = 'STEP 3: Segments exist but no ad inspiration. When user confirms segments, use spawn_assets to shortlist 1 historical reference ad per segment. Include the "reason" field.';
+  } else if (!hasBriefs) {
+    workflowStep = 'STEP 4: Ad inspiration exists but no briefs. When user confirms inspiration, use spawn_briefs to create image briefs for selected segments.';
+  } else if (!hasCreatives) {
+    workflowStep = 'STEP 5: Briefs exist but no creatives. When user confirms briefs, use generate_creatives to produce ad images.';
+  } else {
+    workflowStep = 'All steps complete. User can request variations, edits, or new campaigns.';
+  }
+
+  return cardSummaries.join('\n') + selectedInfo + `\n\n## Current workflow step\n${workflowStep}`;
 }
 
 export async function processMessage(

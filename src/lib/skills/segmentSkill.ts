@@ -9,10 +9,10 @@ import { computeChildPositions, CARD_DIMENSIONS } from '../layoutUtils';
 
 // ===== Zod schemas (stricter than chatAgent's permissive segmentSchema) =====
 
-const funnelStageEnum = z.enum(['awareness', 'consideration', 'conversion']);
+const funnelStageEnum = z.string().transform((v) => v.toLowerCase()).pipe(z.enum(['awareness', 'consideration', 'conversion']));
 
 const skillSegmentSchema = z.object({
-  group: z.enum(['b2c', 'b2b']),
+  group: z.string().transform((v) => v.toLowerCase()).pipe(z.enum(['b2c', 'b2b'])),
   name: z.string().min(3),
   channel: z.string().min(2),
   targeting: z.string().min(20),

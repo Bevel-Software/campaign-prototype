@@ -1,231 +1,93 @@
-This is Wellpass
-R1_wall_1zu10_15575x2603mm
-About EGYM Wellpass
-EGYM Wellpass is the leading corporate fitness network, empowering companies to promote employee health and well-being with a single, flexible membership. With access to 23,000+ premium fitness and wellness facilities across Europe & North America, Wellpass connects employees to gyms, yoga studios, swimming pools, climbing centers, and more—all under one seamless subscription.
+# EGYM Wellpass — Brand System (Observed from Ad Library)
 
+Synthesized from 7 ad sets across all formats (1080x1080, 1080x1350, 1080x1920, 1200x628) in `Wellpass_ADS_2025_2026/`.
 
+---
 
-Beyond physical locations, Wellpass offers a comprehensive digital platform with thousands of online workouts, live classes, and guided meditations, ensuring employees can train anytime, anywhere.
+## Colors
 
+| Role | Color | Hex |
+|------|-------|-----|
+| Primary background (dark) | Wellpass Aqua | `#00a7b5` |
+| Primary background (light) | Pale mint | `#d4f0f0` → `#b2e8e8` |
+| Headline on light bg | Dark teal | `#125a63` / `#166e7a` |
+| Headline on dark bg | White | `#ffffff` |
+| Logo / subtext | White | `#ffffff` |
+| Map pins / icons | Wellpass Aqua | `#00a7b5` |
+| Pill badges | White bg, teal icon | — |
+| Glassmorphism card | Semi-transparent white | ~`rgba(255,255,255,0.55)` |
 
+Two distinct background modes appear across the library:
+- **Dark**: Flat or very subtle gradient, deep Wellpass Aqua (`#00a7b5` → `#166e7a`). Used for high-contrast, punchy ads.
+- **Light**: Soft gradient, pale mint to medium aqua (`#e8f7f7` → `#00a7b5`). Used for B2B/employer ads and softer employee messaging.
 
-With 690,000+ active members from 23,500+ companies, Wellpass helps organizations foster a healthier, more engaged workforce while supporting a preventative approach to healthcare. Backed by EGYM’s cutting-edge fitness technology, Wellpass delivers measurable health benefits, driving real impact for both employees and employers.
+No orange is used in any of the paid social ads (orange appears in brand guidelines but not in this ad library).
 
-Purpose
-Transforming corporate wellbeing.
-Core Belief
-We believe corporate wellbeing helps employers promote a work culture where employees can thrive by balancing work, life, and fitness. 
-Because healthy companies are built with healthy employees.
+---
 
+## Logo
 
-Brand Values
-Inclusivity
+Always present. Three-line stacked lockup, all white:
 
-Balance
+```
+E G Y M          ← wide letter-spacing, bold, largest
+WELLPASS         ← medium weight, slightly smaller, wide-spaced
+ex 🐦 Gymlib     ← small, with Gymlib bird icon to the left of text
+```
 
-Community
+**Placement:** Top-left corner (square/landscape) or top-center (portrait/story).
+Never rotated, never colored, always white.
 
-Motivation
+---
 
-We ensure fitness & wellbeing are accessible to employees of all experience and fitness levels.
+## Typography
 
-We promote a balanced approach to physical, mental, and emotional wellbeing.
+- **Font style:** Geometric sans-serif (clean, modern — similar to Poppins or Nunito Sans)
+- **Headline structure:** Typically two lines with weight contrast:
+  - Line 1: Regular or medium weight, slightly smaller
+  - Line 2: Bold or extrabold, larger — carries the punch
+- **Casing:**
+  - Employee ads: Mixed case ("T'es abonné nulle part, **t'as accès partout.**")
+  - Employer ads: Uppercase or all-caps for emphasis ("ET SI LE SPORT DEVENAIT **VOTRE AVANTAGE SALARIÉ PRÉFÉRÉ ?**")
+- **Body / stat text:** Regular weight, smaller, used inside cards or as floating pill labels
 
-We build supportive environments that encourage shared health and wellness efforts.
+---
 
+## Brand Voice
 
+**Language:** French only in this market.
 
-We inspire individuals and companies to prioritize health and wellbeing.
+**Two registers depending on audience:**
 
+| Audience | Pronoun | Tone | Pattern |
+|----------|---------|------|---------|
+| Employees | **tu** | Casual, direct, slightly provocative | Contrast statement or rhetorical hook |
+| Employers / HR | **vous** | Professional but punchy, value-led | Question hook + concrete stat |
 
+**Headline patterns observed:**
+- Contrast/paradox: *"T'es abonné nulle part, t'as accès partout."*
+- Objection flip: *"Pas fan de l'engagement ? Nous non plus…"*
+- Permission: *"Teste tout, ne t'engage à rien."*
+- Balance: *"Retrouve ton équilibre quotidien."*
+- B2B question: *"Et si le sport devenait votre avantage salarié préféré ?"*
+- Choice elimination: *"Fitness, yoga ou boxe ? Ne choisissez plus !"*
 
-Brand Personality
-Motivating
+**Numbers are always surfaced** and given visual weight: `+ 6 000 partenaires`, `6500 salles de sport`, `1 abonnement`.
 
-Impactful
+---
 
-Inclusive
+## What to Always Include
 
-Innovative
+1. EGYM Wellpass logo (EGYM / WELLPASS / ex Gymlib lockup)
+2. A clear, punchy two-line French headline matched to the audience register (tu / vous)
+3. At least one concrete number (partner count, activity count, or subscription reference)
+4. Brand color as dominant background (aqua or mint gradient)
+5. Visual proof of variety — either through app screenshots, activity photos, or a collage
 
-Empowering
+## What to Avoid
 
-We inspire individuals and organizations to actively engage in fitness and foster a culture where health is valued and integrated into everyday work life.
-
-Wellpass delivers measurable results in enhancing employee satisfaction, reducing healthcare costs, and improving overall productivity.
-
-Wellpass caters to employees of all backgrounds and fitness levels, fostering a supportive environment where everyone feels valued.
-
-We inspire individuals and companies to prioritize health and Wellpass constantly evolves to meet the changing needs of organizations.
-
-
-
-Our brand is empowering employees to take control of their health journeys.
-
-
-
-Colors
-The EGYM Wellpass color palette comes with the 'Wellpass Aqua' that has been part of the brand since day one.
-
-
-
-Instead of pure white and pure black we use 'Wellbeing White' and 'Premium Black'. Toning down these colors gives our brand a softer more approachable feel.
-
-
-
-'Wellpass Orange' is the new color introduced to the EGYM Wellpass brand. An orange color is also used as the primary brand color of EGYM Technology and therefore creates a visual connection of the two.
-
-Primary Colors
-Wellpass Aqua
-HEX
-#00a7b5
-RGB
-0, 167, 181
-CMYK
-75, 9, 30, 0
-RAL
-Wellbeing White
-HEX
-#f7f5f2
-RGB
-247, 245, 242
-CMYK
-5, 4, 6, 0
-RAL
-White
-HEX
-#ffffff
-RGB
-255, 255, 255
-CMYK
-0, 0, 0, 0
-RAL
-Premium Black (digital)
-HEX
-#2b2b2b
-RGB
-43, 43, 43
-CMYK
-67, 58, 55, 75
-RAL
-Black (print)
-HEX
-#000000
-RGB
-0, 0, 0
-CMYK
-0, 0, 0, 100
-RAL
-Secondary colors
-Aqua 1
-HEX
-#125a63
-RGB
-18, 90, 99
-CMYK
-86, 41, 44, 31
-Aqua 2
-HEX
-#166e7a
-RGB
-22, 110, 122
-CMYK
-84, 35, 41, 22
-Aqua 3
-HEX
-#06909c
-RGB
-6, 144, 156
-CMYK
-80, 22, 36, 5
-Aqua 4
-HEX
-#84d0d3
-RGB
-132, 208, 211
-CMYK
-50, 0, 21, 0
-Orange 1
-HEX
-#fd763c
-RGB
-253, 118, 60
-CMYK
-0, 65, 78, 0
-Orange 2
-HEX
-#ffb393
-RGB
-255, 179, 147
-CMYK
-0, 39, 41, 0
-Pantone color code For Aqua 1: 5473C
-
-Black shades
-Black 1 (digital)
-HEX
-#303030
-RGB
-48, 48, 48
-Black 2 (digital)
-HEX
-#3a3a3a
-RGB
-58, 58, 58
-Grey shades
-Grey 1 (digital)
-HEX
-#9da0a2
-RGB
-157, 160, 162
-Grey 2 for tag
-HEX
-#bfbdbd
-RGB
-191, 189, 189
-Grey 3 (digital)
-HEX
-#c6c6c6
-RGB
-198, 198, 198
-Grey 4 (digital)
-HEX
-#dfdfdf
-RGB
-223, 223, 223
-Gradient
-Linear gradient
-
-Aqua 2
-#166e7a
-
-Wellpass Aqua
-#00a7b5
-
-Wellbeing White
-#f7f5f2
-
-Wellpass Aqua
-#00a7b5
-
-Aqua 4
-#84d0d3
-
-Wellbeing White
-#f7f5f2
-
-Orange 2
-#ffb393
-
-Orange 1
-#fd763c
-Radial gradient
-
-Gradient-1
-
-Gradient-2
-
-Gradient-3
-
-Untitled
-Untitled
+- Orange accents (brand guideline color but not used in paid social)
+- English language copy
+- Busy or photo-heavy backgrounds without the brand color
+- More than 2 typeface weights in a single ad
+- Overly corporate stock photography (the tone is warm and accessible, not stiff)
