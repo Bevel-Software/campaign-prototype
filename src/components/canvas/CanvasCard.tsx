@@ -11,9 +11,10 @@ interface CanvasCardProps {
   isSelected: boolean;
   dispatch: React.Dispatch<Action>;
   onGenerateCreative?: (briefCardId: string) => void;
+  onGenerateVariations?: (creativeCardId: string) => void;
 }
 
-export function CanvasCard({ card, isSelected, dispatch, onGenerateCreative }: CanvasCardProps) {
+export function CanvasCard({ card, isSelected, dispatch, onGenerateCreative, onGenerateVariations }: CanvasCardProps) {
   const dragState = useRef({
     isDragging: false,
     startX: 0,
@@ -165,7 +166,12 @@ export function CanvasCard({ card, isSelected, dispatch, onGenerateCreative }: C
         />
       )}
       {(card.cardType === 'creative' || card.cardType === 'variation') && (
-        <CreativeCardContent data={card.data} label={card.label} onFieldChange={handleFieldChange} />
+        <CreativeCardContent
+          data={card.data}
+          label={card.label}
+          onFieldChange={handleFieldChange}
+          onGenerateVariations={onGenerateVariations ? () => onGenerateVariations(card.id) : undefined}
+        />
       )}
     </div>
   );

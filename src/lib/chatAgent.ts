@@ -18,6 +18,7 @@ import type {
 } from './canvasTypes';
 import { computeChildPositions, computeInitialSettingsPosition, CARD_DIMENSIONS } from './layoutUtils';
 import { normalizeChannelList, normalizeObjectiveList } from './settingsData';
+import { buildSegmentCards, generateSegments } from './skills/segmentSkill';
 
 // ===== Zod schemas for LLM response validation =====
 
@@ -193,7 +194,7 @@ You have access to the company's brand guidelines and product positioning docume
 The user is working on an infinite canvas where campaign elements appear as cards. You converse naturally and output structured JSON actions to create/modify cards on the canvas.
 
 ## Available card types
-- **settings**: Campaign overview (name, objectives, market, budget, timeline, channels, positioning). IMPORTANT: "objectives" and "channels" must be arrays of strings, with each objective/channel as its own separate string. Do NOT combine multiple objectives into a single string. Example: ["Drive 10,000 sign-ups in 6 months", "Increase brand awareness by 30%"] not ["1) Drive 10,000 sign-ups... 2) Increase brand awareness..."]
+- **settings**: Campaign overview (name, objectives, market, budget, timeline, channels, positioning). IMPORTANT: "objectives" and "channels" must be arrays of strings, with each objective/channel as its own separate string. Do NOT combine multiple objectives into a single string. Example: ["Drive 10,000 sign-ups in 6 months", "Increase brand awareness by 30%"] not ["1) Drive 10,000 sign-ups... 2) Increase brand awareness..."]. Channels MUST only be "Google", "Meta", or "LinkedIn" — no other platforms.
 - **segment**: Audience segment (group b2c/b2b, name, channel, targeting, tagline)
 - **asset**: Reference image/asset from past campaigns (segmentId, image URL, source, caption)
 - **brief**: Creative brief for a segment (direction, format, keywords)
@@ -240,7 +241,7 @@ IMPORTANT: Pick the best-matching ad per segment based on: audience match (B2B v
 
 ## Guidelines
 - When the user describes a campaign, create ONLY a settings card — do NOT generate segments yet. Ask the user to review the settings first.
-- When asked to generate segments, create 3-4 audience segments (mix of b2c and b2b if applicable). Do NOT spawn assets yet — wait for user to confirm segments first.
+- When asked to generate segments, emit a spawn_segments action with an empty segments array: {"type": "spawn_segments", "segments": []}. The segment generation system will handle the details. Your reply should tell the user that segments are being generated. Do NOT spawn assets yet — wait for user to confirm segments first.
 - When the user confirms segments, shortlist 1 historical reference ad for each segment using "spawn_assets". For each asset set: caption = ad text snippet, source = "Historical Ad Library", image = ad's image description, and reason = a short explanation of why this ad was picked (e.g. "Highest reach B2B ad at 202k, employer-benefit messaging matches this segment"). Then in your reply, ask the user whether they'd like to use these inspirations or swap any out before moving to briefs.
 - When asked for briefs or image briefs, use "spawn_briefs" ONLY for segments marked with ✓ (isSelected). If no segments are selected, ask the user to select segments first. Each brief = ONE image. Do not combine multiple formats or sizes into a single brief — instead create separate briefs (e.g. one brief for "Meta feed 1080x1080", another for "Instagram story 1080x1920"). Then tell the user: "Here are your image briefs. Double-click any text to edit, then tell me when you're ready to generate creatives."
 - When the user approves briefs, use "generate_creatives" ONLY for briefs whose parent segment is marked with ✓ (isSelected). Set each creative's briefId to the ID of the corresponding existing brief card from the canvas state
@@ -400,7 +401,7 @@ function serializeCanvasState(state: AppState): string {
       case 'settings':
         return `[Settings] "${c.data.name}" — Market: ${c.data.market}, Budget: ${c.data.budget}`;
       case 'segment':
-        return `[Segment: ${c.id}]${c.data.isSelected ? ' ✓' : ''} "${c.data.name}" (${c.data.group}) — ${c.data.channel}, ${c.data.targeting}`;
+        return `[Segment: ${c.id}]${c.data.isSelected ? ' ✓' : ''} "${c.data.name}" (${c.data.group}${c.data.funnelStage ? `, ${c.data.funnelStage}` : ''}) — ${c.data.channel}, ${c.data.targeting}`;
       case 'asset':
         return `[Asset: ${c.id}] for segment ${c.data.segmentId} — "${c.data.caption}" (${c.data.source})`;
       case 'brief':
@@ -546,10 +547,28 @@ export async function processMessage(
 
   // Process actions (validate each individually so one bad action doesn't block others)
   for (const rawAction of parsed.data.actions) {
-    const validatedAction = validateAction(rawAction);
-    if (validatedAction) {
-      processAction(validatedAction, state, result);
+    let validatedAction = validateAction(rawAction);
+    if (!validatedAction) continue;
+
+    // Intercept spawn_segments with empty array — delegate to segment skill
+    if (validatedAction.type === 'spawn_segments' && (!validatedAction.segments || validatedAction.segments.length === 0)) {
+      const settingsCard = state.cards.find((c): c is SettingsCard => c.cardType === 'settings');
+      if (settingsCard) {
+        try {
+          const skillResult = await generateSegments({
+            settings: settingsCard.data,
+            brandGuidelines: state.brandGuidelines,
+            brandPositioning: state.brandPositioning,
+          });
+          validatedAction = { ...validatedAction, segments: skillResult.segments as any };
+        } catch (err) {
+          result.reply += `\n\nSegment generation failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
+          continue;
+        }
+      }
     }
+
+    processAction(validatedAction, state, result);
   }
 
   return result;
@@ -597,38 +616,20 @@ export function processAction(action: ValidatedAction, state: AppState, result: 
 
     case 'spawn_segments': {
       const segments = action.segments || [];
-      const settingsCard = state.cards.find((c) => c.cardType === 'settings')
-        || (result.actions.find((a) => a.type === 'ADD_CARD' && (a as any).card?.cardType === 'settings') as any)?.card;
+      const settingsCard = (state.cards.find((c) => c.cardType === 'settings')
+        || (result.actions.find((a) => a.type === 'ADD_CARD' && (a as any).card?.cardType === 'settings') as any)?.card) as SettingsCard | undefined;
 
-      if (!settingsCard) break;
+      if (!settingsCard || segments.length === 0) break;
 
-      const positions = computeChildPositions(
-        settingsCard,
-        segments.length,
-        CARD_DIMENSIONS.segment.width,
-      );
+      const normalizedSegments: SegmentCardData[] = segments.map((seg: any, i: number) => ({
+        group: seg.group || 'b2c',
+        name: seg.name || `Segment ${i + 1}`,
+        channel: seg.channel || 'Meta',
+        targeting: seg.targeting || '',
+        tagline: seg.tagline || '',
+      }));
 
-      const cards: SegmentCard[] = segments.map((seg: any, i: number) => {
-        const data: SegmentCardData = {
-          group: seg.group || 'b2c',
-          name: seg.name || `Segment ${i + 1}`,
-          channel: seg.channel || 'Meta',
-          targeting: seg.targeting || '',
-          tagline: seg.tagline || '',
-        };
-        return {
-          id: `seg-${now}-${i}`,
-          cardType: 'segment' as const,
-          label: data.name,
-          x: positions[i]?.x || 0,
-          y: positions[i]?.y || 0,
-          width: CARD_DIMENSIONS.segment.width,
-          height: CARD_DIMENSIONS.segment.height,
-          parentId: settingsCard.id,
-          data,
-        };
-      });
-
+      const cards = buildSegmentCards(normalizedSegments, settingsCard);
       result.actions.push({ type: 'ADD_CARDS', cards });
       break;
     }

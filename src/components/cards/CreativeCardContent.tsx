@@ -5,9 +5,10 @@ interface Props {
   data: CreativeCardData;
   label: string;
   onFieldChange?: (field: string, value: string) => void;
+  onGenerateVariations?: () => void;
 }
 
-export function CreativeCardContent({ data, label, onFieldChange }: Props) {
+export function CreativeCardContent({ data, label, onFieldChange, onGenerateVariations }: Props) {
   const renderImage = () => {
     if (data.isGenerating) {
       return <div className="creative-loading" />;
@@ -60,6 +61,11 @@ export function CreativeCardContent({ data, label, onFieldChange }: Props) {
             ))}
           </div>
         )}
+        {onGenerateVariations && data.imageDataUrl && !data.isGenerating && (
+          <button className="brief-generate-btn" onClick={onGenerateVariations} onPointerDown={(e) => e.stopPropagation()}>
+            Generate Variations &#9654;
+          </button>
+        )}
       </>
     );
   }
@@ -109,6 +115,11 @@ export function CreativeCardContent({ data, label, onFieldChange }: Props) {
             </span>
           ))}
         </div>
+      )}
+      {onGenerateVariations && data.imageDataUrl && !data.isGenerating && (
+        <button className="brief-generate-btn" onClick={onGenerateVariations} onPointerDown={(e) => e.stopPropagation()}>
+          Generate Variations &#9654;
+        </button>
       )}
     </>
   );

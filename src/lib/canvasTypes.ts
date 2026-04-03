@@ -30,6 +30,7 @@ export interface SegmentCardData {
   channel: string;
   targeting: string;
   tagline: string;
+  funnelStage?: 'awareness' | 'consideration' | 'conversion';
   isSelected?: boolean;
 }
 
