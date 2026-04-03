@@ -609,6 +609,8 @@ body {
   color: var(--gray-900);
   letter-spacing: -0.01em;
 }
+.creative-image-only { padding: 0; }
+.creative-image-only img { width: 100%; display: block; border-radius: var(--radius-sm); }
 .meta-ad { padding: 0; }
 .meta-ad img { width: 100%; height: 180px; object-fit: cover; display: block; }
 .meta-ad-content { padding: 12px 14px; }
