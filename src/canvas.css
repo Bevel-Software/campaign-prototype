@@ -503,6 +503,55 @@ body {
   overflow: hidden;
 }
 
+/* — Inspiration action buttons — */
+.asset-inspiration-actions {
+  display: flex;
+  gap: 6px;
+  padding: 8px 14px 10px;
+}
+.inspiration-btn {
+  flex: 1;
+  padding: 5px 0;
+  font-size: 0.62rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--gray-200);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.inspiration-btn-use {
+  background: var(--teal);
+  color: #fff;
+  border-color: var(--teal);
+}
+.inspiration-btn-use:hover { filter: brightness(1.08); }
+.inspiration-btn-skip {
+  background: var(--gray-50);
+  color: var(--gray-600);
+}
+.inspiration-btn-skip:hover { background: var(--gray-100); }
+
+.asset-inspiration-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px 8px;
+  font-size: 0.62rem;
+  font-weight: 600;
+}
+.asset-inspiration-status.used { color: var(--teal); }
+.asset-inspiration-status.skipped { color: var(--gray-400); }
+.inspiration-undo {
+  background: none;
+  border: none;
+  color: var(--gray-400);
+  font-size: 0.58rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+.inspiration-undo:hover { color: var(--gray-600); }
+
 /* ===== BRIEF CARD ===== */
 .canvas-card.card-brief { width: 260px; border: 1.5px dashed var(--gray-300); box-shadow: none; }
 .canvas-card.card-brief:hover { box-shadow: var(--shadow-sm); }
@@ -542,6 +591,26 @@ body {
   font-size: 0.72rem;
   color: var(--gray-700);
   line-height: 1.45;
+}
+.brief-format-select {
+  font-size: 0.72rem;
+  color: var(--gray-700);
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  padding: 4px 8px;
+  width: 100%;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.45;
+}
+.brief-format-select:hover {
+  border-color: var(--gray-300);
+}
+.brief-format-select:focus {
+  outline: none;
+  border-color: var(--blue-400, #60a5fa);
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
 }
 .brief-card-keywords {
   display: flex;
@@ -599,6 +668,31 @@ body {
 /* ===== VARIATION SPLIT BUTTON + FORMAT DROPDOWN ===== */
 .variation-dropdown-wrapper {
   margin: 6px 8px 8px;
+}
+.creative-actions-row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+.creative-actions-row .split-btn {
+  flex: 1;
+}
+.download-btn {
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: var(--gray-500, #6b7280);
+  background: var(--gray-50, #f9fafb);
+  border: 1px solid var(--gray-200, #e5e7eb);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.download-btn:hover {
+  background: var(--gray-100, #f3f4f6);
+  color: var(--gray-700, #374151);
 }
 .split-btn {
   display: flex;
@@ -670,7 +764,7 @@ body {
   color: var(--gray-400, #9ca3af);
 }
 
-/* ===== CREATIVE CARD (Meta ad + LinkedIn ad) ===== */
+/* ===== CREATIVE CARD (Meta ad) ===== */
 .canvas-card.card-creative { width: 280px; }
 .canvas-card.card-variation { width: 252px; }
 .card-top-bar {
@@ -736,83 +830,6 @@ body {
   font-weight: 500;
   white-space: nowrap;
   flex-shrink: 0;
-}
-.linkedin-ad { padding: 14px; }
-.linkedin-ad-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.linkedin-ad-header .company-logo {
-  width: 32px; height: 32px;
-  background: linear-gradient(135deg, var(--teal), var(--teal-light));
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--white);
-  font-size: 0.5rem;
-  font-weight: 700;
-  line-height: 1.1;
-  text-align: center;
-  flex-shrink: 0;
-}
-.linkedin-ad-header .company-info .name {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--gray-900);
-}
-.linkedin-ad-header .company-info .meta {
-  font-size: 0.65rem;
-  color: var(--gray-500);
-}
-.linkedin-ad-body {
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: var(--gray-700);
-  margin-bottom: 10px;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.linkedin-ad-image {
-  width: 100%;
-  height: 100px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255,255,255,0.6);
-  font-size: 0.7rem;
-  margin-bottom: 10px;
-  overflow: hidden;
-}
-.linkedin-ad-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.linkedin-ad-image.placeholder {
-  background: linear-gradient(135deg, var(--teal), #1a8a97, var(--teal-light));
-}
-.linkedin-ad-headline {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--gray-900);
-  margin-bottom: 4px;
-  letter-spacing: -0.01em;
-}
-.linkedin-ad-cta {
-  display: inline-block;
-  padding: 4px 12px;
-  border: 1.5px solid #0077b5;
-  border-radius: 980px;
-  color: #0077b5;
-  font-size: 0.7rem;
-  font-weight: 500;
-  margin-top: 4px;
 }
 .card-footer {
   display: flex;

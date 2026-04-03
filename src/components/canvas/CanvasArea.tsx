@@ -13,11 +13,12 @@ interface CanvasAreaProps {
   onGenerateCreative?: (briefCardId: string) => void;
   onGenerateVariations?: (creativeCardId: string, format?: string) => void;
   onGenerateBrief?: (segmentCardId: string) => void;
+  onShortlistAds?: (segmentCardId: string) => void;
   onImageDrop?: (file: File) => void;
 }
 
 export const CanvasArea = forwardRef<HTMLDivElement, CanvasAreaProps>(
-  ({ canvas, cards, selectedCardId, dispatch, onGenerateCreative, onGenerateVariations, onGenerateBrief, onImageDrop }, ref) => {
+  ({ canvas, cards, selectedCardId, dispatch, onGenerateCreative, onGenerateVariations, onGenerateBrief, onShortlistAds, onImageDrop }, ref) => {
     const transformRef = useRef<HTMLDivElement>(null);
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
     const [isDragOver, setIsDragOver] = useState(false);
@@ -204,9 +205,11 @@ export const CanvasArea = forwardRef<HTMLDivElement, CanvasAreaProps>(
               card={card}
               isSelected={card.id === selectedCardId}
               dispatch={dispatch}
+              allCards={cards}
               onGenerateCreative={onGenerateCreative}
               onGenerateVariations={onGenerateVariations}
               onGenerateBrief={onGenerateBrief}
+              onShortlistAds={onShortlistAds}
             />
           ))}
         </div>

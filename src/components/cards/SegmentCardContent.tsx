@@ -4,16 +4,18 @@ import { InlineEditable } from './InlineEditable';
 interface Props {
   data: SegmentCardData;
   onFieldChange?: (field: string, value: string | boolean) => void;
+  onShortlistAds?: () => void;
   onGenerateBrief?: () => void;
+  hasAssets?: boolean;
 }
 
-export function SegmentCardContent({ data, onFieldChange, onGenerateBrief }: Props) {
+export function SegmentCardContent({ data, onFieldChange, onShortlistAds, onGenerateBrief, hasAssets }: Props) {
   return (
     <>
       <div className={`segment-card-accent ${data.group}`} />
       <div className="segment-card-top">
         <div className={`segment-card-icon ${data.group}`}>
-          {data.channel === 'Meta' ? 'M' : 'in'}
+          {'M'}
         </div>
         {onFieldChange ? (
           <InlineEditable className="segment-card-name" value={data.name} onChange={(v) => onFieldChange('name', v)} />
@@ -61,9 +63,14 @@ export function SegmentCardContent({ data, onFieldChange, onGenerateBrief }: Pro
       ) : (
         <div className="segment-card-tagline">{data.tagline}</div>
       )}
-      {onGenerateBrief && (
+      {!hasAssets && onShortlistAds && (
+        <button className="brief-generate-btn" onClick={onShortlistAds} onPointerDown={(e) => e.stopPropagation()}>
+          Shortlist Ads
+        </button>
+      )}
+      {hasAssets && onGenerateBrief && (
         <button className="brief-generate-btn" onClick={onGenerateBrief} onPointerDown={(e) => e.stopPropagation()}>
-          Generate Image Brief &#9654;
+          Generate Image Brief
         </button>
       )}
     </>

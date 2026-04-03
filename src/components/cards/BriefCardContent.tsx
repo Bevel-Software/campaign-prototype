@@ -2,6 +2,13 @@ import { useState } from 'react';
 import type { BriefCardData } from '../../lib/canvasTypes';
 import { InlineEditable } from './InlineEditable';
 
+const META_AD_FORMATS = [
+  { value: 'Static image 1080x1080', label: 'Square (1:1)', dimensions: '1080 × 1080' },
+  { value: 'Static image 1080x1350', label: 'Portrait (4:5)', dimensions: '1080 × 1350' },
+  { value: 'Static image 1200x628', label: 'Landscape (1.91:1)', dimensions: '1200 × 628' },
+  { value: 'Static image 1080x1920', label: 'Full Screen (9:16)', dimensions: '1080 × 1920' },
+];
+
 interface Props {
   data: BriefCardData;
   onFieldChange?: (field: string, value: string) => void;
@@ -64,7 +71,26 @@ export function BriefCardContent({ data, onFieldChange, onGenerateCreative }: Pr
         )}
         <div className="brief-card-field">
           <div className="brief-label">Format</div>
-          <div className="brief-value">{data.format}</div>
+          {onFieldChange ? (
+            <select
+              className="brief-format-select"
+              value={data.format}
+              onChange={(e) => onFieldChange('format', e.target.value)}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              {META_AD_FORMATS.map((fmt) => (
+                <option key={fmt.value} value={fmt.value}>
+                  {fmt.dimensions} — {fmt.label}
+                </option>
+              ))}
+              {/* Keep current value visible if it doesn't match any preset */}
+              {!META_AD_FORMATS.some((fmt) => fmt.value === data.format) && (
+                <option value={data.format}>{data.format}</option>
+              )}
+            </select>
+          ) : (
+            <div className="brief-value">{data.format}</div>
+          )}
         </div>
         <div className="brief-card-keywords">
           {data.keywords.map((k, i) => (
@@ -76,7 +102,7 @@ export function BriefCardContent({ data, onFieldChange, onGenerateCreative }: Pr
       </div>
       {onGenerateCreative && (
         <button className="brief-generate-btn" onClick={onGenerateCreative} onPointerDown={(e) => e.stopPropagation()}>
-          Generate Creative &#9654;
+          Generate Creative
         </button>
       )}
     </>

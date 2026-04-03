@@ -3,11 +3,10 @@ interface ToolbarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitAll: () => void;
-  onCleanUp: () => void;
   onClearCanvas: () => void;
 }
 
-export function Toolbar({ scale, onZoomIn, onZoomOut, onFitAll, onCleanUp, onClearCanvas }: ToolbarProps) {
+export function Toolbar({ scale, onZoomIn, onZoomOut, onFitAll, onClearCanvas }: ToolbarProps) {
   return (
     <div className="toolbar">
       <div className="toolbar-left">
@@ -24,9 +23,6 @@ export function Toolbar({ scale, onZoomIn, onZoomOut, onFitAll, onCleanUp, onCle
         <button className="tb-btn" onClick={onFitAll} title="Fit all (Cmd+0)">Fit</button>
       </div>
       <div className="toolbar-right">
-        <button className="tb-btn" onClick={onCleanUp} title="Auto-arrange all cards">
-          Clean Up
-        </button>
         <button className="tb-btn danger" onClick={onClearCanvas} title="Clear all cards and chat history">
           Clear
         </button>

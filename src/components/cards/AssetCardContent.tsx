@@ -2,9 +2,10 @@ import type { AssetCardData } from '../../lib/canvasTypes';
 
 interface Props {
   data: AssetCardData;
+  onFieldChange?: (field: string, value: string | boolean) => void;
 }
 
-export function AssetCardContent({ data }: Props) {
+export function AssetCardContent({ data, onFieldChange }: Props) {
   const isInspiration = !!data.reason;
 
   if (isInspiration) {
@@ -28,6 +29,28 @@ export function AssetCardContent({ data }: Props) {
             </div>
           )}
         </div>
+        {onFieldChange && data.useForBrief === undefined && (
+          <div className="asset-inspiration-actions" onPointerDown={(e) => e.stopPropagation()}>
+            <button className="inspiration-btn inspiration-btn-use" onClick={() => onFieldChange('useForBrief', true)}>
+              Use for brief
+            </button>
+            <button className="inspiration-btn inspiration-btn-skip" onClick={() => onFieldChange('useForBrief', false)}>
+              Don't use
+            </button>
+          </div>
+        )}
+        {data.useForBrief === true && (
+          <div className="asset-inspiration-status used" onPointerDown={(e) => e.stopPropagation()}>
+            <span>&#10003; Using for brief</span>
+            {onFieldChange && <button className="inspiration-undo" onClick={() => onFieldChange('useForBrief', false)}>Undo</button>}
+          </div>
+        )}
+        {data.useForBrief === false && (
+          <div className="asset-inspiration-status skipped" onPointerDown={(e) => e.stopPropagation()}>
+            <span>Skipped</span>
+            {onFieldChange && <button className="inspiration-undo" onClick={() => onFieldChange('useForBrief', true)}>Undo</button>}
+          </div>
+        )}
       </>
     );
   }

@@ -306,6 +306,16 @@ export default function CanvasApp() {
     [state.cards, state.basePrompt, triggerImageGeneration],
   );
 
+  // ===== SHORTLIST ADS FOR SEGMENT =====
+  const handleShortlistAds = useCallback(
+    (segmentCardId: string) => {
+      const seg = state.cards.find((c): c is SegmentCard => c.id === segmentCardId && c.cardType === 'segment');
+      if (!seg) return;
+      handleSendMessage(`Shortlist historical reference ads for segment ${segmentCardId} ("${seg.data.name}")`);
+    },
+    [state.cards, handleSendMessage],
+  );
+
   // ===== GENERATE BRIEF FROM SEGMENT =====
   const handleGenerateBrief = useCallback(
     (segmentCardId: string) => {
@@ -478,6 +488,7 @@ export default function CanvasApp() {
         (c): c is SegmentCard => c.cardType === 'segment',
       );
       const hasSegments = segmentCards.length > 0;
+      const hasAssets = state.cards.some((c) => c.cardType === 'asset');
       const hasBriefs = state.cards.some((c) => c.cardType === 'brief');
       const hasCreatives = state.cards.some((c) => c.cardType === 'creative');
 
@@ -540,7 +551,24 @@ export default function CanvasApp() {
           }
         }});
       }
-      if (hasSegments && !hasBriefs) {
+      if (hasSegments && !hasAssets && !hasBriefs) {
+        let shortlistMsg: string;
+        if (checkedSegments.length > 0) {
+          const ids = checkedSegments.map((s) => `${s.id} ("${s.data.name}")`).join(', ');
+          shortlistMsg = `Shortlist historical reference ads for these segments: ${ids}`;
+        } else if (selectedSegment) {
+          shortlistMsg = `Shortlist historical reference ads for segment ${selectedSegment.id} ("${selectedSegment.data.name}")`;
+        } else {
+          shortlistMsg = 'Shortlist historical reference ads for each segment';
+        }
+        const shortlistLabel = checkedSegments.length > 0
+          ? `Shortlist Ads (${checkedSegments.length} selected)`
+          : selectedSegment
+            ? `Shortlist Ads (${selectedSegment.data.name})`
+            : 'Shortlist Ads';
+        items.push({ icon: '&#128270;', label: shortlistLabel, action: () => handleSendMessage(shortlistMsg) });
+      }
+      if (hasSegments && hasAssets && !hasBriefs) {
         let briefMsg: string;
         if (checkedSegments.length > 0) {
           const ids = checkedSegments.map((s) => `${s.id} ("${s.data.name}")`).join(', ');
@@ -638,10 +666,6 @@ export default function CanvasApp() {
           });
         }}
         onFitAll={fitAll}
-        onCleanUp={() => {
-          dispatch({ type: 'AUTO_LAYOUT' });
-          setTimeout(() => fitAll(), 50);
-        }}
         onClearCanvas={handleClearCanvas}
       />
       {missingKeys.length > 0 && (
@@ -666,6 +690,7 @@ export default function CanvasApp() {
           onGenerateCreative={handleGenerateCreative}
           onGenerateVariations={handleGenerateVariations}
           onGenerateBrief={handleGenerateBrief}
+          onShortlistAds={handleShortlistAds}
           onImageDrop={handleImageUpload}
         />
         <div className="upload-toolbar">
@@ -675,6 +700,16 @@ export default function CanvasApp() {
             title="Upload an image to the canvas"
           >
             &#128247; Upload Image
+          </button>
+          <button
+            className="tb-btn"
+            onClick={() => {
+              dispatch({ type: 'AUTO_LAYOUT' });
+              setTimeout(() => fitAll(), 50);
+            }}
+            title="Auto-arrange all cards"
+          >
+            Re-arrange Canvas
           </button>
         </div>
         <ChatPanel

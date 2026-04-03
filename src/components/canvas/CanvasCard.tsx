@@ -10,12 +10,14 @@ interface CanvasCardProps {
   card: CanvasCardType;
   isSelected: boolean;
   dispatch: React.Dispatch<Action>;
+  allCards?: CanvasCardType[];
   onGenerateCreative?: (briefCardId: string) => void;
   onGenerateVariations?: (creativeCardId: string, format?: string) => void;
   onGenerateBrief?: (segmentCardId: string) => void;
+  onShortlistAds?: (segmentCardId: string) => void;
 }
 
-export function CanvasCard({ card, isSelected, dispatch, onGenerateCreative, onGenerateVariations, onGenerateBrief }: CanvasCardProps) {
+export function CanvasCard({ card, isSelected, dispatch, allCards, onGenerateCreative, onGenerateVariations, onGenerateBrief, onShortlistAds }: CanvasCardProps) {
   const dragState = useRef({
     isDragging: false,
     startX: 0,
@@ -162,10 +164,12 @@ export function CanvasCard({ card, isSelected, dispatch, onGenerateCreative, onG
         <SegmentCardContent
           data={card.data}
           onFieldChange={handleFieldChange}
+          hasAssets={allCards?.some((c) => c.cardType === 'asset' && (c.data as any).segmentId === card.id)}
+          onShortlistAds={onShortlistAds ? () => onShortlistAds(card.id) : undefined}
           onGenerateBrief={onGenerateBrief ? () => onGenerateBrief(card.id) : undefined}
         />
       )}
-      {card.cardType === 'asset' && <AssetCardContent data={card.data} />}
+      {card.cardType === 'asset' && <AssetCardContent data={card.data} onFieldChange={handleFieldChange} />}
       {card.cardType === 'brief' && (
         <BriefCardContent
           data={card.data}

@@ -42,6 +42,7 @@ export interface AssetCardData {
   source: string;
   caption: string;
   reason?: string;
+  useForBrief?: boolean;
 }
 
 export interface BriefCardData {
@@ -52,7 +53,7 @@ export interface BriefCardData {
 }
 
 export interface CreativeCardData {
-  type: 'meta' | 'linkedin';
+  type: 'meta';
   group: 'b2c' | 'b2b';
   imageDataUrl: string | null;
   brand: string;

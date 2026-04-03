@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import type { CreativeCardData } from '../../lib/canvasTypes';
 
 const META_AD_FORMATS = [
-  { id: 'feed', label: 'Feed / Square Format', dimensions: '1080 × 1080' },
-  { id: 'landscape', label: 'Landscape / Link Ad Format', dimensions: '1200 × 628' },
-  { id: 'story', label: 'Story / Reel Format', dimensions: '1080 × 1920' },
+  { id: 'square', label: 'Square (1:1)', dimensions: '1080 × 1080' },
+  { id: 'portrait', label: 'Portrait (4:5)', dimensions: '1080 × 1350' },
+  { id: 'landscape', label: 'Landscape (1.91:1)', dimensions: '1200 × 628' },
+  { id: 'fullscreen', label: 'Full Screen (9:16)', dimensions: '1080 × 1920' },
 ];
 
 interface Props {
@@ -36,6 +37,23 @@ export function CreativeCardContent({ data, label, onGenerateVariations }: Props
     };
   }, [dropdownOpen]);
 
+  const handleDownload = () => {
+    if (!data.imageDataUrl) return;
+    const slug = label
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 40);
+    const ts = new Date().toISOString().slice(0, 16).replace(':', '');
+    const filename = `${slug}-${ts}.png`;
+    const a = document.createElement('a');
+    a.href = data.imageDataUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const renderImage = () => {
     if (data.isGenerating) {
       return <div className="creative-loading" />;
@@ -64,18 +82,27 @@ export function CreativeCardContent({ data, label, onGenerateVariations }: Props
       </div>
       {onGenerateVariations && data.imageDataUrl && !data.isGenerating && (
         <div ref={wrapperRef} className="variation-dropdown-wrapper" onPointerDown={(e) => e.stopPropagation()}>
-          <div className="split-btn">
+          <div className="creative-actions-row">
+            <div className="split-btn">
+              <button
+                className="split-btn-main"
+                onClick={() => onGenerateVariations()}
+              >
+                Generate Variations
+              </button>
+              <button
+                className="split-btn-toggle"
+                onClick={() => setDropdownOpen((prev) => !prev)}
+              >
+                {dropdownOpen ? '\u25B2' : '\u25BC'}
+              </button>
+            </div>
             <button
-              className="split-btn-main"
-              onClick={() => onGenerateVariations()}
+              className="download-btn"
+              onClick={handleDownload}
+              title="Download PNG"
             >
-              Generate Variations &#9654;
-            </button>
-            <button
-              className="split-btn-toggle"
-              onClick={() => setDropdownOpen((prev) => !prev)}
-            >
-              {dropdownOpen ? '\u25B2' : '\u25BC'}
+              {'\u21E9'}
             </button>
           </div>
           {dropdownOpen && (
