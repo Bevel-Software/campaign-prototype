@@ -467,11 +467,139 @@ function serializeCanvasState(state: AppState): string {
   return cardSummaries.join('\n') + selectedInfo + `\n\n## Current workflow step\n${workflowStep}`;
 }
 
+function extractCreativeLikeIds(userText: string): string[] {
+  const matches = userText.match(/\b(?:creative|var)-[\w-]+\b/g) || [];
+  return Array.from(new Set(matches));
+}
+
+function resolveFocusedCreativeLikeCard(userText: string, state: AppState): CreativeCard | VariationCard | null {
+  const mentionedIds = extractCreativeLikeIds(userText);
+  for (const id of mentionedIds) {
+    const card = state.cards.find((c) => c.id === id);
+    if (card && (card.cardType === 'creative' || card.cardType === 'variation')) {
+      return card;
+    }
+  }
+
+  if (!state.selectedCardId) return null;
+  const selected = state.cards.find((c) => c.id === state.selectedCardId);
+  if (selected && (selected.cardType === 'creative' || selected.cardType === 'variation')) {
+    return selected;
+  }
+
+  return null;
+}
+
+function isUploadedRootCreative(card: CanvasCard): card is CreativeCard {
+  if (card.cardType !== 'creative') return false;
+  const data = card.data as CreativeCardData;
+  return !!data.imageDataUrl && !String(data.prompt || '').trim();
+}
+
+function isInUploadedImageLineage(card: CreativeCard | VariationCard, state: AppState): boolean {
+  const byId = new Map(state.cards.map((c) => [c.id, c]));
+  let current: CanvasCard | undefined = card;
+  const visited = new Set<string>();
+
+  while (current && !visited.has(current.id)) {
+    visited.add(current.id);
+    if (isUploadedRootCreative(current)) return true;
+    if (!current.parentId) break;
+    current = byId.get(current.parentId);
+  }
+
+  return false;
+}
+
+function userExplicitlyRequestsCampaignContext(userText: string): boolean {
+  const lowered = userText.toLowerCase();
+  const hasNegation = /\b(do not|don't|dont|without|ignore)\b/.test(lowered);
+  const hasContextTerm = /\b(campaign|brand|guidelines?|positioning|history|previous messages?|chat history|historical ads?|full context)\b/.test(lowered);
+  if (hasNegation && hasContextTerm) return false;
+
+  const explicitIncludePatterns = [
+    /\buse (the )?(campaign|brand|full) context\b/i,
+    /\binclude (the )?(campaign|brand|historical|full) context\b/i,
+    /\bwith (the )?(campaign|brand|historical|full) context\b/i,
+    /\bconsider (the )?(campaign|brand|historical ads?|previous messages?|chat history)\b/i,
+    /\bapply (the )?brand guidelines?\b/i,
+    /\buse previous messages?\b/i,
+    /\buse chat history\b/i,
+  ];
+  return explicitIncludePatterns.some((p) => p.test(userText));
+}
+
+function buildStandaloneUploadedImageCanvasState(state: AppState, focusCardId: string): string {
+  const byId = new Map(state.cards.map((c) => [c.id, c]));
+  const branchIds = new Set<string>();
+
+  let current = byId.get(focusCardId);
+  const visited = new Set<string>();
+  while (current && !visited.has(current.id)) {
+    visited.add(current.id);
+    branchIds.add(current.id);
+    if (!current.parentId) break;
+    current = byId.get(current.parentId);
+  }
+
+  let expanded = true;
+  while (expanded) {
+    expanded = false;
+    for (const card of state.cards) {
+      if (!card.parentId) continue;
+      if (!branchIds.has(card.parentId)) continue;
+      if (card.cardType !== 'creative' && card.cardType !== 'variation') continue;
+      if (branchIds.has(card.id)) continue;
+      branchIds.add(card.id);
+      expanded = true;
+    }
+  }
+
+  const focusedCards = state.cards.filter((c) => branchIds.has(c.id));
+  if (focusedCards.length === 0) {
+    return `Selected card: ${focusCardId}\nStandalone uploaded-image mode active.`;
+  }
+
+  const summaries = focusedCards.map((c) => {
+    if (c.cardType === 'creative') {
+      const d = c.data as CreativeCardData;
+      const kind = isUploadedRootCreative(c) ? 'uploaded root image' : 'generated creative';
+      return `[Creative: ${c.id}] ${kind} (${d.isGenerating ? 'generating image...' : d.imageDataUrl ? 'has image' : 'no image'})`;
+    }
+    if (c.cardType === 'variation') {
+      const d = c.data as CreativeCardData;
+      return `[Variation: ${c.id}] of ${c.parentId} (${d.isGenerating ? 'generating image...' : d.imageDataUrl ? 'has image' : 'no image'})`;
+    }
+    return `[Card: ${c.id}] ${c.cardType}`;
+  });
+
+  return [
+    ...summaries,
+    `Selected card: ${focusCardId}`,
+    '',
+    'Standalone uploaded-image workflow is active. Ignore campaign cards unless user explicitly asks for campaign context.',
+  ].join('\n');
+}
+
+function getStandaloneUploadedImageContext(userText: string, state: AppState): { focusCardId: string; canvasState: string } | null {
+  const focusCard = resolveFocusedCreativeLikeCard(userText, state);
+  if (!focusCard) return null;
+  if (!isInUploadedImageLineage(focusCard, state)) return null;
+  if (userExplicitlyRequestsCampaignContext(userText)) return null;
+  return {
+    focusCardId: focusCard.id,
+    canvasState: buildStandaloneUploadedImageCanvasState(state, focusCard.id),
+  };
+}
+
 export async function processMessage(
   userText: string,
   state: AppState,
 ): Promise<AgentResult> {
-  const canvasState = serializeCanvasState(state);
+  const standaloneUploadContext = getStandaloneUploadedImageContext(userText, state);
+  const canvasState = standaloneUploadContext
+    ? standaloneUploadContext.canvasState
+    : serializeCanvasState(state);
 
   const messages: { role: string; content: string }[] = [
     { role: 'system', content: SYSTEM_PROMPT },
@@ -481,37 +609,44 @@ export async function processMessage(
     },
   ];
 
-  if (state.brandGuidelines) {
+  if (standaloneUploadContext) {
     messages.push({
       role: 'system',
-      content: `## Brand Guidelines\n\n${state.brandGuidelines}`,
+      content: `Standalone uploaded-image mode is active for card ${standaloneUploadContext.focusCardId}. Treat this as an independent image-edit workflow. Ignore campaign settings, segments, briefs, assets, historical ads, and previous chat history unless the user explicitly asks to include that context in this message.`,
     });
-  }
+  } else {
+    if (state.brandGuidelines) {
+      messages.push({
+        role: 'system',
+        content: `## Brand Guidelines\n\n${state.brandGuidelines}`,
+      });
+    }
 
-  if (state.brandPositioning) {
-    messages.push({
-      role: 'system',
-      content: `## Product Positioning & Messaging\n\n${state.brandPositioning}`,
-    });
-  }
+    if (state.brandPositioning) {
+      messages.push({
+        role: 'system',
+        content: `## Product Positioning & Messaging\n\n${state.brandPositioning}`,
+      });
+    }
 
-  if (state.historicalAds.length > 0) {
-    const adSummaries = state.historicalAds.map((ad, i) =>
-      `[Ad ${i + 1}] Reach: ${ad.reach.toLocaleString()} | Duration: ${ad.adDuration} | Location: ${ad.location} | Type: ${ad.imageDescription}\nText: ${ad.text.slice(0, 200)}${ad.text.length > 200 ? '...' : ''}\nLink: ${ad.adLink}`
-    ).join('\n\n');
-    messages.push({
-      role: 'system',
-      content: `## Historical Ad Library (${state.historicalAds.length} past ads)\nUse these to shortlist reference ads for each segment after spawning segments. Pick the best match based on audience, reach, and messaging.\n\n${adSummaries}`,
-    });
-  }
+    if (state.historicalAds.length > 0) {
+      const adSummaries = state.historicalAds.map((ad, i) =>
+        `[Ad ${i + 1}] Reach: ${ad.reach.toLocaleString()} | Duration: ${ad.adDuration} | Location: ${ad.location} | Type: ${ad.imageDescription}\nText: ${ad.text.slice(0, 200)}${ad.text.length > 200 ? '...' : ''}\nLink: ${ad.adLink}`
+      ).join('\n\n');
+      messages.push({
+        role: 'system',
+        content: `## Historical Ad Library (${state.historicalAds.length} past ads)\nUse these to shortlist reference ads for each segment after spawning segments. Pick the best match based on audience, reach, and messaging.\n\n${adSummaries}`,
+      });
+    }
 
-  // Include recent chat history for context (last 10 messages)
-  const recentMessages = state.messages.slice(-10);
-  for (const msg of recentMessages) {
-    if (msg.role === 'user') {
-      messages.push({ role: 'user', content: msg.text });
-    } else if (msg.role === 'agent') {
-      messages.push({ role: 'assistant', content: msg.text });
+    // Include recent chat history for context (last 10 messages)
+    const recentMessages = state.messages.slice(-10);
+    for (const msg of recentMessages) {
+      if (msg.role === 'user') {
+        messages.push({ role: 'user', content: msg.text });
+      } else if (msg.role === 'agent') {
+        messages.push({ role: 'assistant', content: msg.text });
+      }
     }
   }
 

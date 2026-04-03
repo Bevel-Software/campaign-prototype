@@ -1305,6 +1305,19 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
+/* ===== MULTI-SEGMENT SHORTLIST CTA ===== */
+.shortlist-selected-fab {
+  position: absolute;
+  bottom: 68px;
+  right: calc(var(--chat-width) + 20px);
+  z-index: 11;
+}
+.shortlist-selected-btn {
+  height: 34px;
+  padding: 0 14px;
+  box-shadow: var(--shadow-md);
+}
+
 /* ===== DRAG & DROP OVERLAY ===== */
 .canvas-drop-overlay {
   position: absolute;

@@ -321,9 +321,12 @@ export default function CanvasApp() {
     (segmentCardId: string) => {
       const seg = state.cards.find((c): c is SegmentCard => c.id === segmentCardId && c.cardType === 'segment');
       if (!seg) return;
-      handleSendMessage(`Generate a creative brief for segment ${segmentCardId} ("${seg.data.name}")`);
+      dispatch({ type: 'SELECT_CARD', cardId: segmentCardId });
+      setTimeout(() => {
+        handleSendMessage(`Generate a creative brief for segment ${segmentCardId} ("${seg.data.name}")`);
+      }, 0);
     },
-    [state.cards, handleSendMessage],
+    [dispatch, state.cards, handleSendMessage],
   );
 
   // ===== GENERATE VARIATIONS FROM CREATIVE =====
@@ -647,6 +650,18 @@ export default function CanvasApp() {
   if (!state.apiKeys.openai) missingKeys.push('OPENAI_API_KEY');
   if (!state.apiKeys.gemini) missingKeys.push('GEMINI_API_KEY');
 
+  const selectedSegments = state.cards.filter(
+    (c): c is SegmentCard => c.cardType === 'segment' && !!c.data.isSelected,
+  );
+  const selectedSegmentCount = selectedSegments.length;
+  const showShortlistSelectedButton = selectedSegmentCount > 1;
+
+  const handleShortlistSelectedSegments = useCallback(() => {
+    if (selectedSegments.length < 2) return;
+    const ids = selectedSegments.map((s) => `${s.id} ("${s.data.name}")`).join(', ');
+    handleSendMessage(`Shortlist historical reference ads for these segments: ${ids}`);
+  }, [selectedSegments, handleSendMessage]);
+
   const selectedCard = state.cards.find((c) => c.id === state.selectedCardId) || null;
 
   return (
@@ -712,6 +727,17 @@ export default function CanvasApp() {
             Re-arrange Canvas
           </button>
         </div>
+        {showShortlistSelectedButton && (
+          <div className="shortlist-selected-fab">
+            <button
+              className="tb-btn primary shortlist-selected-btn"
+              onClick={handleShortlistSelectedSegments}
+              title={`Shortlist reference ads for ${selectedSegmentCount} selected segments`}
+            >
+              {`Shortlist Ads for ${selectedSegmentCount} selected`}
+            </button>
+          </div>
+        )}
         <ChatPanel
           messages={state.messages}
           isAgentThinking={state.isAgentThinking}
