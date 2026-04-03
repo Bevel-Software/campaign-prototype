@@ -2,7 +2,7 @@ import type { CanvasCard, CanvasViewport } from './canvasTypes';
 
 // Card dimension defaults by type
 export const CARD_DIMENSIONS: Record<string, { width: number; height: number }> = {
-  settings: { width: 340, height: 260 },
+  settings: { width: 520, height: 260 },
   segment: { width: 260, height: 170 },
   asset: { width: 260, height: 210 },
   brief: { width: 260, height: 200 },

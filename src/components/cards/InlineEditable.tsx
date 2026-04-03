@@ -81,9 +81,7 @@ export function InlineEditable({
 
   // Prevent pointer events from starting card drag
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    if (elRef.current?.contentEditable === 'true') {
-      e.stopPropagation();
-    }
+    e.stopPropagation();
   }, []);
 
   return (
