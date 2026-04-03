@@ -1,4 +1,3 @@
-import OpenAI from 'openai';
 import { z } from 'zod';
 import type {
   AppState,
@@ -415,14 +414,9 @@ export async function processMessage(
   userText: string,
   state: AppState,
 ): Promise<AgentResult> {
-  const openai = new OpenAI({
-    apiKey: state.apiKeys.openai!,
-    dangerouslyAllowBrowser: true,
-  });
-
   const canvasState = serializeCanvasState(state);
 
-  const messages: OpenAI.ChatCompletionMessageParam[] = [
+  const messages: { role: string; content: string }[] = [
     { role: 'system', content: SYSTEM_PROMPT },
     {
       role: 'system',
@@ -444,31 +438,28 @@ export async function processMessage(
 
   let rawResponse: string;
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-5-mini',
-      reasoning_effort: 'low',
-      messages,
-      response_format: { type: 'json_object' },
-      max_completion_tokens: 4000,
-    });
-
-    rawResponse = completion.choices[0]?.message?.content || '{}';
-  } catch (err) {
-    // Retry once on failure
-    try {
-      const completion = await openai.chat.completions.create({
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages,
         model: 'gpt-5-mini',
         reasoning_effort: 'low',
-        messages: [...messages, { role: 'user', content: 'Please respond with valid JSON.' }],
-        response_format: { type: 'json_object' },
         max_completion_tokens: 4000,
-      });
-      rawResponse = completion.choices[0]?.message?.content || '{}';
-    } catch (retryErr) {
-      throw new Error(
-        retryErr instanceof Error ? retryErr.message : 'Failed to get response from OpenAI',
-      );
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err as any).error || `Server error ${res.status}`);
     }
+
+    const data = await res.json();
+    rawResponse = data.content || '{}';
+  } catch (err) {
+    throw new Error(
+      err instanceof Error ? err.message : 'Failed to get response from OpenAI',
+    );
   }
 
   // Parse response

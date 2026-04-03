@@ -4,23 +4,31 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"tsx watch server/index.ts\"",
+    "dev:client": "vite",
+    "dev:server": "tsx watch server/index.ts",
     "build": "tsc -b && vite build",
+    "start": "tsx server/index.ts",
     "preview": "vite preview",
     "test": "vitest run"
   },
   "dependencies": {
     "@google/genai": "^1.47.0",
     "dompurify": "^3.3.3",
+    "dotenv": "^17.4.0",
+    "express": "^5.1.0",
     "openai": "^6.33.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/express": "^5.0.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.4.1",
+    "concurrently": "^9.1.2",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "vite": "^6.3.1",
     "vitest": "^4.1.2"
