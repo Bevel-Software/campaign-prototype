@@ -1,7 +1,7 @@
 import { useReducer, useEffect, useCallback, useRef, useState } from 'react';
 import { canvasReducer, initialState } from './lib/canvasReducer';
 import type { AppState, ChatMessage } from './lib/canvasTypes';
-import { generateCreative, GeminiError } from '../src/lib/gemini';
+import { generateCreative, GeminiError } from './lib/gemini';
 import { processMessage } from './lib/chatAgent';
 import { buildCreativeFromBrief } from './lib/creativeFromBrief';
 import type { BriefCard, SegmentCard } from './lib/canvasTypes';
