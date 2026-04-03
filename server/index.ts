@@ -100,6 +100,8 @@ app.post('/api/generate-image', async (req, res) => {
     '- NEVER render the image as if it is being viewed inside an app or platform.',
     '- NEVER include "Sponsored" labels, Like/Comment/Share buttons, profile pictures, or any social media UI elements.',
     '- The output should be a clean, flat, standalone graphic that could be directly uploaded as-is.',
+    '- TEXT RULES: If the image contains any text, make it VERY LARGE and easily readable at mobile screen size. Maximum 5-6 words of text overlay. Small or medium-sized text is never acceptable.',
+    '- COMPOSITION: Fill the entire canvas edge-to-edge. No borders, margins, or frames around the content.',
     '',
     reframedPrompt,
   ];

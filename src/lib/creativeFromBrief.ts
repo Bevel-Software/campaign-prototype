@@ -44,6 +44,23 @@ export function buildCreativeFromBrief(
 
   prompt += `. Creative direction: ${briefData.direction}`;
   prompt += `. Format: ${briefData.format}`;
+
+  // Platform context — tell the image generator what platform this is for
+  const platformContext = adType === 'meta'
+    ? 'Platform: Meta (Instagram/Facebook) — this image will be viewed on mobile phones in a social feed. Use bold, scroll-stopping visuals. Any text in the image must be very large and minimal (maximum 5-6 words). Prefer letting the visual do the work over text overlays.'
+    : 'Platform: LinkedIn — this image will appear in a professional feed. Use clean, data-forward imagery. Text overlays should be large, readable, and professional.';
+  prompt += `. ${platformContext}`;
+
+  // Format-specific placement context
+  const formatContext = briefData.format.includes('1080x1080')
+    ? 'This is a square feed image (1080x1080) for Instagram/Facebook feed placement.'
+    : briefData.format.includes('1200x628')
+    ? 'This is a landscape image (1200x628) for link ads or LinkedIn feed placement.'
+    : briefData.format.includes('1080x1920')
+    ? 'This is a portrait/story image (1080x1920) for Instagram/Facebook Stories — full vertical screen.'
+    : '';
+  if (formatContext) prompt += ` ${formatContext}`;
+
   if (segmentData) {
     prompt += `. Target audience: ${segmentData.name} — ${segmentData.targeting}`;
     prompt += `. Key message: ${segmentData.tagline}`;
