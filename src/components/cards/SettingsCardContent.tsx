@@ -1,4 +1,4 @@
-import type { SettingsCardData, CampaignObjective, AudienceType } from '../../lib/canvasTypes';
+import type { SettingsCardData, CampaignObjective } from '../../lib/canvasTypes';
 import { InlineEditable } from './InlineEditable';
 
 interface Props {
@@ -10,13 +10,6 @@ const OBJECTIVE_OPTIONS: { value: CampaignObjective; label: string }[] = [
   { value: 'tofu', label: 'TOFU' },
   { value: 'mofu', label: 'MOFU' },
   { value: 'bofu', label: 'BOFU' },
-];
-
-const AUDIENCE_OPTIONS: { value: AudienceType; label: string }[] = [
-  { value: 'broad', label: 'Broad' },
-  { value: 'affinity', label: 'Affinity' },
-  { value: 'employee_icp', label: 'Employee ICP' },
-  { value: 'corporate_icp', label: 'Corporate ICP' },
 ];
 
 export function SettingsCardContent({ data, onFieldChange }: Props) {
@@ -41,23 +34,6 @@ export function SettingsCardContent({ data, onFieldChange }: Props) {
                   key={opt.value}
                   className={`settings-card-badge objective ${data.campaignObjective === opt.value ? 'active' : ''}`}
                   onClick={onFieldChange ? () => onFieldChange('campaignObjective', opt.value) : undefined}
-                  style={onFieldChange ? { cursor: 'pointer' } : undefined}
-                >
-                  {opt.label}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="settings-card-row">
-          <div className="settings-card-field">
-            <div className="field-label">Audience</div>
-            <div className="settings-card-badges selectable" onPointerDown={(e) => e.stopPropagation()}>
-              {AUDIENCE_OPTIONS.map((opt) => (
-                <span
-                  key={opt.value}
-                  className={`settings-card-badge audience ${data.audienceType === opt.value ? 'active' : ''}`}
-                  onClick={onFieldChange ? () => onFieldChange('audienceType', opt.value) : undefined}
                   style={onFieldChange ? { cursor: 'pointer' } : undefined}
                 >
                   {opt.label}
