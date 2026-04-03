@@ -4,8 +4,10 @@ type Objective = SettingsCardData['objectives'][number];
 type Channel = SettingsCardData['channels'][number];
 
 function splitListLikeString(value: string): string[] {
+  // Split on newlines, semicolons, or numbered-list patterns (e.g. "1) ..., 2) ...")
+  // Avoid splitting on commas inside numbers (e.g. "10,000") or natural prose
   return value
-    .split(/\s*(?:,|;|\n|\band\b)\s*/i)
+    .split(/\s*(?:;|\n)\s*|\s*(?=\d+[.)]\s)/)
     .map((part) => part.trim())
     .filter(Boolean);
 }

@@ -214,7 +214,7 @@ body {
 }
 
 /* ===== SETTINGS CARD ===== */
-.canvas-card.card-settings { width: 340px; }
+.canvas-card.card-settings { width: 520px; }
 .settings-card-header {
   background: linear-gradient(135deg, var(--teal), var(--teal-light));
   color: var(--white);
