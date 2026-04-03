@@ -4,7 +4,7 @@ import type { AppState, ChatMessage } from './lib/canvasTypes';
 import { generateCreative, GeminiError } from './lib/gemini';
 import { processMessage } from './lib/chatAgent';
 import { buildCreativeFromBrief } from './lib/creativeFromBrief';
-import type { BriefCard } from './lib/canvasTypes';
+import type { BriefCard, SegmentCard } from './lib/canvasTypes';
 import { computeFitAllViewport } from './lib/layoutUtils';
 import { Toolbar } from './components/Toolbar';
 import { CanvasArea } from './components/canvas/CanvasArea';
@@ -322,19 +322,83 @@ export default function CanvasApp() {
       const items: { icon: string; label: string; action: () => void }[] = [];
 
       const hasSettings = state.cards.some((c) => c.cardType === 'settings');
-      const hasSegments = state.cards.some((c) => c.cardType === 'segment');
+      const segmentCards = state.cards.filter(
+        (c): c is SegmentCard => c.cardType === 'segment',
+      );
+      const hasSegments = segmentCards.length > 0;
       const hasBriefs = state.cards.some((c) => c.cardType === 'brief');
       const hasCreatives = state.cards.some((c) => c.cardType === 'creative');
+
+      // Determine which segments are targeted for generation
+      const checkedSegments = segmentCards.filter((c) => c.data.isSelected);
+      const selectedSegment = segmentCards.find((c) => c.id === state.selectedCardId);
 
       if (hasSettings && !hasSegments) {
         items.push({ icon: '&#9783;', label: 'Generate Segments', action: () => handleSendMessage('Generate audience segments for this campaign') });
       }
       if (hasSegments && !hasBriefs) {
-        items.push({ icon: '&#9998;', label: 'Generate Briefs', action: () => handleSendMessage('Generate creative briefs for each segment') });
+        let briefMsg: string;
+        if (checkedSegments.length > 0) {
+          const ids = checkedSegments.map((s) => `${s.id} ("${s.data.name}")`).join(', ');
+          briefMsg = `Generate creative briefs for these segments: ${ids}`;
+        } else if (selectedSegment) {
+          briefMsg = `Generate a creative brief for segment ${selectedSegment.id} ("${selectedSegment.data.name}")`;
+        } else {
+          briefMsg = 'Generate creative briefs for each segment';
+        }
+        const briefLabel = checkedSegments.length > 0
+          ? `Generate Briefs (${checkedSegments.length} selected)`
+          : selectedSegment
+            ? `Generate Brief (${selectedSegment.data.name})`
+            : 'Generate Briefs';
+        items.push({ icon: '&#9998;', label: briefLabel, action: () => handleSendMessage(briefMsg) });
       }
       if (hasBriefs && !hasCreatives) {
-        items.push({ icon: '&#127912;', label: 'Generate Creatives', action: () => handleSendMessage('Generate creatives for each brief') });
+        // Filter briefs to those whose parent segment is selected/checked
+        let creativeMsg: string;
+        if (checkedSegments.length > 0) {
+          const segIds = new Set(checkedSegments.map((s) => s.id));
+          const targetBriefs = state.cards.filter(
+            (c) => c.cardType === 'brief' && segIds.has(c.data.segmentId),
+          );
+          if (targetBriefs.length > 0) {
+            const ids = targetBriefs.map((b) => b.id).join(', ');
+            creativeMsg = `Generate creatives for these briefs: ${ids}`;
+          } else {
+            creativeMsg = 'Generate creatives for each brief';
+          }
+        } else {
+          creativeMsg = 'Generate creatives for each brief';
+        }
+        items.push({ icon: '&#127912;', label: 'Generate Creatives', action: () => handleSendMessage(creativeMsg) });
       }
+
+      // Select / Deselect All Segments
+      if (hasSegments) {
+        const allSelected = segmentCards.every((c) => c.data.isSelected);
+        if (allSelected) {
+          items.push({
+            icon: '&#9744;',
+            label: 'Deselect All Segments',
+            action: () => {
+              for (const seg of segmentCards) {
+                dispatch({ type: 'UPDATE_CARD_DATA', cardId: seg.id, data: { isSelected: false } });
+              }
+            },
+          });
+        } else {
+          items.push({
+            icon: '&#9745;',
+            label: 'Select All Segments',
+            action: () => {
+              for (const seg of segmentCards) {
+                dispatch({ type: 'UPDATE_CARD_DATA', cardId: seg.id, data: { isSelected: true } });
+              }
+            },
+          });
+        }
+      }
+
       if (state.cards.length > 0) {
         items.push({ icon: '&#128269;', label: 'Fit All', action: fitAll });
       }

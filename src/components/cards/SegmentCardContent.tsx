@@ -3,7 +3,7 @@ import { InlineEditable } from './InlineEditable';
 
 interface Props {
   data: SegmentCardData;
-  onFieldChange?: (field: string, value: string) => void;
+  onFieldChange?: (field: string, value: string | boolean) => void;
 }
 
 export function SegmentCardContent({ data, onFieldChange }: Props) {
@@ -18,6 +18,18 @@ export function SegmentCardContent({ data, onFieldChange }: Props) {
           <InlineEditable className="segment-card-name" value={data.name} onChange={(v) => onFieldChange('name', v)} />
         ) : (
           <div className="segment-card-name">{data.name}</div>
+        )}
+        {onFieldChange && (
+          <label
+            className={`segment-checkbox${data.isSelected ? ' checked' : ''}`}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <input
+              type="checkbox"
+              checked={!!data.isSelected}
+              onChange={() => onFieldChange('isSelected', !data.isSelected)}
+            />
+          </label>
         )}
       </div>
       <div className="segment-card-body">
