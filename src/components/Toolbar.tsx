@@ -3,9 +3,10 @@ interface ToolbarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitAll: () => void;
+  onClearCanvas: () => void;
 }
 
-export function Toolbar({ scale, onZoomIn, onZoomOut, onFitAll }: ToolbarProps) {
+export function Toolbar({ scale, onZoomIn, onZoomOut, onFitAll, onClearCanvas }: ToolbarProps) {
   return (
     <div className="toolbar">
       <div className="toolbar-left">
@@ -22,6 +23,9 @@ export function Toolbar({ scale, onZoomIn, onZoomOut, onFitAll }: ToolbarProps) 
         <button className="tb-btn" onClick={onFitAll} title="Fit all (Cmd+0)">Fit</button>
       </div>
       <div className="toolbar-right">
+        <button className="tb-btn danger" onClick={onClearCanvas} title="Clear all cards and chat history">
+          Clear
+        </button>
         <button className="tb-btn primary" onClick={onFitAll}>
           Fit All
         </button>

@@ -37,9 +37,22 @@ export function SegmentCardContent({ data, onFieldChange }: Props) {
           <span className="detail-label">Channel</span>
           <span>{data.channel}{data.funnelStage ? ` · ${data.funnelStage}` : ''}</span>
         </div>
-        <div className="segment-card-detail">
+        <div className="segment-card-detail targeting-structured">
           <span className="detail-label">Targeting</span>
-          <span>{data.targeting}</span>
+          <div className="targeting-lines">
+            {data.targeting.split('\n').map((line, i) => {
+              const colonIdx = line.indexOf(':');
+              if (colonIdx > 0 && colonIdx < 15) {
+                return (
+                  <div key={i} className="targeting-line">
+                    <span className="targeting-line-label">{line.slice(0, colonIdx)}</span>
+                    <span>{line.slice(colonIdx + 1).trim()}</span>
+                  </div>
+                );
+              }
+              return <div key={i}>{line}</div>;
+            })}
+          </div>
         </div>
       </div>
       {onFieldChange ? (

@@ -146,6 +146,7 @@ export function CanvasCard({ card, isSelected, dispatch, onGenerateCreative, onG
     <div
       ref={elRef}
       className={className}
+      data-card-id={card.id}
       style={{
         left: card.x,
         top: card.y,
