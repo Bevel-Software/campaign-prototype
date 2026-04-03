@@ -318,8 +318,11 @@ export default function CanvasApp() {
 
   // ===== GENERATE VARIATIONS FROM CREATIVE =====
   const handleGenerateVariations = useCallback(
-    (creativeCardId: string) => {
-      handleSendMessage(`Generate 3 variations for creative ${creativeCardId}`);
+    (creativeCardId: string, format?: string) => {
+      const msg = format
+        ? `Generate 3 variations of creative ${creativeCardId} in format "${format}"`
+        : `Generate 3 variations for creative ${creativeCardId}`;
+      handleSendMessage(msg);
     },
     [handleSendMessage],
   );

@@ -11,7 +11,7 @@ interface CanvasCardProps {
   isSelected: boolean;
   dispatch: React.Dispatch<Action>;
   onGenerateCreative?: (briefCardId: string) => void;
-  onGenerateVariations?: (creativeCardId: string) => void;
+  onGenerateVariations?: (creativeCardId: string, format?: string) => void;
   onGenerateBrief?: (segmentCardId: string) => void;
 }
 
@@ -178,7 +178,7 @@ export function CanvasCard({ card, isSelected, dispatch, onGenerateCreative, onG
           data={card.data}
           label={card.label}
           onFieldChange={handleFieldChange}
-          onGenerateVariations={onGenerateVariations ? () => onGenerateVariations(card.id) : undefined}
+          onGenerateVariations={onGenerateVariations ? (format?: string) => onGenerateVariations(card.id, format) : undefined}
         />
       )}
     </div>

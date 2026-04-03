@@ -11,7 +11,7 @@ interface CanvasAreaProps {
   selectedCardId: string | null;
   dispatch: React.Dispatch<Action>;
   onGenerateCreative?: (briefCardId: string) => void;
-  onGenerateVariations?: (creativeCardId: string) => void;
+  onGenerateVariations?: (creativeCardId: string, format?: string) => void;
   onGenerateBrief?: (segmentCardId: string) => void;
   onImageDrop?: (file: File) => void;
 }
