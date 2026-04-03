@@ -7,7 +7,7 @@ interface Props {
   onGenerateVariations?: () => void;
 }
 
-export function CreativeCardContent({ data, label, onFieldChange, onGenerateVariations }: Props) {
+export function CreativeCardContent({ data, label, onGenerateVariations }: Props) {
   const renderImage = () => {
     if (data.isGenerating) {
       return <div className="creative-loading" />;
