@@ -1,4 +1,3 @@
-import OpenAI from 'openai';
 import { z } from 'zod';
 import type {
   SettingsCard,
@@ -124,9 +123,8 @@ export interface GenerateSegmentsParams {
   settings: SettingsCardData;
   brandGuidelines: string;
   brandPositioning: string;
-  apiKey: string;
-  /** @internal — for testing only */
-  _openaiClient?: OpenAI;
+  /** @internal — for testing only; bypasses /api/chat */
+  _fetchFn?: typeof fetch;
 }
 
 export interface GenerateSegmentsResult {
@@ -137,10 +135,7 @@ export interface GenerateSegmentsResult {
 export async function generateSegments(
   params: GenerateSegmentsParams,
 ): Promise<GenerateSegmentsResult> {
-  const openai = params._openaiClient ?? new OpenAI({
-    apiKey: params.apiKey,
-    dangerouslyAllowBrowser: true,
-  });
+  const fetchFn = params._fetchFn ?? fetch;
 
   const userContent = buildCampaignContext(
     params.settings,
@@ -148,7 +143,7 @@ export async function generateSegments(
     params.brandPositioning,
   );
 
-  const messages: OpenAI.ChatCompletionMessageParam[] = [
+  const messages = [
     { role: 'system', content: SEGMENT_SYSTEM_PROMPT },
     { role: 'user', content: userContent },
   ];
@@ -163,36 +158,25 @@ export async function generateSegments(
   });
 
   let rawResponse: string;
-  try {
-    const completion = await openai.chat.completions.create({
+  const res = await fetchFn('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messages,
       model: 'gpt-5-mini',
       reasoning_effort: 'medium',
-      messages,
-      response_format: { type: 'json_object' },
       max_completion_tokens: 8000,
-    });
-    rawResponse = completion.choices[0]?.message?.content || '{}';
-    console.log('[segmentSkill] LLM response length:', rawResponse.length);
-  } catch (err) {
-    console.warn('[segmentSkill] first call failed, retrying:', err instanceof Error ? err.message : err);
-    // Retry once on failure
-    try {
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-5-mini',
-        reasoning_effort: 'medium',
-        messages,
-        response_format: { type: 'json_object' },
-        max_completion_tokens: 8000,
-      });
-      rawResponse = completion.choices[0]?.message?.content || '{}';
-      console.log('[segmentSkill] retry response length:', rawResponse.length);
-    } catch (retryErr) {
-      console.error('[segmentSkill] retry also failed:', retryErr instanceof Error ? retryErr.message : retryErr);
-      throw new Error(
-        retryErr instanceof Error ? retryErr.message : 'Failed to generate segments',
-      );
-    }
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as any).error || `Server error ${res.status}`);
   }
+
+  const data = await res.json();
+  rawResponse = data.content || '{}';
+  console.log('[segmentSkill] LLM response length:', rawResponse.length);
 
   let rawParsed: unknown;
   try {

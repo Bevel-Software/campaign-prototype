@@ -543,7 +543,6 @@ export async function processMessage(
             settings: settingsCard.data,
             brandGuidelines: state.brandGuidelines,
             brandPositioning: state.brandPositioning,
-            apiKey: state.apiKeys.openai!,
           });
           validatedAction = { ...validatedAction, segments: skillResult.segments as any };
         } catch (err) {

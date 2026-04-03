@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { buildSegmentCards, generateSegments, skillResponseSchema } from './segmentSkill';
 import type { SettingsCard, SegmentCardData } from '../canvasTypes';
 import { computeChildPositions, CARD_DIMENSIONS } from '../layoutUtils';
-import type OpenAI from 'openai';
 
 // ===== Test helpers =====
 
@@ -203,10 +202,13 @@ describe('skillResponseSchema', () => {
   });
 });
 
-// ===== generateSegments tests (mock OpenAI via _openaiClient) =====
+// ===== generateSegments tests (mock /api/chat via _fetchFn) =====
 
-function makeMockClient(createFn: (...args: any[]) => any): OpenAI {
-  return { chat: { completions: { create: createFn } } } as unknown as OpenAI;
+function makeMockFetch(content: string, ok = true): typeof fetch {
+  return vi.fn().mockResolvedValue({
+    ok,
+    json: () => Promise.resolve(ok ? { content } : { error: 'Server error' }),
+  }) as any;
 }
 
 const baseParams = {
@@ -222,7 +224,6 @@ const baseParams = {
   },
   brandGuidelines: 'Use brand colors',
   brandPositioning: 'Market leader in wellness',
-  apiKey: 'test-key',
 };
 
 describe('generateSegments', () => {
@@ -235,42 +236,26 @@ describe('generateSegments', () => {
       ],
     };
 
-    const mockCreate = vi.fn().mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify(mockResponse) } }],
-    });
+    const mockFetch = makeMockFetch(JSON.stringify(mockResponse));
 
     const result = await generateSegments({
       ...baseParams,
-      _openaiClient: makeMockClient(mockCreate),
+      _fetchFn: mockFetch,
     });
 
     expect(result.segments).toHaveLength(2);
     expect(result.segments[0].name).toBe('Young Pros');
     expect(result.segments[1].group).toBe('b2b');
     expect(result.reasoning).toBe('Targeting both consumers and HR');
-    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  it('T13: retries once on API failure', async () => {
-    const mockResponse = {
-      segments: [
-        { group: 'b2c', name: 'Retry Seg', channel: 'Meta', targeting: 'Ages 25-34, urban fitness enthusiasts active on Instagram', tagline: 'Worth the wait', funnel_stage: 'awareness' },
-        { group: 'b2b', name: 'Second Seg', channel: 'LinkedIn', targeting: 'HR directors at companies seeking employee wellness programs', tagline: 'Better benefits', funnel_stage: 'conversion' },
-      ],
-    };
+  it('T13: throws on server error', async () => {
+    const mockFetch = makeMockFetch('', false);
 
-    const mockCreate = vi.fn()
-      .mockRejectedValueOnce(new Error('API rate limit'))
-      .mockResolvedValueOnce({
-        choices: [{ message: { content: JSON.stringify(mockResponse) } }],
-      });
-
-    const result = await generateSegments({
+    await expect(generateSegments({
       ...baseParams,
-      _openaiClient: makeMockClient(mockCreate),
-    });
-
-    expect(result.segments).toHaveLength(2);
-    expect(mockCreate).toHaveBeenCalledTimes(2);
+      _fetchFn: mockFetch,
+    })).rejects.toThrow('Server error');
   });
 });

@@ -273,6 +273,14 @@ export default function CanvasApp() {
     [state.cards, state.basePrompt, triggerImageGeneration],
   );
 
+  // ===== GENERATE VARIATIONS FROM CREATIVE =====
+  const handleGenerateVariations = useCallback(
+    (creativeCardId: string) => {
+      handleSendMessage(`Generate 3 variations for creative ${creativeCardId}`);
+    },
+    [handleSendMessage],
+  );
+
   // ===== FIT ALL =====
   const fitAll = useCallback(() => {
     const container = canvasAreaRef.current;
@@ -366,7 +374,6 @@ export default function CanvasApp() {
               settings: settingsCard.data,
               brandGuidelines: state.brandGuidelines,
               brandPositioning: state.brandPositioning,
-              apiKey: state.apiKeys.openai!,
             });
 
             const cards = buildSegmentCards(segResult.segments, settingsCard);
@@ -511,6 +518,7 @@ export default function CanvasApp() {
           selectedCardId={state.selectedCardId}
           dispatch={dispatch}
           onGenerateCreative={handleGenerateCreative}
+          onGenerateVariations={handleGenerateVariations}
         />
         <ChatPanel
           messages={state.messages}
