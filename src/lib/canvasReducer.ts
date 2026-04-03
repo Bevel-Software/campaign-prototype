@@ -3,8 +3,8 @@ import { computeChildPositions, CARD_DIMENSIONS } from './layoutUtils';
 
 export const initialState: AppState = {
   apiKeys: {
-    openai: import.meta.env.VITE_OPENAI_API_KEY || null,
-    gemini: import.meta.env.VITE_GEMINI_API_KEY || null,
+    openai: false,
+    gemini: false,
   },
   brandGuidelines: '',
   brandPositioning: '',
@@ -134,6 +134,10 @@ export function canvasReducer(state: AppState, action: Action): AppState {
 
     case 'SET_BASE_PROMPT':
       return { ...state, basePrompt: action.payload };
+
+    // ===== API KEYS =====
+    case 'SET_API_KEYS':
+      return { ...state, apiKeys: action.payload };
 
     // ===== ERROR =====
     case 'SET_ERROR':

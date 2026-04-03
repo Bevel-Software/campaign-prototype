@@ -20,6 +20,16 @@ export default function CanvasApp() {
   const stateRef = useRef(state);
   stateRef.current = state;
 
+  // Check which API keys are configured on the server
+  useEffect(() => {
+    fetch('/api/health')
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data: { openai: boolean; gemini: boolean }) => {
+        dispatch({ type: 'SET_API_KEYS', payload: data });
+      })
+      .catch(() => {});
+  }, []);
+
   // Load brand context files
   useEffect(() => {
     fetch('/questions.json')
@@ -130,7 +140,7 @@ export default function CanvasApp() {
         const errMsg: ChatMessage = {
           id: `msg-${Date.now()}`,
           role: 'agent',
-          text: 'OpenAI API key not configured. Add VITE_OPENAI_API_KEY to your .env file.',
+          text: 'OpenAI API key not configured. Set OPENAI_API_KEY on the server.',
           timestamp: Date.now(),
         };
         dispatch({ type: 'ADD_MESSAGE', message: errMsg });
@@ -210,7 +220,7 @@ export default function CanvasApp() {
         dispatch({
           type: 'UPDATE_CARD_DATA',
           cardId,
-          data: { isGenerating: false, error: 'Gemini API key not configured. Add VITE_GEMINI_API_KEY to .env.' },
+          data: { isGenerating: false, error: 'Gemini API key not configured. Set GEMINI_API_KEY on the server.' },
         });
         return;
       }
@@ -219,7 +229,6 @@ export default function CanvasApp() {
 
       try {
         const result = await generateCreative(
-          state.apiKeys.gemini,
           prompt,
           { guidelines: state.brandGuidelines, positioning: state.brandPositioning },
           previousImageDataUrl,
@@ -241,7 +250,7 @@ export default function CanvasApp() {
         dispatch({ type: 'FINISH_GENERATING', cardId });
       }
     },
-    [state.apiKeys.gemini, state.brandGuidelines, state.brandPositioning],
+    [state.apiKeys.gemini, state.brandGuidelines, state.brandPositioning], // gemini bool used for early return check
   );
 
   // ===== GENERATE CREATIVE FROM BRIEF =====
@@ -466,8 +475,8 @@ export default function CanvasApp() {
 
   // Missing API key banners
   const missingKeys: string[] = [];
-  if (!state.apiKeys.openai) missingKeys.push('VITE_OPENAI_API_KEY');
-  if (!state.apiKeys.gemini) missingKeys.push('VITE_GEMINI_API_KEY');
+  if (!state.apiKeys.openai) missingKeys.push('OPENAI_API_KEY');
+  if (!state.apiKeys.gemini) missingKeys.push('GEMINI_API_KEY');
 
   const selectedCard = state.cards.find((c) => c.id === state.selectedCardId) || null;
 
@@ -491,8 +500,7 @@ export default function CanvasApp() {
       />
       {missingKeys.length > 0 && (
         <div className="api-key-banner">
-          Missing API keys: {missingKeys.map((k) => <code key={k}>{k}</code>).reduce<React.ReactNode[]>((acc, el, i) => i === 0 ? [el] : [...acc, ', ', el], [])}
-          {' '}in your <code>.env</code> file.
+          Missing server env vars: {missingKeys.map((k) => <code key={k}>{k}</code>).reduce<React.ReactNode[]>((acc, el, i) => i === 0 ? [el] : [...acc, ', ', el], [])}
         </div>
       )}
       <div className="app-layout" onContextMenu={handleContextMenu}>

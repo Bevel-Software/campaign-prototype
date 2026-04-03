@@ -116,7 +116,7 @@ export interface CanvasViewport {
 // ===== APP STATE =====
 
 export interface AppState {
-  apiKeys: { openai: string | null; gemini: string | null };
+  apiKeys: { openai: boolean; gemini: boolean };
   brandGuidelines: string;
   brandPositioning: string;
   basePrompt: string;
@@ -153,5 +153,7 @@ export type Action =
   | { type: 'SET_BRAND_GUIDELINES'; payload: string }
   | { type: 'SET_BRAND_POSITIONING'; payload: string }
   | { type: 'SET_BASE_PROMPT'; payload: string }
+  // API keys
+  | { type: 'SET_API_KEYS'; payload: { openai: boolean; gemini: boolean } }
   // Error
   | { type: 'SET_ERROR'; error: string | null };
