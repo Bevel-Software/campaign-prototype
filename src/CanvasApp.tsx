@@ -305,6 +305,16 @@ export default function CanvasApp() {
     [state.cards, state.basePrompt, triggerImageGeneration],
   );
 
+  // ===== GENERATE BRIEF FROM SEGMENT =====
+  const handleGenerateBrief = useCallback(
+    (segmentCardId: string) => {
+      const seg = state.cards.find((c): c is SegmentCard => c.id === segmentCardId && c.cardType === 'segment');
+      if (!seg) return;
+      handleSendMessage(`Generate a creative brief for segment ${segmentCardId} ("${seg.data.name}")`);
+    },
+    [state.cards, handleSendMessage],
+  );
+
   // ===== GENERATE VARIATIONS FROM CREATIVE =====
   const handleGenerateVariations = useCallback(
     (creativeCardId: string) => {
@@ -584,6 +594,7 @@ export default function CanvasApp() {
           dispatch={dispatch}
           onGenerateCreative={handleGenerateCreative}
           onGenerateVariations={handleGenerateVariations}
+          onGenerateBrief={handleGenerateBrief}
         />
         <ChatPanel
           messages={state.messages}

@@ -19,6 +19,7 @@ import type {
 import { computeChildPositions, computeInitialSettingsPosition, CARD_DIMENSIONS } from './layoutUtils';
 import { normalizeChannelList, normalizeObjectiveList } from './settingsData';
 import { buildSegmentCards, generateSegments } from './skills/segmentSkill';
+import { generateBriefs } from './skills/briefSkill';
 
 // ===== Zod schemas for LLM response validation =====
 
@@ -245,7 +246,7 @@ IMPORTANT: Pick the best-matching ad per segment based on: audience match (B2B v
 - When the user describes a campaign, create ONLY a settings card — do NOT generate segments yet. Ask the user to review the settings first.
 - When asked to generate segments, emit a spawn_segments action with an empty segments array: {"type": "spawn_segments", "segments": []}. The segment generation system will handle the details. Your reply should tell the user that segments are being generated. Do NOT spawn assets yet — wait for user to confirm segments first.
 - When the user confirms segments, shortlist 1 historical reference ad for each segment using "spawn_assets". For each asset set: caption = ad text snippet, source = "Historical Ad Library", image = ad's image description, and reason = a short explanation of why this ad was picked (e.g. "Highest reach B2B ad at 202k, employer-benefit messaging matches this segment"). Then in your reply, ask the user whether they'd like to use these inspirations or swap any out before moving to briefs.
-- When asked for briefs or image briefs, use "spawn_briefs" ONLY for segments marked with ✓ (isSelected). If no segments are selected, ask the user to select segments first. Each brief = ONE static image. Do not suggest video, carousel, story, or animation formats — only static image dimensions (e.g., "Static image 1080x1080", "Static image 1200x628", "Static image 1080x1920"). Create separate briefs for different sizes. Then tell the user: "Here are your image briefs. Double-click any text to edit, then tell me when you're ready to generate creatives."
+- When asked for briefs or image briefs, emit a spawn_briefs action with an empty briefs array: {"type": "spawn_briefs", "briefs": []}. The brief generation system will handle the details using the full brand context. ONLY do this if at least one segment is marked with ✓ (isSelected). If no segments are selected, ask the user to select segments first. Then tell the user: "Here are your image briefs. Double-click any text to edit, then tell me when you're ready to generate creatives."
 - When the user approves briefs, use "generate_creatives" ONLY for briefs whose parent segment is marked with ✓ (isSelected). Set each creative's briefId to the ID of the corresponding existing brief card from the canvas state
 - For Meta ads, use type "meta". For LinkedIn ads, use type "linkedin"
 - B2C segments typically use Meta (Instagram/Facebook), B2B segments use LinkedIn
@@ -565,6 +566,32 @@ export async function processMessage(
           validatedAction = { ...validatedAction, segments: skillResult.segments as any };
         } catch (err) {
           result.reply += `\n\nSegment generation failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
+          continue;
+        }
+      }
+    }
+
+    // Intercept spawn_briefs with empty array — delegate to brief skill
+    if (validatedAction.type === 'spawn_briefs' && (!validatedAction.briefs || validatedAction.briefs.length === 0)) {
+      const settingsCard = state.cards.find((c): c is SettingsCard => c.cardType === 'settings');
+      const selectedSegments = state.cards.filter(
+        (c): c is SegmentCard => c.cardType === 'segment' && !!c.data.isSelected,
+      );
+      if (settingsCard && selectedSegments.length > 0) {
+        const assets = state.cards.filter(
+          (c): c is AssetCard => c.cardType === 'asset',
+        );
+        try {
+          const skillResult = await generateBriefs({
+            settings: settingsCard.data,
+            brandGuidelines: state.brandGuidelines,
+            brandPositioning: state.brandPositioning,
+            segments: selectedSegments.map((s) => ({ id: s.id, data: s.data })),
+            assets: assets.map((a) => ({ segmentId: a.data.segmentId, data: a.data })),
+          });
+          validatedAction = { ...validatedAction, briefs: skillResult.briefs.map((b) => ({ segmentId: b.segmentId, brief: { direction: b.direction, format: b.format, keywords: b.keywords } as Record<string, unknown> })) } as NonNullable<typeof validatedAction>;
+        } catch (err) {
+          result.reply += `\n\nBrief generation failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
           continue;
         }
       }

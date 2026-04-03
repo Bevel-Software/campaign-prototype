@@ -12,10 +12,11 @@ interface CanvasAreaProps {
   dispatch: React.Dispatch<Action>;
   onGenerateCreative?: (briefCardId: string) => void;
   onGenerateVariations?: (creativeCardId: string) => void;
+  onGenerateBrief?: (segmentCardId: string) => void;
 }
 
 export const CanvasArea = forwardRef<HTMLDivElement, CanvasAreaProps>(
-  ({ canvas, cards, selectedCardId, dispatch, onGenerateCreative, onGenerateVariations }, ref) => {
+  ({ canvas, cards, selectedCardId, dispatch, onGenerateCreative, onGenerateVariations, onGenerateBrief }, ref) => {
     const transformRef = useRef<HTMLDivElement>(null);
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
@@ -176,6 +177,7 @@ export const CanvasArea = forwardRef<HTMLDivElement, CanvasAreaProps>(
               dispatch={dispatch}
               onGenerateCreative={onGenerateCreative}
               onGenerateVariations={onGenerateVariations}
+              onGenerateBrief={onGenerateBrief}
             />
           ))}
         </div>

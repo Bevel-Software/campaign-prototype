@@ -12,9 +12,10 @@ interface CanvasCardProps {
   dispatch: React.Dispatch<Action>;
   onGenerateCreative?: (briefCardId: string) => void;
   onGenerateVariations?: (creativeCardId: string) => void;
+  onGenerateBrief?: (segmentCardId: string) => void;
 }
 
-export function CanvasCard({ card, isSelected, dispatch, onGenerateCreative, onGenerateVariations }: CanvasCardProps) {
+export function CanvasCard({ card, isSelected, dispatch, onGenerateCreative, onGenerateVariations, onGenerateBrief }: CanvasCardProps) {
   const dragState = useRef({
     isDragging: false,
     startX: 0,
@@ -157,7 +158,13 @@ export function CanvasCard({ card, isSelected, dispatch, onGenerateCreative, onG
       onPointerUp={handlePointerUp}
     >
       {card.cardType === 'settings' && <SettingsCardContent data={card.data} onFieldChange={handleFieldChange} />}
-      {card.cardType === 'segment' && <SegmentCardContent data={card.data} onFieldChange={handleFieldChange} />}
+      {card.cardType === 'segment' && (
+        <SegmentCardContent
+          data={card.data}
+          onFieldChange={handleFieldChange}
+          onGenerateBrief={onGenerateBrief ? () => onGenerateBrief(card.id) : undefined}
+        />
+      )}
       {card.cardType === 'asset' && <AssetCardContent data={card.data} />}
       {card.cardType === 'brief' && (
         <BriefCardContent

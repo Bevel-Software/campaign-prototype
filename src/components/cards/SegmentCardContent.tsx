@@ -4,9 +4,10 @@ import { InlineEditable } from './InlineEditable';
 interface Props {
   data: SegmentCardData;
   onFieldChange?: (field: string, value: string | boolean) => void;
+  onGenerateBrief?: () => void;
 }
 
-export function SegmentCardContent({ data, onFieldChange }: Props) {
+export function SegmentCardContent({ data, onFieldChange, onGenerateBrief }: Props) {
   return (
     <>
       <div className={`segment-card-accent ${data.group}`} />
@@ -59,6 +60,11 @@ export function SegmentCardContent({ data, onFieldChange }: Props) {
         <InlineEditable className="segment-card-tagline" value={data.tagline} onChange={(v) => onFieldChange('tagline', v)} />
       ) : (
         <div className="segment-card-tagline">{data.tagline}</div>
+      )}
+      {onGenerateBrief && (
+        <button className="brief-generate-btn" onClick={onGenerateBrief} onPointerDown={(e) => e.stopPropagation()}>
+          Generate Image Brief &#9654;
+        </button>
       )}
     </>
   );
